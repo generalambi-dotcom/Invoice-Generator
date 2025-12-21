@@ -88,6 +88,8 @@ export default function InvoiceForm() {
   const [showHistory, setShowHistory] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showSaveDefaults, setShowSaveDefaults] = useState(false);
+  const [companyAddressFormat, setCompanyAddressFormat] = useState<'simple' | 'detailed'>('simple');
+  const [clientAddressFormat, setClientAddressFormat] = useState<'simple' | 'detailed'>('simple');
 
   // Load company defaults on mount
   useEffect(() => {
@@ -179,6 +181,30 @@ export default function InvoiceForm() {
         };
       }
     });
+  };
+
+  // Helper function to convert detailed address to simple format
+  const getSimpleAddress = (entity: any) => {
+    const parts = [
+      entity?.address,
+      entity?.city,
+      entity?.state,
+      entity?.zip,
+      entity?.country,
+    ].filter(Boolean);
+    return parts.join(', ');
+  };
+
+  // Helper function to parse simple address (basic parsing)
+  const parseSimpleAddress = (address: string, type: 'company' | 'client') => {
+    const parts = address.split(',').map((p) => p.trim());
+    
+    // Update fields based on comma-separated parts
+    updateField(`${type}.address`, parts[0] || '');
+    updateField(`${type}.city`, parts[1] || '');
+    updateField(`${type}.state`, parts[2] || '');
+    updateField(`${type}.zip`, parts[3] || '');
+    updateField(`${type}.country`, parts[4] || '');
   };
 
   // Generate and download PDF
@@ -346,24 +372,24 @@ export default function InvoiceForm() {
   const currencySymbol = currencySymbols[invoice.currency || 'USD'];
 
   return (
-    <div className="bg-gray-50 py-8">
+    <div className="bg-gray-50 py-4 sm:py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Page Header */}
-        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Invoice Generator</h1>
-            <p className="text-gray-600 mt-1">Create professional invoices in minutes</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Invoice Generator</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">Create professional invoices in minutes</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <button
               onClick={() => setShowHistory(!showHistory)}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
             >
               {showHistory ? 'Hide' : 'Show'} History ({invoiceHistory.length})
             </button>
             <button
               onClick={handleNewInvoice}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
             >
               New Invoice
             </button>
@@ -372,7 +398,7 @@ export default function InvoiceForm() {
 
         {/* Invoice History */}
         {showHistory && (
-          <div className="mb-8 bg-white rounded-lg shadow p-6">
+          <div className="mb-6 sm:mb-8 bg-white rounded-lg shadow p-4 sm:p-6">
             <h2 className="text-xl font-semibold mb-4">Invoice History</h2>
             {invoiceHistory.length === 0 ? (
               <p className="text-gray-500">No invoices yet. Create your first invoice!</p>
@@ -422,13 +448,13 @@ export default function InvoiceForm() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
           {/* Left Column - Form */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Theme and Currency Selectors */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
               <h2 className="text-xl font-semibold mb-4">Settings</h2>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
                   <select
@@ -463,15 +489,40 @@ export default function InvoiceForm() {
             </div>
 
             {/* Company Information */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Company Information</h2>
-                <button
-                  onClick={() => setShowSaveDefaults(!showSaveDefaults)}
-                  className="text-sm text-theme-primary hover:text-theme-primary-dark"
-                >
-                  {showSaveDefaults ? 'Cancel' : 'Save as Default'}
-                </button>
+                <div className="flex items-center gap-3">
+                  {/* Address Format Toggle */}
+                  <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                    <button
+                      onClick={() => setCompanyAddressFormat('simple')}
+                      className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${
+                        companyAddressFormat === 'simple'
+                          ? 'bg-white text-theme-primary shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Simple
+                    </button>
+                    <button
+                      onClick={() => setCompanyAddressFormat('detailed')}
+                      className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${
+                        companyAddressFormat === 'detailed'
+                          ? 'bg-white text-theme-primary shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      Detailed
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setShowSaveDefaults(!showSaveDefaults)}
+                    className="text-sm text-theme-primary hover:text-theme-primary-dark"
+                  >
+                    {showSaveDefaults ? 'Cancel' : 'Save as Default'}
+                  </button>
+                </div>
               </div>
               {showSaveDefaults && (
                 <div className="mb-4 p-3 bg-blue-50 rounded">
@@ -515,90 +566,140 @@ export default function InvoiceForm() {
                     />
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                
+                {/* Address Section - Simple or Detailed */}
+                {companyAddressFormat === 'simple' ? (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                    <input
-                      type="text"
-                      value={invoice.company?.address || ''}
-                      onChange={(e) => updateField('company.address', e.target.value)}
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Address
+                    </label>
+                    <textarea
+                      value={getSimpleAddress(invoice.company)}
+                      onChange={(e) => parseSimpleAddress(e.target.value, 'company')}
+                      placeholder="Enter full address (e.g., 123 Main St, Lagos, Lagos State, 100001, Nigeria)"
+                      rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Enter address separated by commas: Street, City, State, ZIP, Country
+                    </p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                    <input
-                      type="text"
-                      value={invoice.company?.city || ''}
-                      onChange={(e) => updateField('company.city', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                    />
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <input
+                          type="text"
+                          value={invoice.company?.address || ''}
+                          onChange={(e) => updateField('company.address', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                        <input
+                          type="text"
+                          value={invoice.company?.city || ''}
+                          onChange={(e) => updateField('company.city', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                        <input
+                          type="text"
+                          value={invoice.company?.state || ''}
+                          onChange={(e) => updateField('company.state', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">ZIP</label>
+                        <input
+                          type="text"
+                          value={invoice.company?.zip || ''}
+                          onChange={(e) => updateField('company.zip', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                        <input
+                          type="text"
+                          value={invoice.company?.country || ''}
+                          onChange={(e) => updateField('company.country', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+                {/* Phone, Email, Website - Only show in detailed mode */}
+                {companyAddressFormat === 'detailed' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                      <input
+                        type="text"
+                        value={invoice.company?.phone || ''}
+                        onChange={(e) => updateField('company.phone', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={invoice.company?.email || ''}
+                        onChange={(e) => updateField('company.email', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                      <input
+                        type="url"
+                        value={invoice.company?.website || ''}
+                        onChange={(e) => updateField('company.website', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                    <input
-                      type="text"
-                      value={invoice.company?.state || ''}
-                      onChange={(e) => updateField('company.state', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">ZIP</label>
-                    <input
-                      type="text"
-                      value={invoice.company?.zip || ''}
-                      onChange={(e) => updateField('company.zip', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                    <input
-                      type="text"
-                      value={invoice.company?.country || ''}
-                      onChange={(e) => updateField('company.country', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <input
-                      type="text"
-                      value={invoice.company?.phone || ''}
-                      onChange={(e) => updateField('company.phone', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={invoice.company?.email || ''}
-                      onChange={(e) => updateField('company.email', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                    <input
-                      type="url"
-                      value={invoice.company?.website || ''}
-                      onChange={(e) => updateField('company.website', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                    />
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
             {/* Client Information */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Client Information</h2>
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Client Information</h2>
+                {/* Address Format Toggle */}
+                <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setClientAddressFormat('simple')}
+                    className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${
+                      clientAddressFormat === 'simple'
+                        ? 'bg-white text-theme-primary shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Simple
+                  </button>
+                  <button
+                    onClick={() => setClientAddressFormat('detailed')}
+                    className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${
+                      clientAddressFormat === 'detailed'
+                        ? 'bg-white text-theme-primary shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Detailed
+                  </button>
+                </div>
+              </div>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -612,81 +713,106 @@ export default function InvoiceForm() {
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                  <input
-                    type="text"
-                    value={invoice.client?.address || ''}
-                    onChange={(e) => updateField('client.address', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+                
+                {/* Address Section - Simple or Detailed */}
+                {clientAddressFormat === 'simple' ? (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Address
+                    </label>
+                    <textarea
+                      value={getSimpleAddress(invoice.client)}
+                      onChange={(e) => parseSimpleAddress(e.target.value, 'client')}
+                      placeholder="Enter full address (e.g., 123 Main St, Lagos, Lagos State, 100001, Nigeria)"
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Enter address separated by commas: Street, City, State, ZIP, Country
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                      <input
+                        type="text"
+                        value={invoice.client?.address || ''}
+                        onChange={(e) => updateField('client.address', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                        <input
+                          type="text"
+                          value={invoice.client?.city || ''}
+                          onChange={(e) => updateField('client.city', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                        <input
+                          type="text"
+                          value={invoice.client?.state || ''}
+                          onChange={(e) => updateField('client.state', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">ZIP</label>
+                        <input
+                          type="text"
+                          value={invoice.client?.zip || ''}
+                          onChange={(e) => updateField('client.zip', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                        <input
+                          type="text"
+                          value={invoice.client?.country || ''}
+                          onChange={(e) => updateField('client.country', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input
+                          type="text"
+                          value={invoice.client?.phone || ''}
+                          onChange={(e) => updateField('client.phone', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+                {/* Email - Only show in detailed mode */}
+                {clientAddressFormat === 'detailed' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input
-                      type="text"
-                      value={invoice.client?.city || ''}
-                      onChange={(e) => updateField('client.city', e.target.value)}
+                      type="email"
+                      value={invoice.client?.email || ''}
+                      onChange={(e) => updateField('client.email', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                    <input
-                      type="text"
-                      value={invoice.client?.state || ''}
-                      onChange={(e) => updateField('client.state', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">ZIP</label>
-                    <input
-                      type="text"
-                      value={invoice.client?.zip || ''}
-                      onChange={(e) => updateField('client.zip', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                    <input
-                      type="text"
-                      value={invoice.client?.country || ''}
-                      onChange={(e) => updateField('client.country', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <input
-                      type="text"
-                      value={invoice.client?.phone || ''}
-                      onChange={(e) => updateField('client.phone', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={invoice.client?.email || ''}
-                    onChange={(e) => updateField('client.email', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                  />
-                </div>
+                )}
               </div>
             </div>
 
             {/* Invoice Details */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
               <h2 className="text-xl font-semibold mb-4">Invoice Details</h2>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Invoice Number *
@@ -709,7 +835,7 @@ export default function InvoiceForm() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Invoice Date *
@@ -737,7 +863,7 @@ export default function InvoiceForm() {
             </div>
 
             {/* Ship To */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Ship To (Optional)</h2>
                 <button
@@ -794,7 +920,7 @@ export default function InvoiceForm() {
                       className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
                       <input
@@ -824,7 +950,7 @@ export default function InvoiceForm() {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">ZIP</label>
                       <input
@@ -859,7 +985,7 @@ export default function InvoiceForm() {
             </div>
 
             {/* Line Items */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
               <h2 className="text-xl font-semibold mb-4">Line Items</h2>
               <LineItems
                 lineItems={invoice.lineItems || []}
@@ -870,10 +996,10 @@ export default function InvoiceForm() {
             </div>
 
             {/* Additional Charges */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
               <h2 className="text-xl font-semibold mb-4">Additional Charges</h2>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Tax Rate (%)
@@ -921,7 +1047,7 @@ export default function InvoiceForm() {
             </div>
 
             {/* Notes, Bank Details, Terms */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
               <h2 className="text-xl font-semibold mb-4">Additional Information</h2>
               <div className="space-y-4">
                 <div>
@@ -961,12 +1087,12 @@ export default function InvoiceForm() {
           </div>
 
           {/* Right Column - Preview */}
-          <div className="lg:sticky lg:top-8 h-fit">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-4">Invoice Preview</h2>
-              <div className="border-2 border-gray-200 rounded-lg p-6 bg-white">
+          <div className="lg:sticky lg:top-8 h-fit order-first lg:order-last">
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold mb-4">Invoice Preview</h2>
+              <div className="border-2 border-gray-200 rounded-lg p-4 sm:p-6 bg-white">
                 {/* Company Header */}
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                   {invoice.company?.logo && (
                     <img
                       src={invoice.company.logo}
@@ -989,9 +1115,9 @@ export default function InvoiceForm() {
                 </div>
 
                 {/* Invoice Title */}
-                <div className="mb-6">
-                  <h1 className="text-2xl font-bold text-gray-900 mb-4">INVOICE</h1>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="mb-4 sm:mb-6">
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">INVOICE</h1>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                     <div>
                       <p className="text-gray-600">Invoice #:</p>
                       <p className="font-semibold">{invoice.invoiceNumber || 'INV-001'}</p>
@@ -1022,7 +1148,7 @@ export default function InvoiceForm() {
                 </div>
 
                 {/* Client Info */}
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                   <p className="text-sm font-semibold text-gray-700 mb-2">Bill To:</p>
                   <p className="text-sm text-gray-900">{invoice.client?.name || 'Client Name'}</p>
                   {invoice.client?.address && (
@@ -1037,8 +1163,8 @@ export default function InvoiceForm() {
                 </div>
 
                 {/* Line Items Table */}
-                <div className="mb-6">
-                  <table className="w-full text-sm">
+                <div className="mb-4 sm:mb-6 overflow-x-auto">
+                  <table className="w-full text-xs sm:text-sm min-w-[500px]">
                     <thead>
                       <tr className="border-b-2 border-gray-300">
                         <th className="text-left py-2">Description</th>
@@ -1073,9 +1199,9 @@ export default function InvoiceForm() {
                 </div>
 
                 {/* Totals */}
-                <div className="border-t-2 border-gray-300 pt-4">
+                <div className="border-t-2 border-gray-300 pt-3 sm:pt-4">
                   <div className="flex justify-end">
-                    <div className="w-64 space-y-2">
+                    <div className="w-full sm:w-64 space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Subtotal:</span>
                         <span className="font-semibold">
@@ -1128,11 +1254,11 @@ export default function InvoiceForm() {
               </div>
 
               {/* Download PDF Button */}
-              <div className="mt-6">
+              <div className="mt-4 sm:mt-6">
                 <button
                   onClick={handleDownloadPDF}
                   disabled={isGeneratingPDF}
-                  className="w-full px-6 py-3 bg-theme-primary text-white rounded-lg hover:bg-theme-primary-dark transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-theme-primary text-white rounded-lg hover:bg-theme-primary-dark transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
                 </button>

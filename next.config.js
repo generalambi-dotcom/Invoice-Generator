@@ -4,6 +4,14 @@ const nextConfig = {
   images: {
     domains: [],
   },
+  // Exclude Invoice-Generator directory from build
+  webpack: (config) => {
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: ['**/Invoice-Generator/**', '**/node_modules/**'],
+    };
+    return config;
+  },
   async headers() {
     return [
       {

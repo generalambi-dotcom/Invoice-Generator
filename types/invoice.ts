@@ -67,6 +67,11 @@ export interface Invoice {
   terms?: string;
   createdAt: string;
   updatedAt: string;
+  paymentStatus?: 'pending' | 'paid' | 'overdue' | 'cancelled';
+  paymentDate?: string;
+  paymentLink?: string;
+  paymentProvider?: 'paypal' | 'paystack';
+  paidAmount?: number;
 }
 
 export interface CompanyDefaults {

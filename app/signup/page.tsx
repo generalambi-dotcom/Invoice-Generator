@@ -1,16 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { registerUser, signInWithGoogle } from '@/lib/auth';
-
-// Declare Google types
-declare global {
-  interface Window {
-    google: any;
-  }
-}
+import { registerUser } from '@/lib/auth';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -20,134 +13,6 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const googleButtonRef = useRef<HTMLDivElement>(null);
-
-  const handleGoogleSignIn = async (response: any) => {
-    try {
-      setIsLoading(true);
-      setError('');
-      
-      // Check if we're in browser environment
-      if (typeof window === 'undefined') {
-        throw new Error('Google Sign-In is only available in the browser');
-      }
-      
-      // Decode the credential (JWT token)
-      if (!response || !response.credential) {
-        throw new Error('Invalid Google Sign-In response');
-      }
-      
-      const credential = response.credential;
-      
-      // Decode JWT token (client-side - for production, verify on backend)
-      try {
-        const base64Url = credential.split('.')[1];
-        if (!base64Url) {
-          throw new Error('Invalid credential format');
-        }
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(
-          atob(base64)
-            .split('')
-            .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-            .join('')
-        );
-        const payload = JSON.parse(jsonPayload);
-        
-        // Create user object from Google response
-        const userData = {
-          id: payload.sub || payload.user_id || Date.now().toString(),
-          name: payload.name || 'Google User',
-          email: payload.email || '',
-          picture: payload.picture,
-        };
-
-        if (!userData.email) {
-          throw new Error('Email is required from Google account');
-        }
-
-        // Sign in with Google (will create account if doesn't exist)
-        signInWithGoogle(userData);
-        
-        // Redirect to dashboard
-        router.push('/dashboard');
-      } catch (parseError: any) {
-        throw new Error('Failed to decode Google Sign-In token: ' + parseError.message);
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign up with Google. Please try again.');
-      setIsLoading(false);
-    }
-  };
-
-  // Load Google Sign-In script
-  useEffect(() => {
-    // Only run in browser
-    if (typeof window === 'undefined') return;
-    
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      console.error('Google Client ID is not configured');
-      return;
-    }
-
-    // Check if script already exists
-    if (document.querySelector('script[src="https://accounts.google.com/gsi/client"]')) {
-      // Script already loaded, just initialize
-      if (window.google && googleButtonRef.current) {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleGoogleSignIn,
-        });
-        window.google.accounts.id.renderButton(
-          googleButtonRef.current,
-          {
-            theme: 'outline',
-            size: 'large',
-            width: '100%',
-            text: 'signup_with',
-            type: 'standard',
-          }
-        );
-      }
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      if (window.google && googleButtonRef.current) {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleGoogleSignIn,
-        });
-        window.google.accounts.id.renderButton(
-          googleButtonRef.current,
-          {
-            theme: 'outline',
-            size: 'large',
-            width: '100%',
-            text: 'signup_with',
-            type: 'standard',
-          }
-        );
-      }
-    };
-    script.onerror = () => {
-      console.error('Failed to load Google Sign-In script');
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup script if component unmounts
-      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-      if (existingScript && existingScript.parentNode) {
-        existingScript.parentNode.removeChild(existingScript);
-      }
-    };
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -295,18 +160,6 @@ export default function SignUpPage() {
               </button>
             </div>
 
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
-
-            {/* Sign up with Google */}
-            <div ref={googleButtonRef} className="w-full flex justify-center"></div>
           </form>
 
           {/* Sign In Link */}

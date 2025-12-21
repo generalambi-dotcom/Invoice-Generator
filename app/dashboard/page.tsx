@@ -11,6 +11,7 @@ import {
   permanentlyDeleteInvoice,
   deleteInvoice,
 } from '@/lib/storage';
+import { loadInvoicesAPI, deleteInvoiceAPI } from '@/lib/api-client';
 import { Invoice, currencySymbols } from '@/types/invoice';
 import { formatCurrency } from '@/lib/calculations';
 import { format } from 'date-fns';
@@ -34,21 +35,69 @@ export default function DashboardPage() {
     loadInvoiceData();
   }, [router]);
 
-  const loadInvoiceData = () => {
-    const active = loadInvoices();
-    const deleted = loadDeletedInvoices();
-    setActiveInvoices(active.sort((a, b) => {
-      const dateA = new Date(a.createdAt || a.invoiceDate).getTime();
-      const dateB = new Date(b.createdAt || b.invoiceDate).getTime();
-      return dateB - dateA;
-    }));
-    setDeletedInvoices(deleted.sort((a, b) => {
-      const dateA = new Date((a as any).deletedAt || a.createdAt || a.invoiceDate).getTime();
-      const dateB = new Date((b as any).deletedAt || b.createdAt || b.invoiceDate).getTime();
-      return dateB - dateA;
-    }));
-    setIsLoading(false);
+  const loadInvoiceData = async () => {
+    try {
+      // Try to load from API first
+      const active = await loadInvoicesAPI();
+      const deleted = loadDeletedInvoices(); // Deleted invoices still in localStorage for now
+      
+      setActiveInvoices(active.sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.invoiceDate).getTime();
+        const dateB = new Date(b.createdAt || b.invoiceDate).getTime();
+        return dateB - dateA;
+      }));
+      setDeletedInvoices(deleted.sort((a, b) => {
+        const dateA = new Date((a as any).deletedAt || a.createdAt || a.invoiceDate).getTime();
+        const dateB = new Date((b as any).deletedAt || b.createdAt || b.invoiceDate).getTime();
+        return dateB - dateA;
+      }));
+    } catch (error) {
+      // Fallback to localStorage
+      const active = loadInvoices();
+      const deleted = loadDeletedInvoices();
+      setActiveInvoices(active.sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.invoiceDate).getTime();
+        const dateB = new Date(b.createdAt || b.invoiceDate).getTime();
+        return dateB - dateA;
+      }));
+      setDeletedInvoices(deleted.sort((a, b) => {
+        const dateA = new Date((a as any).deletedAt || a.createdAt || a.invoiceDate).getTime();
+        const dateB = new Date((b as any).deletedAt || b.createdAt || b.invoiceDate).getTime();
+        return dateB - dateA;
+      }));
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const calculateStats = () => {
+    const invoices = activeInvoices;
+    const totalInvoices = invoices.length;
+    const totalAmount = invoices.reduce((sum, inv) => sum + inv.total, 0);
+    const paidInvoices = invoices.filter(inv => inv.paymentStatus === 'paid');
+    const paidAmount = paidInvoices.reduce((sum, inv) => sum + (inv.paidAmount || inv.total), 0);
+    const unpaidInvoices = invoices.filter(inv => inv.paymentStatus !== 'paid' && inv.paymentStatus !== 'cancelled');
+    const unpaidAmount = unpaidInvoices.reduce((sum, inv) => sum + inv.total, 0);
+    const overdueInvoices = invoices.filter(inv => {
+      if (inv.paymentStatus === 'paid' || inv.paymentStatus === 'cancelled') return false;
+      const dueDate = new Date(inv.dueDate);
+      return dueDate < new Date();
+    });
+    const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + inv.total, 0);
+    
+    return {
+      totalInvoices,
+      totalAmount,
+      paidCount: paidInvoices.length,
+      paidAmount,
+      unpaidCount: unpaidInvoices.length,
+      unpaidAmount,
+      overdueCount: overdueInvoices.length,
+      overdueAmount,
+    };
+  };
+
+  const stats = calculateStats();
 
   const handleSignOut = () => {
     signOut();
@@ -70,8 +119,15 @@ export default function DashboardPage() {
   };
 
   const handleView = (invoice: Invoice) => {
-    sessionStorage.setItem('loadInvoice', JSON.stringify(invoice));
-    router.push('/');
+    // For database invoices, use the ID; for localStorage, use sessionStorage
+    if (invoice.id && invoice.id.length > 10) {
+      // Likely a database ID (cuid format)
+      router.push(`/?invoiceId=${invoice.id}`);
+    } else {
+      // Legacy localStorage invoice
+      sessionStorage.setItem('loadInvoice', JSON.stringify(invoice));
+      router.push('/');
+    }
   };
 
   if (isLoading) {
@@ -105,6 +161,39 @@ export default function DashboardPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-sm font-medium text-gray-500 mb-1">Total Invoices</h3>
+            <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalInvoices}</p>
+            <p className="text-sm text-gray-500 mt-1">All time</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h3>
+            <p className="text-3xl font-bold text-gray-900 mt-2">
+              {currencySymbols[activeInvoices[0]?.currency || 'USD']} {formatCurrency(stats.totalAmount, activeInvoices[0]?.currency || 'USD')}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">All invoices</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-sm font-medium text-gray-500 mb-1">Paid</h3>
+            <p className="text-3xl font-bold text-green-600 mt-2">
+              {currencySymbols[activeInvoices[0]?.currency || 'USD']} {formatCurrency(stats.paidAmount, activeInvoices[0]?.currency || 'USD')}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">{stats.paidCount} invoices</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-sm font-medium text-gray-500 mb-1">Unpaid</h3>
+            <p className="text-3xl font-bold text-red-600 mt-2">
+              {currencySymbols[activeInvoices[0]?.currency || 'USD']} {formatCurrency(stats.unpaidAmount, activeInvoices[0]?.currency || 'USD')}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">{stats.unpaidCount} invoices</p>
+            {stats.overdueCount > 0 && (
+              <p className="text-xs text-red-600 mt-1">({stats.overdueCount} overdue)</p>
+            )}
+          </div>
+        </div>
+
         {/* Action Buttons */}
         <div className="mb-6 flex items-center justify-between">
           <div className="flex gap-3">
@@ -192,6 +281,9 @@ export default function DashboardPage() {
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Total
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
                     {showDeleted && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Deleted
@@ -227,6 +319,19 @@ export default function DashboardPage() {
                         <div className="text-sm font-medium text-gray-900">
                           {currencySymbols[invoice.currency]} {formatCurrency(invoice.total, invoice.currency)}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          invoice.paymentStatus === 'paid'
+                            ? 'bg-green-100 text-green-800'
+                            : invoice.paymentStatus === 'overdue'
+                            ? 'bg-red-100 text-red-800'
+                            : invoice.paymentStatus === 'cancelled'
+                            ? 'bg-gray-100 text-gray-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {invoice.paymentStatus || 'pending'}
+                        </span>
                       </td>
                       {showDeleted && (
                         <td className="px-6 py-4 whitespace-nowrap">

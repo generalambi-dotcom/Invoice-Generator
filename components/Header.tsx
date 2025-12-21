@@ -13,6 +13,7 @@ export default function Header() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   const [language, setLanguage] = useState('en');
+  const [isPremium, setIsPremium] = useState(false);
 
   // Load dark mode preference from localStorage
   useEffect(() => {
@@ -31,7 +32,15 @@ export default function Header() {
         setLanguage(savedLanguage);
       }
       
-      setUser(getCurrentUser());
+      const currentUser = getCurrentUser();
+      setUser(currentUser);
+      if (currentUser) {
+        setIsPremium(
+          currentUser.subscription?.plan === 'premium' && 
+          currentUser.subscription?.status === 'active' ||
+          currentUser.isAdmin === true
+        );
+      }
     } catch (error) {
       console.error('Error loading preferences:', error);
     }
@@ -167,6 +176,12 @@ export default function Header() {
             >
               FAQ
             </Link>
+            <Link
+              href="/upgrade"
+              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              Pricing
+            </Link>
           </nav>
 
           {/* Right Side Actions */}
@@ -267,6 +282,30 @@ export default function Header() {
             {user ? (
               <>
                 {/* Desktop View */}
+                {user.subscription?.plan !== 'premium' && (
+                  <Link
+                    href="/upgrade"
+                    className="hidden md:block px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all font-medium text-sm"
+                  >
+                    ⭐ Upgrade
+                  </Link>
+                )}
+                {user.isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="hidden md:block px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                  >
+                    Admin
+                  </Link>
+                )}
+                {isPremium && (
+                  <Link
+                    href="/settings/payment-methods"
+                    className="hidden md:block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm"
+                  >
+                    Payment Methods
+                  </Link>
+                )}
                 <Link
                   href="/dashboard"
                   className="hidden md:block text-gray-700 hover:text-gray-900 transition-colors"
@@ -303,6 +342,33 @@ export default function Header() {
                   </button>
                   {accountMenuOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
+                      {user.subscription?.plan !== 'premium' && (
+                        <Link
+                          href="/upgrade"
+                          onClick={closeMenus}
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-100 font-medium"
+                        >
+                          ⭐ Upgrade
+                        </Link>
+                      )}
+                      {user.isAdmin && (
+                        <Link
+                          href="/admin"
+                          onClick={closeMenus}
+                          className="block px-4 py-2 text-purple-700 hover:bg-purple-50 font-medium"
+                        >
+                          Admin
+                        </Link>
+                      )}
+                      {isPremium && (
+                        <Link
+                          href="/settings/payment-methods"
+                          onClick={closeMenus}
+                          className="block px-4 py-2 text-indigo-700 hover:bg-indigo-50 font-medium"
+                        >
+                          Payment Methods
+                        </Link>
+                      )}
                       <Link
                         href="/dashboard"
                         onClick={closeMenus}
@@ -322,7 +388,13 @@ export default function Header() {
               </>
             ) : (
               <>
-                {/* Desktop: Sign In and Sign Up */}
+                {/* Desktop: Sign In, Sign Up, and Upgrade */}
+                <Link
+                  href="/upgrade"
+                  className="hidden md:block px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all font-medium text-sm"
+                >
+                  ⭐ Upgrade
+                </Link>
                 <Link
                   href="/signin"
                   className="hidden md:block text-gray-700 hover:text-gray-900 transition-colors"
@@ -406,6 +478,31 @@ export default function Header() {
               >
                 FAQ
               </Link>
+              <Link
+                href="/upgrade"
+                onClick={closeMenus}
+                className="block text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors py-2"
+              >
+                Pricing
+              </Link>
+              {user && user.subscription?.plan !== 'premium' && (
+                <Link
+                  href="/upgrade"
+                  onClick={closeMenus}
+                  className="block px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all font-medium text-center"
+                >
+                  ⭐ Upgrade to Premium
+                </Link>
+              )}
+              {user && user.isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={closeMenus}
+                  className="block px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-center"
+                >
+                  Admin Dashboard
+                </Link>
+              )}
               <div className="pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
                 <button
                   onClick={toggleDarkMode}

@@ -27,8 +27,18 @@ import {
   saveCompanyDefaults,
   loadCompanyDefaults,
 } from '@/lib/storage';
+import {
+  saveInvoiceAPI,
+  loadInvoicesAPI,
+  loadInvoiceAPI,
+  deleteInvoiceAPI,
+  generatePaymentLinkAPI,
+  sendInvoiceEmailAPI,
+} from '@/lib/api-client';
 import LineItems from './LineItems';
 import { format } from 'date-fns';
+import { getCurrentUser } from '@/lib/auth';
+import { isPremiumUser } from '@/lib/payments';
 
 export default function InvoiceForm() {
   // Form state
@@ -90,6 +100,23 @@ export default function InvoiceForm() {
   const [showSaveDefaults, setShowSaveDefaults] = useState(false);
   const [companyAddressFormat, setCompanyAddressFormat] = useState<'simple' | 'detailed'>('simple');
   const [clientAddressFormat, setClientAddressFormat] = useState<'simple' | 'detailed'>('simple');
+  const [isPremium, setIsPremium] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [savingInvoice, setSavingInvoice] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+
+  // Check premium status and load user
+  useEffect(() => {
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
+    if (currentUser) {
+      const isPremiumUser = 
+        (currentUser.subscription?.plan === 'premium' && 
+         currentUser.subscription?.status === 'active') ||
+        currentUser.isAdmin === true;
+      setIsPremium(isPremiumUser);
+    }
+  }, []);
 
   // Load company defaults on mount
   useEffect(() => {
@@ -110,8 +137,17 @@ export default function InvoiceForm() {
 
   // Load invoice history
   useEffect(() => {
-    const invoices = loadInvoices();
-    setInvoiceHistory(invoices);
+    const loadHistory = async () => {
+      try {
+        const invoices = await loadInvoicesAPI();
+        setInvoiceHistory(invoices);
+      } catch (error) {
+        // Fallback to localStorage
+        const invoices = loadInvoices();
+        setInvoiceHistory(invoices);
+      }
+    };
+    loadHistory();
   }, []);
 
   // Load invoice from history page (sessionStorage)
@@ -238,6 +274,9 @@ export default function InvoiceForm() {
         notes: invoice.notes,
         bankDetails: invoice.bankDetails,
         terms: invoice.terms,
+        paymentStatus: invoice.paymentStatus || 'pending',
+        paymentLink: invoice.paymentLink,
+        paymentProvider: invoice.paymentProvider,
         createdAt: invoice.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -252,9 +291,25 @@ export default function InvoiceForm() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      // Save invoice
-      saveInvoice(completeInvoice);
-      setInvoiceHistory(loadInvoices());
+      // Save invoice to database
+      try {
+        setSavingInvoice(true);
+        const result = await saveInvoiceAPI(completeInvoice);
+        // Update invoice with database ID
+        if (result.invoice) {
+          setInvoice(prev => ({ ...prev, id: result.invoice.id }));
+        }
+        // Reload history
+        const invoices = await loadInvoicesAPI();
+        setInvoiceHistory(invoices);
+      } catch (error: any) {
+        console.error('Error saving to database, using localStorage fallback:', error);
+        // Fallback to localStorage
+        saveInvoice(completeInvoice);
+        setInvoiceHistory(loadInvoices());
+      } finally {
+        setSavingInvoice(false);
+      }
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Error generating PDF. Please try again.');
@@ -286,19 +341,61 @@ export default function InvoiceForm() {
   };
 
   // Load invoice from history
-  const loadInvoiceFromHistory = (id: string) => {
-    const loaded = loadInvoice(id);
-    if (loaded) {
-      setInvoice(loaded);
-      setShowHistory(false);
+  const loadInvoiceFromHistory = async (id: string) => {
+    try {
+      const loaded = await loadInvoiceAPI(id);
+      if (loaded) {
+        // Convert database format to form format
+        setInvoice({
+          id: loaded.id,
+          invoiceNumber: loaded.invoiceNumber,
+          invoiceDate: new Date(loaded.invoiceDate).toISOString().split('T')[0],
+          dueDate: new Date(loaded.dueDate).toISOString().split('T')[0],
+          purchaseOrder: loaded.purchaseOrder,
+          company: loaded.companyInfo,
+          client: loaded.clientInfo,
+          shipTo: loaded.shipToInfo,
+          lineItems: loaded.lineItems,
+          subtotal: loaded.subtotal,
+          taxRate: loaded.taxRate,
+          taxAmount: loaded.taxAmount,
+          discountRate: loaded.discountRate,
+          discountAmount: loaded.discountAmount,
+          shipping: loaded.shipping,
+          total: loaded.total,
+          currency: loaded.currency,
+          theme: loaded.theme,
+          notes: loaded.notes,
+          bankDetails: loaded.bankDetails,
+          terms: loaded.terms,
+          paymentStatus: loaded.paymentStatus,
+          paymentLink: loaded.paymentLink,
+          paymentProvider: loaded.paymentProvider,
+        });
+        setShowHistory(false);
+      }
+    } catch (error) {
+      // Fallback to localStorage
+      const loaded = loadInvoice(id);
+      if (loaded) {
+        setInvoice(loaded);
+        setShowHistory(false);
+      }
     }
   };
 
   // Delete invoice from history
-  const handleDeleteInvoice = (id: string) => {
+  const handleDeleteInvoice = async (id: string) => {
     if (confirm('Are you sure you want to delete this invoice?')) {
-      deleteInvoice(id);
-      setInvoiceHistory(loadInvoices());
+      try {
+        await deleteInvoiceAPI(id);
+        const invoices = await loadInvoicesAPI();
+        setInvoiceHistory(invoices);
+      } catch (error) {
+        // Fallback to localStorage
+        deleteInvoice(id);
+        setInvoiceHistory(loadInvoices());
+      }
     }
   };
 
@@ -1253,14 +1350,155 @@ export default function InvoiceForm() {
                 </div>
               </div>
 
-              {/* Download PDF Button */}
-              <div className="mt-4 sm:mt-6">
+              {/* Payment Link Section - Premium Only */}
+              {isPremium && invoice.total && invoice.total > 0 && (
+                <div className="mt-4 sm:mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Payment Link</h3>
+                  {invoice.paymentLink ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Payment Provider:</span>
+                        <span className="text-sm font-medium capitalize">{invoice.paymentProvider || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={invoice.paymentLink}
+                          className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded bg-white"
+                        />
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(invoice.paymentLink || '');
+                            alert('Payment link copied to clipboard!');
+                          }}
+                          className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={async () => {
+                            if (!user || !invoice.id) return;
+                            
+                            try {
+                              const link = await generatePaymentLinkAPI(invoice.id, 'paypal');
+                              setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paypal' }));
+                              alert('PayPal payment link updated!');
+                            } catch (error: any) {
+                              alert('Failed to update payment link: ' + error.message);
+                            }
+                          }}
+                          className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                        >
+                          Update PayPal Link
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!user || !invoice.id) return;
+                            
+                            try {
+                              const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
+                              setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paystack' }));
+                              alert('Paystack payment link updated!');
+                            } catch (error: any) {
+                              alert('Failed to update payment link: ' + error.message);
+                            }
+                          }}
+                          className="flex-1 px-3 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                          Update Paystack Link
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600 mb-2">Create a payment link for this invoice:</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={async () => {
+                            if (!user || !invoice.total || !invoice.id) {
+                              alert('Please save the invoice first');
+                              return;
+                            }
+                            
+                            try {
+                              const link = await generatePaymentLinkAPI(invoice.id, 'paypal');
+                              setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paypal' }));
+                              alert('PayPal payment link created!');
+                            } catch (error: any) {
+                              alert('Failed to create payment link: ' + error.message);
+                            }
+                          }}
+                          className="flex-1 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                          Create PayPal Link
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!user || !invoice.total || !invoice.id) {
+                              alert('Please save the invoice first');
+                              return;
+                            }
+                            
+                            try {
+                              const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
+                              setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paystack' }));
+                              alert('Paystack payment link created!');
+                            } catch (error: any) {
+                              alert('Failed to create payment link: ' + error.message);
+                            }
+                          }}
+                          className="flex-1 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        >
+                          Create Paystack Link
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="mt-4 sm:mt-6 space-y-3">
+                {/* Send Invoice Button - Premium Only */}
+                {isPremium && user && invoice.id && invoice.client?.email && (
+                  <button
+                    onClick={async () => {
+                      if (!invoice.client?.email || !invoice.id) {
+                        alert('Please enter client email address and save the invoice first');
+                        return;
+                      }
+                      
+                      setSendingEmail(true);
+                      try {
+                        await sendInvoiceEmailAPI(
+                          invoice.id,
+                          invoice.client.email,
+                          `Please find your invoice ${invoice.invoiceNumber || 'N/A'} attached.${invoice.paymentLink ? `\n\nPay online: ${invoice.paymentLink}` : ''}`
+                        );
+                        alert('Invoice sent successfully!');
+                      } catch (error: any) {
+                        alert('Failed to send invoice: ' + error.message);
+                      } finally {
+                        setSendingEmail(false);
+                      }
+                    }}
+                    disabled={sendingEmail || !invoice.client?.email || !invoice.id}
+                    className="w-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {sendingEmail ? 'Sending...' : '📧 Send Invoice via Email'}
+                  </button>
+                )}
+                
+                {/* Download PDF Button */}
                 <button
                   onClick={handleDownloadPDF}
-                  disabled={isGeneratingPDF}
+                  disabled={isGeneratingPDF || savingInvoice}
                   className="w-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-theme-primary text-white rounded-lg hover:bg-theme-primary-dark transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
+                  {isGeneratingPDF ? 'Generating PDF...' : savingInvoice ? 'Saving...' : 'Download PDF'}
                 </button>
               </div>
             </div>

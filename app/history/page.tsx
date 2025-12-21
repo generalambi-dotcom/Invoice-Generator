@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { loadInvoices, deleteInvoice } from '@/lib/storage';
+import { loadInvoicesAPI, deleteInvoiceAPI } from '@/lib/api-client';
 import { Invoice, currencySymbols } from '@/types/invoice';
 import { formatCurrency } from '@/lib/calculations';
 import { format } from 'date-fns';
+import { getCurrentUser } from '@/lib/auth';
 
 export default function HistoryPage() {
   const router = useRouter();
@@ -15,15 +17,30 @@ export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const loadedInvoices = loadInvoices();
-    // Sort by date, most recent first
-    const sorted = loadedInvoices.sort((a, b) => {
-      const dateA = new Date(a.createdAt || a.invoiceDate).getTime();
-      const dateB = new Date(b.createdAt || b.invoiceDate).getTime();
-      return dateB - dateA;
-    });
-    setInvoices(sorted);
-    setFilteredInvoices(sorted);
+    const loadData = async () => {
+      try {
+        const loadedInvoices = await loadInvoicesAPI();
+        // Sort by date, most recent first
+        const sorted = loadedInvoices.sort((a: Invoice, b: Invoice) => {
+          const dateA = new Date(a.createdAt || a.invoiceDate).getTime();
+          const dateB = new Date(b.createdAt || b.invoiceDate).getTime();
+          return dateB - dateA;
+        });
+        setInvoices(sorted);
+        setFilteredInvoices(sorted);
+      } catch (error) {
+        // Fallback to localStorage
+        const loadedInvoices = loadInvoices();
+        const sorted = loadedInvoices.sort((a, b) => {
+          const dateA = new Date(a.createdAt || a.invoiceDate).getTime();
+          const dateB = new Date(b.createdAt || b.invoiceDate).getTime();
+          return dateB - dateA;
+        });
+        setInvoices(sorted);
+        setFilteredInvoices(sorted);
+      }
+    };
+    loadData();
   }, []);
 
   useEffect(() => {

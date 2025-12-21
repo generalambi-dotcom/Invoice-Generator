@@ -1,0 +1,161 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  password      String    // Hashed password
+  isAdmin       Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Subscription
+  subscriptionPlan    String?   // 'free' | 'premium'
+  subscriptionStatus  String?   // 'active' | 'cancelled' | 'expired'
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
+  subscriptionPaymentMethod String? // 'paypal' | 'paystack' | 'stripe'
+
+  // Relations
+  paymentCredentials PaymentCredential[]
+  invoices          Invoice[]
+  payments          Payment[]
+  sentEmails        EmailLog[]
+}
+
+model PaymentCredential {
+  id        String   @id @default(cuid())
+  userId    String
+  provider  String   // 'paypal' | 'paystack' | 'stripe'
+  
+  // Encrypted credentials
+  publicKey    String?  // For Paystack/Stripe public keys
+  secretKey    String?  // Encrypted secret keys
+  clientId     String?  // For PayPal
+  clientSecret String?  // For PayPal (encrypted)
+  
+  // Additional config
+  isActive     Boolean  @default(true)
+  isTestMode  Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@index([userId])
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  userId        String
+  invoiceNumber String
+  invoiceDate   DateTime
+  dueDate       DateTime
+  purchaseOrder String?
+  
+  // Company info (JSON)
+  companyInfo   Json
+  
+  // Client info (JSON)
+  clientInfo    Json
+  shipToInfo    Json?
+  
+  // Line items (JSON array)
+  lineItems     Json
+  
+  // Totals
+  subtotal      Float
+  taxRate       Float    @default(0)
+  taxAmount     Float    @default(0)
+  discountRate  Float    @default(0)
+  discountAmount Float   @default(0)
+  shipping      Float    @default(0)
+  total         Float
+  
+  currency      String   @default("USD")
+  theme         String   @default("slate")
+  
+  notes         String?
+  bankDetails   String?
+  terms         String?
+  
+  // Payment info
+  paymentStatus String   @default("pending") // 'pending' | 'paid' | 'overdue' | 'cancelled'
+  paymentLink    String?
+  paymentProvider String? // 'paypal' | 'paystack' | 'stripe'
+  paidAmount    Float?   @default(0)
+  paymentDate   DateTime?
+  
+  // Email tracking
+  sentAt        DateTime?
+  viewedAt      DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments      Payment[]
+
+  @@index([userId])
+  @@index([invoiceNumber])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  invoiceId     String
+  userId        String
+  amount        Float
+  currency      String   @default("USD")
+  provider      String   // 'paypal' | 'paystack' | 'stripe'
+  
+  // Payment details
+  transactionId String?  @unique
+  reference     String?  @unique
+  status        String   // 'pending' | 'completed' | 'failed' | 'refunded'
+  
+  // Provider-specific data (JSON)
+  providerData  Json?
+  
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  invoice      Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model EmailLog {
+  id            String   @id @default(cuid())
+  userId        String
+  invoiceId     String?
+  to            String
+  subject       String
+  body          String
+  status        String   // 'sent' | 'failed' | 'bounced'
+  errorMessage  String?
+  sentAt        DateTime @default(now())
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([invoiceId])
+  @@index([sentAt])
+}

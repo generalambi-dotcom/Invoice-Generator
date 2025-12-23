@@ -25,7 +25,13 @@ export async function GET(request: NextRequest) {
     });
 
     // Decrypt public keys for display (public keys are less sensitive but still encrypted)
-    const decryptedCredentials = credentials.map(cred => {
+    const decryptedCredentials = credentials.map((cred: {
+      id: string;
+      provider: string;
+      publicKey: string | null;
+      isTestMode: boolean;
+      createdAt: Date;
+    }) => {
       try {
         return {
           ...cred,

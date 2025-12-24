@@ -170,9 +170,22 @@ export default function AdminDashboard() {
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                PayPal Client ID
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  PayPal Client ID
+                </label>
+                <button
+                  onClick={() => {
+                    window.open('/settings/payment-methods/paypal-setup?testMode=false', '_blank');
+                  }}
+                  className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.451 0 5.97 0h7.976a11.1 11.1 0 0 1 2.33.237c1.941.519 3.105 1.767 3.105 3.745 0 2.268-1.841 4.142-4.604 4.142H12.19l-1.028 5.978a2.28 2.28 0 0 0 .182 1.925 2.243 2.243 0 0 0 1.87.995h8.945a.746.746 0 0 1 .735.896l-1.319 7.66a.641.641 0 0 1-.633.54h-4.846a.635.635 0 0 1-.627-.54l-.408-2.388a.635.635 0 0 0-.627-.54H9.23a2.24 2.24 0 0 1-1.87-.995 2.28 2.28 0 0 1-.182-1.925l1.028-5.978H7.076z"/>
+                  </svg>
+                  Connect PayPal
+                </button>
+              </div>
               <input
                 type="text"
                 value={paymentConfig.paypalClientId}
@@ -181,7 +194,7 @@ export default function AdminDashboard() {
                 placeholder="PayPal Client ID"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Get this from your PayPal Developer Dashboard
+                Click "Connect PayPal" to get your credentials, or enter manually from your PayPal Developer Dashboard
               </p>
             </div>
             

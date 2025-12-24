@@ -5,7 +5,8 @@
 import { Resend } from 'resend';
 import { retryWithBackoff, formatErrorMessage } from './error-handler';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Don't initialize Resend at module level - do it lazily in the function
+// This prevents build-time errors when RESEND_API_KEY is not set
 
 interface SendInvoiceEmailParams {
   invoice: any;
@@ -31,6 +32,9 @@ export async function sendInvoiceEmail({
       });
       return { success: true, emailId: 'dev-email-id' };
     }
+
+    // Initialize Resend client lazily (only when needed and API key is available)
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     // Build email HTML
     const emailHtml = `

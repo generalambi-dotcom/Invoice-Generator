@@ -5,6 +5,7 @@
 import { Resend } from 'resend';
 import { retryWithBackoff, formatErrorMessage } from './error-handler';
 import { getPasswordResetEmailHtml, getPasswordResetEmailText } from './password-reset-email';
+import { getVerificationEmailHtml, getVerificationEmailText } from './verification-email';
 
 // Don't initialize Resend at module level - do it lazily in the function
 // This prevents build-time errors when RESEND_API_KEY is not set
@@ -232,6 +233,84 @@ export async function sendPasswordResetEmail({
     return { 
       success: false, 
       error: formatErrorMessage(error, 'sending password reset email') 
+    };
+  }
+}
+
+/**
+ * Send email verification email
+ */
+interface SendVerificationEmailParams {
+  to: string;
+  name?: string;
+  verificationUrl: string;
+}
+
+export async function sendVerificationEmail({
+  to,
+  name,
+  verificationUrl,
+}: SendVerificationEmailParams): Promise<{ success: boolean; error?: string; emailId?: string }> {
+  try {
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      // In development, just log the email
+      console.log('⚠️  RESEND_API_KEY not set. Verification email would be sent:', {
+        to,
+        verificationUrl: verificationUrl.substring(0, 50) + '...',
+      });
+      return { 
+        success: false, 
+        error: 'RESEND_API_KEY environment variable is not configured' 
+      };
+    }
+
+    // Initialize Resend client lazily
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    const emailHtml = getVerificationEmailHtml(verificationUrl, name);
+    const emailText = getVerificationEmailText(verificationUrl, name);
+
+    const emailData = {
+      from: 'Invoice Generator <onboarding@resend.dev>', // Update to your verified domain for production
+      to,
+      subject: 'Verify Your Email Address - Invoice Generator Nigeria',
+      html: emailHtml,
+      text: emailText,
+    };
+
+    // Send email with retry logic
+    const result = await retryWithBackoff(async () => {
+      return await resend.emails.send(emailData);
+    }, {
+      maxRetries: 2,
+      retryDelay: 1000,
+      retryable: (error: any) => {
+        return error.statusCode === 429 || error.code === 'ECONNABORTED';
+      },
+    });
+
+    const { data, error } = result;
+
+    if (error) {
+      console.error('❌ Resend API error:', error);
+      return { 
+        success: false, 
+        error: formatErrorMessage(error, 'sending verification email') 
+      };
+    }
+
+    console.log('✅ Verification email sent successfully:', {
+      emailId: data?.id,
+      to,
+    });
+
+    return { success: true, emailId: data?.id };
+  } catch (error: any) {
+    console.error('❌ Exception in sendVerificationEmail:', error);
+    return { 
+      success: false, 
+      error: formatErrorMessage(error, 'sending verification email') 
     };
   }
 }

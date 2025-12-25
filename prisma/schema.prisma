@@ -18,9 +18,18 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // Email verification
+  emailVerified              Boolean   @default(false)
+  emailVerificationToken     String?   @unique
+  emailVerificationExpiry    DateTime?
+
   // Password reset
   resetToken    String?   @unique
   resetTokenExpiry DateTime?
+
+  // Account lockout
+  failedLoginAttempts        Int       @default(0)
+  lockedUntil                DateTime?
 
   // Subscription
   subscriptionPlan    String?   // 'free' | 'premium'
@@ -34,6 +43,7 @@ model User {
   invoices          Invoice[]
   payments          Payment[]
   sentEmails        EmailLog[]
+  refreshTokens     RefreshToken[]
 }
 
 model PaymentCredential {
@@ -162,4 +172,19 @@ model EmailLog {
   @@index([userId])
   @@index([invoiceId])
   @@index([sentAt])
+}
+
+model RefreshToken {
+  id            String   @id @default(cuid())
+  userId        String
+  token         String   @unique
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  revokedAt     DateTime?
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
 }

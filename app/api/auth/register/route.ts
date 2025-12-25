@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { generateToken } from '@/lib/auth-jwt';
+import { sendVerificationEmail } from '@/lib/email';
+import { validatePassword } from '@/lib/password-validator';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 // POST - Register new user
 export async function POST(request: NextRequest) {
@@ -17,9 +19,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (password.length < 6) {
+    // Validate password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
       return NextResponse.json(
-        { error: 'Password must be at least 6 characters' },
+        { 
+          error: 'Password does not meet requirements',
+          errors: passwordValidation.errors,
+        },
         { status: 400 }
       );
     }
@@ -46,6 +53,11 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpiry = new Date();
+    verificationExpiry.setHours(verificationExpiry.getHours() + 24); // Token expires in 24 hours
+
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -53,27 +65,44 @@ export async function POST(request: NextRequest) {
         name,
         password: hashedPassword,
         isAdmin: false,
+        emailVerified: false,
+        emailVerificationToken: verificationToken,
+        emailVerificationExpiry: verificationExpiry,
       },
     });
 
-    // Generate JWT token
-    const token = generateToken({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      createdAt: user.createdAt.toISOString(),
-      isAdmin: user.isAdmin,
-    });
+    // Send verification email
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng';
+    const verificationUrl = `${appUrl}/api/auth/verify-email?token=${verificationToken}`;
 
-    // Return token and user info (without password)
-    return NextResponse.json({
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
+    try {
+      const emailResult = await sendVerificationEmail({
+        to: user.email,
         name: user.name,
-        isAdmin: user.isAdmin,
-      },
+        verificationUrl,
+      });
+
+      if (!emailResult.success) {
+        console.error('❌ Failed to send verification email:', {
+          email: user.email,
+          error: emailResult.error,
+        });
+        // Still return success - user can request resend
+      } else {
+        console.log('✅ Verification email sent successfully:', {
+          email: user.email,
+          emailId: emailResult.emailId,
+        });
+      }
+    } catch (emailError: any) {
+      console.error('❌ Exception sending verification email:', emailError);
+      // Don't fail registration if email fails
+    }
+
+    // Return success message (don't return token - user needs to verify email first)
+    return NextResponse.json({
+      message: 'Registration successful! Please check your email to verify your account.',
+      requiresVerification: true,
     }, { status: 201 });
   } catch (error: any) {
     console.error('Error during registration:', error);

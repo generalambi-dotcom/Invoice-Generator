@@ -14,8 +14,28 @@ interface User {
   isAdmin?: boolean;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-const JWT_EXPIRES_IN = '7d';
+// Validate JWT_SECRET on module load
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error(
+    'JWT_SECRET environment variable is not set. ' +
+    'Please set it in your environment variables. ' +
+    'For security, use a strong random string (minimum 32 characters).'
+  );
+}
+
+if (JWT_SECRET.length < 32) {
+  console.warn(
+    '⚠️  WARNING: JWT_SECRET is less than 32 characters. ' +
+    'For security, please use a longer secret (minimum 32 characters recommended).'
+  );
+}
+
+// Access token expires in 15 minutes
+const ACCESS_TOKEN_EXPIRES_IN = '15m';
+// Refresh token expires in 7 days
+const REFRESH_TOKEN_EXPIRES_IN = '7d';
 
 export interface JWTPayload {
   userId: string;
@@ -36,7 +56,7 @@ export function generateToken(user: User): string {
   };
 
   return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN,
+    expiresIn: ACCESS_TOKEN_EXPIRES_IN,
   });
 }
 
@@ -61,5 +81,21 @@ export function getUserFromToken(token: string | null): JWTPayload | null {
   // Remove 'Bearer ' prefix if present
   const cleanToken = token.replace(/^Bearer\s+/i, '');
   return verifyToken(cleanToken);
+}
+
+/**
+ * Generate refresh token (longer-lived token for getting new access tokens)
+ */
+export function generateRefreshToken(userId: string): string {
+  return jwt.sign({ userId, type: 'refresh' }, JWT_SECRET, {
+    expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+  });
+}
+
+/**
+ * Get JWT secret (for use in other modules if needed)
+ */
+export function getJWTSecret(): string {
+  return JWT_SECRET;
 }
 

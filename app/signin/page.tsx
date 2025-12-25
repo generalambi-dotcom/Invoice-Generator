@@ -1,21 +1,36 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from '@/lib/auth';
+import { createSession, setupSessionTracking } from '@/lib/session';
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [keepLoggedIn, setKeepLoggedIn] = useState(true);
   const [error, setError] = useState('');
+  const [errorDetails, setErrorDetails] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Setup session tracking on mount
+  useEffect(() => {
+    setupSessionTracking();
+
+    // Check for expired session
+    const expired = searchParams.get('expired');
+    if (expired === 'true') {
+      setError('Your session has expired. Please sign in again.');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setErrorDetails([]);
     setIsLoading(true);
 
     try {
@@ -28,16 +43,68 @@ export default function SignInPage() {
 
       if (response.ok) {
         const data = await response.json();
-        // Store JWT token
+        // Store tokens
         localStorage.setItem('auth_token', data.token);
+        if (data.refreshToken) {
+          localStorage.setItem('refresh_token', data.refreshToken);
+        }
         localStorage.setItem('current_user', JSON.stringify(data.user));
-        router.push('/dashboard');
+        
+        // Create session
+        createSession(data.user);
+        
+        const redirectUrl = searchParams.get('redirect') || '/dashboard';
+        router.push(redirectUrl);
         return;
       }
 
-      // Fallback to localStorage auth
-      signIn(email, password);
-      router.push('/dashboard');
+      // Handle email verification requirement
+      if (response.status === 403) {
+        const errorData = await response.json();
+        if (errorData.requiresVerification) {
+          router.push(`/verify-email?email=${encodeURIComponent(errorData.email || email)}`);
+          return;
+        }
+      }
+
+      // Handle account lockout
+      if (response.status === 423) {
+        const errorData = await response.json();
+        setError(errorData.error || 'Account is locked. Please try again later.');
+        if (errorData.lockedUntil) {
+          setErrorDetails([
+            `Account locked until: ${new Date(errorData.lockedUntil).toLocaleString()}`,
+            'You can reset your password to unlock your account immediately.',
+          ]);
+        }
+        return;
+      }
+
+      // Handle other errors
+      const errorData = await response.json();
+      let errorMessage = errorData.error || 'Failed to sign in. Please try again.';
+      const details: string[] = [];
+      
+      if (errorData.attemptsRemaining) {
+        details.push(errorData.attemptsRemaining);
+      }
+      
+      if (errorData.errors && Array.isArray(errorData.errors)) {
+        details.push(...errorData.errors);
+      }
+      
+      setError(errorMessage);
+      if (details.length > 0) {
+        setErrorDetails(details);
+      }
+
+      // Fallback to localStorage auth (legacy support)
+      try {
+        signIn(email, password);
+        router.push('/dashboard');
+      } catch (localError: any) {
+        // Error already set above
+      }
     } catch (err: any) {
       setError(err instanceof Error ? err.message : 'Failed to sign in. Please try again.');
     } finally {
@@ -78,7 +145,14 @@ export default function SignInPage() {
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
-              {error}
+              <p className="font-medium">{error}</p>
+              {errorDetails.length > 0 && (
+                <ul className="mt-2 list-disc list-inside space-y-1 text-xs">
+                  {errorDetails.map((detail, index) => (
+                    <li key={index}>{detail}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 

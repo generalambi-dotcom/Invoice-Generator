@@ -75,14 +75,22 @@ export function signIn(email: string, password: string): User {
 /**
  * Sign out the current user
  */
-export function signOut(): void {
+export async function signOut(): Promise<void> {
   // Only run in browser
   if (typeof window === 'undefined') {
     return;
   }
   
-  localStorage.removeItem(CURRENT_USER_KEY);
-  localStorage.removeItem('auth_token');
+  // Use session management for proper cleanup
+  try {
+    const { clearSession } = await import('./session');
+    await clearSession();
+  } catch (error) {
+    // Fallback to manual cleanup if import fails
+    localStorage.removeItem(CURRENT_USER_KEY);
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+  }
 }
 
 /**

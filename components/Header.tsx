@@ -84,8 +84,8 @@ export default function Header() {
     }
   };
 
-  const handleSignOut = () => {
-    signOut();
+  const handleSignOut = async () => {
+    await signOut();
     setUser(null);
     setAccountMenuOpen(false);
     router.push('/');

@@ -4,18 +4,20 @@
  */
 
 import { getCurrentUser } from './auth';
+import { getValidAccessToken } from './token-refresh';
 
 const API_BASE = process.env.NEXT_PUBLIC_APP_URL || '';
 
 /**
  * Get authentication headers with JWT token
+ * Automatically refreshes token if needed
  */
-function getAuthHeaders(): HeadersInit {
+async function getAuthHeaders(): Promise<HeadersInit> {
   if (typeof window === 'undefined') {
     return { 'Content-Type': 'application/json' };
   }
 
-  const token = localStorage.getItem('auth_token');
+  const token = await getValidAccessToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
@@ -34,7 +36,7 @@ export async function saveInvoiceAPI(invoice: any): Promise<any> {
   try {
     const response = await fetch(`${API_BASE}/api/invoices`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: await getAuthHeaders(),
       body: JSON.stringify({
         invoiceNumber: invoice.invoiceNumber,
         invoiceDate: invoice.invoiceDate,
@@ -80,7 +82,7 @@ export async function saveInvoiceAPI(invoice: any): Promise<any> {
 export async function loadInvoicesAPI(): Promise<any[]> {
   try {
     const response = await fetch(`${API_BASE}/api/invoices`, {
-      headers: getAuthHeaders(),
+      headers: await getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -115,7 +117,7 @@ export async function loadInvoicesAPI(): Promise<any[]> {
 export async function loadInvoiceAPI(invoiceId: string): Promise<any | null> {
   try {
     const response = await fetch(`${API_BASE}/api/invoices/${invoiceId}`, {
-      headers: getAuthHeaders(),
+      headers: await getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -137,7 +139,7 @@ export async function deleteInvoiceAPI(invoiceId: string): Promise<void> {
   try {
     const response = await fetch(`${API_BASE}/api/invoices/${invoiceId}`, {
       method: 'DELETE',
-      headers: getAuthHeaders(),
+      headers: await getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -159,7 +161,7 @@ export async function generatePaymentLinkAPI(
   try {
     const response = await fetch(`${API_BASE}/api/invoices/${invoiceId}/payment-link`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: await getAuthHeaders(),
       body: JSON.stringify({ provider }),
     });
 
@@ -196,7 +198,7 @@ export async function sendInvoiceEmailAPI(
   try {
     const response = await fetch(`${API_BASE}/api/invoices/send-email`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: await getAuthHeaders(),
       body: JSON.stringify({
         invoiceId,
         recipientEmail,

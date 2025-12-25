@@ -3,26 +3,37 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { checkPasswordStrength, validatePassword } from '@/lib/password-validator';
+import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator';
+
 export default function SignUpPage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string>('');
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Calculate password strength in real-time
+  const passwordStrength = password ? checkPasswordStrength(password) : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setPasswordErrors([]);
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    // Validate password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      setPasswordErrors(passwordValidation.errors);
+      setError('Please fix the password requirements below');
       return;
     }
 
@@ -38,16 +49,27 @@ export default function SignUpPage() {
 
       if (response.ok) {
         const data = await response.json();
-        // Store JWT token
-        localStorage.setItem('auth_token', data.token);
-        localStorage.setItem('current_user', JSON.stringify(data.user));
-        router.push('/dashboard');
-        return;
+        // Redirect to verification page
+        if (data.requiresVerification) {
+          router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+          return;
+        }
+        // If no verification required (shouldn't happen in new flow), redirect to dashboard
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token);
+          localStorage.setItem('refresh_token', data.refreshToken || '');
+          localStorage.setItem('current_user', JSON.stringify(data.user));
+          router.push('/dashboard');
+          return;
+        }
       }
 
       // Handle errors
       const errorData = await response.json();
       setError(errorData.error || 'Failed to create account. Please try again.');
+      if (errorData.errors && Array.isArray(errorData.errors)) {
+        setPasswordErrors(errorData.errors);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to create account. Please try again.');
     } finally {
@@ -140,10 +162,34 @@ export default function SignUpPage() {
                 autoComplete="new-password"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="Create a password (min. 6 characters)"
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setPasswordErrors([]);
+                }}
+                className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 ${
+                  passwordErrors.length > 0
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
+                }`}
+                placeholder="Create a strong password (min. 8 characters)"
               />
+              {passwordStrength && (
+                <PasswordStrengthIndicator strength={passwordStrength} />
+              )}
+              {passwordErrors.length > 0 && (
+                <div className="mt-2 text-sm text-red-600">
+                  <ul className="list-disc list-inside space-y-1">
+                    {passwordErrors.map((err, index) => (
+                      <li key={index}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {password && !passwordStrength?.isValid && passwordErrors.length === 0 && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Password must be at least 8 characters and include uppercase, lowercase, number, and special character.
+                </p>
+              )}
             </div>
 
             {/* Confirm Password */}

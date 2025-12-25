@@ -1616,10 +1616,13 @@ export default function InvoiceForm() {
                       {invoice.paymentStatus !== 'paid' && invoice.id && invoice.total && (
                         <button
                           onClick={async () => {
+                            const total = invoice.total || 0;
+                            const paid = invoice.paidAmount || 0;
+                            const outstanding = total - paid;
                             const amount = prompt(
-                              `Enter payment amount (Outstanding: ${currencySymbol}${formatCurrency(invoice.total - (invoice.paidAmount || 0), invoice.currency || 'USD')}):`
+                              `Enter payment amount (Outstanding: ${currencySymbol}${formatCurrency(outstanding, invoice.currency || 'USD')}):`
                             );
-                            if (amount && !isNaN(parseFloat(amount))) {
+                            if (amount && !isNaN(parseFloat(amount)) && invoice.id) {
                               try {
                                 await recordPaymentAPI(
                                   invoice.id,

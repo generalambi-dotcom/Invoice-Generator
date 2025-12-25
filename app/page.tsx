@@ -1,5 +1,10 @@
 import type { Metadata } from 'next';
-import InvoiceForm from '@/components/InvoiceForm';
+import dynamic from 'next/dynamic';
+
+// Dynamically import InvoiceForm to avoid SSR issues during static generation
+const InvoiceForm = dynamic(() => import('@/components/InvoiceForm'), {
+  ssr: false,
+});
 
 export const metadata: Metadata = {
   title: 'Free Invoice Generator Nigeria - Create Professional Invoices Online',
@@ -12,9 +17,7 @@ export const metadata: Metadata = {
   },
 };
 
-// Make this page dynamic to avoid prerendering issues with client components
-export const dynamic = 'force-dynamic';
-
+// Use dynamic import to prevent SSR issues that cause 5xx errors for crawlers
 export default function Home() {
   return <InvoiceForm />;
 }

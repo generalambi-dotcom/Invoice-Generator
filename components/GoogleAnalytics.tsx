@@ -1,8 +1,19 @@
 'use client';
 
 import Script from 'next/script';
+import { useEffect, useState } from 'react';
 
 export default function GoogleAnalytics() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <>
       <Script

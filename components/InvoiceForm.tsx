@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { pdf } from '@react-pdf/renderer';
 import { InvoicePDF } from '@/lib/pdf-generator';
 import {
@@ -100,6 +101,8 @@ export default function InvoiceForm() {
   const [showSaveDefaults, setShowSaveDefaults] = useState(false);
   const [companyAddressFormat, setCompanyAddressFormat] = useState<'simple' | 'detailed'>('simple');
   const [clientAddressFormat, setClientAddressFormat] = useState<'simple' | 'detailed'>('simple');
+  const [simpleCompanyAddress, setSimpleCompanyAddress] = useState<string>('');
+  const [simpleClientAddress, setSimpleClientAddress] = useState<string>('');
   const [isPremium, setIsPremium] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [savingInvoice, setSavingInvoice] = useState(false);
@@ -132,6 +135,16 @@ export default function InvoiceForm() {
       setIsPremium(isPremiumUser);
     }
   }, []);
+
+  // Sync simple address fields when invoice data changes (e.g., when loading from database)
+  useEffect(() => {
+    if (companyAddressFormat === 'simple') {
+      setSimpleCompanyAddress(getSimpleAddress(invoice.company));
+    }
+    if (clientAddressFormat === 'simple') {
+      setSimpleClientAddress(getSimpleAddress(invoice.client));
+    }
+  }, [invoice.company, invoice.client, companyAddressFormat, clientAddressFormat]);
 
   // Load company defaults and generate invoice number on mount
   useEffect(() => {
@@ -313,9 +326,15 @@ export default function InvoiceForm() {
 
   // Helper function to parse simple address (basic parsing)
   const parseSimpleAddress = (address: string, type: 'company' | 'client') => {
-    const parts = address.split(',').map((p) => p.trim());
+    // Store the raw input for the textarea
+    if (type === 'company') {
+      setSimpleCompanyAddress(address);
+    } else {
+      setSimpleClientAddress(address);
+    }
     
-    // Update fields based on comma-separated parts
+    // Parse and update fields based on comma-separated parts
+    const parts = address.split(',').map((p) => p.trim());
     updateField(`${type}.address`, parts[0] || '');
     updateField(`${type}.city`, parts[1] || '');
     updateField(`${type}.state`, parts[2] || '');
@@ -718,7 +737,10 @@ export default function InvoiceForm() {
                   {/* Address Format Toggle */}
                   <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
                     <button
-                      onClick={() => setCompanyAddressFormat('simple')}
+                      onClick={() => {
+                        setCompanyAddressFormat('simple');
+                        setSimpleCompanyAddress(getSimpleAddress(invoice.company));
+                      }}
                       className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${
                         companyAddressFormat === 'simple'
                           ? 'bg-white text-theme-primary shadow-sm'
@@ -728,7 +750,10 @@ export default function InvoiceForm() {
                       Simple
                     </button>
                     <button
-                      onClick={() => setCompanyAddressFormat('detailed')}
+                      onClick={() => {
+                        setCompanyAddressFormat('detailed');
+                        setSimpleCompanyAddress('');
+                      }}
                       className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${
                         companyAddressFormat === 'detailed'
                           ? 'bg-white text-theme-primary shadow-sm'
@@ -796,8 +821,15 @@ export default function InvoiceForm() {
                       Full Address
                     </label>
                     <textarea
-                      value={getSimpleAddress(invoice.company)}
+                      value={simpleCompanyAddress || getSimpleAddress(invoice.company)}
                       onChange={(e) => parseSimpleAddress(e.target.value, 'company')}
+                      onBlur={() => {
+                        // When user finishes typing, update from parsed values if needed
+                        const current = getSimpleAddress(invoice.company);
+                        if (current !== simpleCompanyAddress) {
+                          setSimpleCompanyAddress(current);
+                        }
+                      }}
                       placeholder="Enter full address (e.g., 123 Main St, Lagos, Lagos State, 100001, Nigeria)"
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
@@ -901,7 +933,10 @@ export default function InvoiceForm() {
                 {/* Address Format Toggle */}
                 <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
                   <button
-                    onClick={() => setClientAddressFormat('simple')}
+                    onClick={() => {
+                      setClientAddressFormat('simple');
+                      setSimpleClientAddress(getSimpleAddress(invoice.client));
+                    }}
                     className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${
                       clientAddressFormat === 'simple'
                         ? 'bg-white text-theme-primary shadow-sm'
@@ -911,7 +946,10 @@ export default function InvoiceForm() {
                     Simple
                   </button>
                   <button
-                    onClick={() => setClientAddressFormat('detailed')}
+                    onClick={() => {
+                      setClientAddressFormat('detailed');
+                      setSimpleClientAddress('');
+                    }}
                     className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${
                       clientAddressFormat === 'detailed'
                         ? 'bg-white text-theme-primary shadow-sm'
@@ -984,8 +1022,15 @@ export default function InvoiceForm() {
                       Full Address
                     </label>
                     <textarea
-                      value={getSimpleAddress(invoice.client)}
+                      value={simpleClientAddress || getSimpleAddress(invoice.client)}
                       onChange={(e) => parseSimpleAddress(e.target.value, 'client')}
+                      onBlur={() => {
+                        // When user finishes typing, update from parsed values if needed
+                        const current = getSimpleAddress(invoice.client);
+                        if (current !== simpleClientAddress) {
+                          setSimpleClientAddress(current);
+                        }
+                      }}
                       placeholder="Enter full address (e.g., 123 Main St, Lagos, Lagos State, 100001, Nigeria)"
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
@@ -1662,7 +1707,7 @@ export default function InvoiceForm() {
                 <div className="mt-4 sm:mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3">Payment Link</h3>
                   {invoice.paymentLink ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-600">Payment Provider:</span>
                         <span className="text-sm font-medium capitalize">{invoice.paymentProvider || 'N/A'}</span>
@@ -1672,98 +1717,147 @@ export default function InvoiceForm() {
                           type="text"
                           readOnly
                           value={invoice.paymentLink}
-                          className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded bg-white"
+                          className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white font-mono text-xs"
                         />
                         <button
                           onClick={() => {
                             navigator.clipboard.writeText(invoice.paymentLink || '');
                             alert('Payment link copied to clipboard!');
                           }}
-                          className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded"
+                          className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-md transition-colors"
                         >
                           Copy
                         </button>
                       </div>
-                      <div className="flex gap-2 mt-2">
-                        <button
-                          onClick={async () => {
-                            if (!user || !invoice.id) return;
-                            
-                            try {
-                              const link = await generatePaymentLinkAPI(invoice.id, 'paypal');
-                              setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paypal' }));
-                              alert('PayPal payment link updated!');
-                            } catch (error: any) {
-                              alert('Failed to update payment link: ' + error.message);
-                            }
-                          }}
-                          className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-                        >
-                          Update PayPal Link
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (!user || !invoice.id) return;
-                            
-                            try {
-                              const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
-                              setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paystack' }));
-                              alert('Paystack payment link updated!');
-                            } catch (error: any) {
-                              alert('Failed to update payment link: ' + error.message);
-                            }
-                          }}
-                          className="flex-1 px-3 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700"
-                        >
-                          Update Paystack Link
-                        </button>
+                      <div className="pt-2 border-t border-gray-200">
+                        <p className="text-xs text-gray-500 mb-2">Change payment provider:</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={async () => {
+                              if (!user || !invoice.id) return;
+                              
+                              try {
+                                const link = await generatePaymentLinkAPI(invoice.id, 'paypal');
+                                setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paypal' }));
+                                alert('PayPal payment link updated!');
+                              } catch (error: any) {
+                                alert('Failed to update payment link: ' + error.message);
+                              }
+                            }}
+                            className="flex-1 px-3 py-2 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                          >
+                            Update PayPal
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!user || !invoice.id) return;
+                              
+                              try {
+                                const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
+                                setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paystack' }));
+                                alert('Paystack payment link updated!');
+                              } catch (error: any) {
+                                alert('Failed to update payment link: ' + error.message);
+                              }
+                            }}
+                            className="flex-1 px-3 py-2 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                          >
+                            Update Paystack
+                          </button>
+                        </div>
                       </div>
+                      <p className="text-xs text-gray-500 italic">
+                        💡 Payment links are automatically generated when you save invoices if payment methods are configured.
+                      </p>
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      <p className="text-sm text-gray-600 mb-2">Create a payment link for this invoice:</p>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={async () => {
-                            if (!user || !invoice.total || !invoice.id) {
-                              alert('Please save the invoice first');
-                              return;
-                            }
-                            
-                            try {
-                              const link = await generatePaymentLinkAPI(invoice.id, 'paypal');
-                              setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paypal' }));
-                              alert('PayPal payment link created!');
-                            } catch (error: any) {
-                              alert('Failed to create payment link: ' + error.message);
-                            }
-                          }}
-                          className="flex-1 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                          Create PayPal Link
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (!user || !invoice.total || !invoice.id) {
-                              alert('Please save the invoice first');
-                              return;
-                            }
-                            
-                            try {
-                              const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
-                              setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paystack' }));
-                              alert('Paystack payment link created!');
-                            } catch (error: any) {
-                              alert('Failed to create payment link: ' + error.message);
-                            }
-                          }}
-                          className="flex-1 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
-                        >
-                          Create Paystack Link
-                        </button>
+                    <div className="space-y-3">
+                      <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                        <p className="text-sm text-blue-800 mb-2">
+                          <strong>Payment links are automatically generated</strong> when you save this invoice if you have payment methods configured.
+                        </p>
+                        <p className="text-xs text-blue-600">
+                          If no link appears after saving, you may need to connect a payment method in Settings.
+                        </p>
+                      </div>
+                      <div className="pt-2 border-t border-gray-200">
+                        <p className="text-xs text-gray-600 mb-2">Or create a payment link now:</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={async () => {
+                              if (!user || !invoice.total || !invoice.id) {
+                                alert('Please save the invoice first');
+                                return;
+                              }
+                              
+                              try {
+                                const link = await generatePaymentLinkAPI(invoice.id, 'paypal');
+                                setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paypal' }));
+                                alert('PayPal payment link created!');
+                              } catch (error: any) {
+                                if (error.message?.includes('not configured')) {
+                                  alert('PayPal credentials not configured. Please connect PayPal in Settings → Payment Methods');
+                                } else {
+                                  alert('Failed to create payment link: ' + error.message);
+                                }
+                              }
+                            }}
+                            className="flex-1 px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                          >
+                            Create PayPal Link
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!user || !invoice.total || !invoice.id) {
+                                alert('Please save the invoice first');
+                                return;
+                              }
+                              
+                              try {
+                                const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
+                                setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paystack' }));
+                                alert('Paystack payment link created!');
+                              } catch (error: any) {
+                                if (error.message?.includes('not configured')) {
+                                  alert('Paystack credentials not configured. Please connect Paystack in Settings → Payment Methods');
+                                } else {
+                                  alert('Failed to create payment link: ' + error.message);
+                                }
+                              }
+                            }}
+                            className="flex-1 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            Create Paystack Link
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
+                </div>
+              )}
+              
+              {/* Payment Methods Not Configured Message */}
+              {isPremium && invoice.total && invoice.total > 0 && !invoice.paymentLink && (
+                <div className="mt-4 sm:mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                      <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-amber-900 mb-1">Connect Payment Methods</h4>
+                      <p className="text-xs text-amber-700 mb-2">
+                        To automatically generate payment links for your invoices, connect your payment gateway in Settings.
+                      </p>
+                      <Link
+                        href="/settings/payment-methods"
+                        className="inline-block text-xs font-medium text-amber-800 hover:text-amber-900 underline"
+                      >
+                        Go to Payment Methods Settings →
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               )}
 

@@ -774,6 +774,62 @@ export async function getPaymentRemindersAPI(): Promise<any> {
 }
 
 /**
+ * Get available payment providers
+ */
+export async function getAvailablePaymentProvidersAPI(): Promise<{ providers: any[]; defaultProvider: string | null }> {
+  try {
+    const response = await fetch(`${API_BASE}/api/payment-providers/available`, {
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to view payment providers');
+      }
+      throw new Error(error.error || 'Failed to load payment providers');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error loading payment providers:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update default payment provider
+ */
+export async function updateDefaultPaymentProviderAPI(provider: 'paypal' | 'paystack' | 'stripe' | null): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/company-defaults/default-payment-provider`, {
+      method: 'PUT',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ defaultPaymentProvider: provider }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to update default payment provider');
+      }
+      throw new Error(error.error || 'Failed to update default payment provider');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error updating default payment provider:', error);
+    throw error;
+  }
+}
+
+/**
  * Send payment reminders
  */
 export async function sendPaymentRemindersAPI(

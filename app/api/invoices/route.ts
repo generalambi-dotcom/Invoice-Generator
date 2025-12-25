@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { rateLimit, rateLimitConfigs, getClientIdentifier } from '@/lib/rate-limit';
 import { logRequest, logError } from '@/lib/request-logger';
+import { autoGeneratePaymentLink } from '@/lib/auto-payment-link';
 
 // GET - Get user's invoices
 export async function GET(request: NextRequest) {
@@ -160,6 +161,28 @@ export async function POST(request: NextRequest) {
         paymentStatus: 'pending',
       },
     });
+
+    // Auto-generate payment link if credentials are configured
+    // Only if no payment link was provided in the request
+    if (!body.paymentLink && total > 0) {
+      try {
+        const paymentLinkResult = await autoGeneratePaymentLink(invoice.id, user.userId, total);
+        if (paymentLinkResult) {
+          // Update invoice with generated payment link
+          const updatedInvoice = await prisma.invoice.update({
+            where: { id: invoice.id },
+            data: {
+              paymentLink: paymentLinkResult.paymentLink,
+              paymentProvider: paymentLinkResult.provider,
+            },
+          });
+          return NextResponse.json({ invoice: updatedInvoice });
+        }
+      } catch (error) {
+        // Don't fail invoice creation if payment link generation fails
+        console.error('Error auto-generating payment link:', error);
+      }
+    }
 
     return NextResponse.json({ invoice });
   } catch (error: any) {

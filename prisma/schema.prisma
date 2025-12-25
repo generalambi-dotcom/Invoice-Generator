@@ -205,12 +205,13 @@ model CompanyDefaults {
   companyInfo       Json
   
   // Default settings
-  defaultCurrency   String   @default("USD")
-  defaultTheme      String   @default("slate")
-  defaultTaxRate    Float    @default(0)
-  defaultNotes      String?
-  defaultBankDetails String?
-  defaultTerms      String?
+  defaultCurrency        String   @default("USD")
+  defaultTheme           String   @default("slate")
+  defaultTaxRate         Float    @default(0)
+  defaultNotes           String?
+  defaultBankDetails     String?
+  defaultTerms           String?
+  defaultPaymentProvider String?  // 'paypal' | 'paystack' | 'stripe'
 
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

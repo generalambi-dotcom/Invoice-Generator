@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
+import { autoGeneratePaymentLink } from '@/lib/auto-payment-link';
 
 // GET - Get single invoice (public, for payment page)
 export async function GET(
@@ -134,8 +135,20 @@ export async function PATCH(
       );
     }
 
+    // Determine the total amount (use updated value if provided, otherwise existing)
+    const totalAmount = body.total !== undefined ? body.total : existingInvoice.total;
+
+    // Auto-generate payment link if:
+    // 1. No payment link is being explicitly set
+    // 2. Invoice has a positive total
+    // 3. Payment link doesn't already exist (or is being cleared)
+    const shouldAutoGenerate = 
+      body.paymentLink === undefined && 
+      !existingInvoice.paymentLink && 
+      totalAmount > 0;
+
     // Update invoice with provided fields
-    const updatedInvoice = await prisma.invoice.update({
+    let updatedInvoice = await prisma.invoice.update({
       where: { id: invoiceId },
       data: {
         ...(body.invoiceNumber && { invoiceNumber: body.invoiceNumber }),
@@ -165,7 +178,7 @@ export async function PATCH(
         ...(body.paymentDate && { paymentDate: new Date(body.paymentDate) }),
         // Auto-update payment status based on paid amount
         ...(body.paidAmount !== undefined && {
-          paymentStatus: body.paidAmount >= existingInvoice.total
+          paymentStatus: body.paidAmount >= totalAmount
             ? 'paid'
             : body.paidAmount > 0
             ? 'pending' // Partial payment - keep as pending
@@ -173,6 +186,25 @@ export async function PATCH(
         }),
       },
     });
+
+    // Auto-generate payment link if conditions are met
+    if (shouldAutoGenerate) {
+      try {
+        const paymentLinkResult = await autoGeneratePaymentLink(invoiceId, user.userId, totalAmount);
+        if (paymentLinkResult) {
+          updatedInvoice = await prisma.invoice.update({
+            where: { id: invoiceId },
+            data: {
+              paymentLink: paymentLinkResult.paymentLink,
+              paymentProvider: paymentLinkResult.provider,
+            },
+          });
+        }
+      } catch (error) {
+        // Don't fail invoice update if payment link generation fails
+        console.error('Error auto-generating payment link:', error);
+      }
+    }
 
     return NextResponse.json({ invoice: updatedInvoice });
   } catch (error: any) {

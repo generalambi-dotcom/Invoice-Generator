@@ -124,10 +124,11 @@ export default function InvoiceForm() {
     const currentUser = getCurrentUser();
     setUser(currentUser);
     if (currentUser) {
+      // Admins automatically have premium access
       const isPremiumUser = 
+        currentUser.isAdmin === true ||
         (currentUser.subscription?.plan === 'premium' && 
-         currentUser.subscription?.status === 'active') ||
-        currentUser.isAdmin === true;
+         currentUser.subscription?.status === 'active');
       setIsPremium(isPremiumUser);
     }
   }, []);

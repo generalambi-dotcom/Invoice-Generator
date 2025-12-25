@@ -17,7 +17,9 @@ export default function AdSense({
 
   useEffect(() => {
     const user = getCurrentUser();
-    const premium = user?.subscription?.plan === 'premium' && user?.subscription?.status === 'active';
+    // Admins automatically have premium access (no ads)
+    const premium = user?.isAdmin === true ||
+      (user?.subscription?.plan === 'premium' && user?.subscription?.status === 'active');
     setIsPremium(premium || false);
   }, []);
 

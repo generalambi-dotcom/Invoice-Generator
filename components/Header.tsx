@@ -35,10 +35,11 @@ export default function Header() {
       const currentUser = getCurrentUser();
       setUser(currentUser);
       if (currentUser) {
+        // Admins automatically have premium access
         setIsPremium(
-          currentUser.subscription?.plan === 'premium' && 
-          currentUser.subscription?.status === 'active' ||
-          currentUser.isAdmin === true
+          currentUser.isAdmin === true ||
+          (currentUser.subscription?.plan === 'premium' && 
+           currentUser.subscription?.status === 'active')
         );
       }
     } catch (error) {

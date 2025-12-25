@@ -44,6 +44,7 @@ model User {
   payments          Payment[]
   sentEmails        EmailLog[]
   refreshTokens     RefreshToken[]
+  companyDefaults   CompanyDefaults?
 }
 
 model PaymentCredential {
@@ -187,4 +188,26 @@ model RefreshToken {
   @@index([userId])
   @@index([token])
   @@index([expiresAt])
+}
+
+model CompanyDefaults {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Company information (JSON)
+  companyInfo       Json
+  
+  // Default settings
+  defaultCurrency   String   @default("USD")
+  defaultTheme      String   @default("slate")
+  defaultTaxRate    Float    @default(0)
+  defaultNotes      String?
+  defaultBankDetails String?
+  defaultTerms      String?
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

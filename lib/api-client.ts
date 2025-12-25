@@ -101,13 +101,7 @@ export async function loadInvoicesAPI(): Promise<any[]> {
     return data.invoices || [];
   } catch (error: any) {
     console.error('Error loading invoices:', error);
-    // Fallback to localStorage if API fails (for migration period)
-    try {
-      const { loadInvoices } = require('./storage');
-      return loadInvoices();
-    } catch {
-      return [];
-    }
+    throw error;
   }
 }
 
@@ -224,6 +218,93 @@ export async function sendInvoiceEmailAPI(
     }
   } catch (error: any) {
     console.error('Error sending email:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get company defaults from database
+ */
+export async function getCompanyDefaultsAPI(): Promise<any | null> {
+  try {
+    const response = await fetch(`${API_BASE}/api/company-defaults`, {
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to view company defaults');
+      }
+      if (response.status === 404) {
+        return null;
+      }
+      const error = await response.json().catch(() => ({ error: 'Failed to load company defaults' }));
+      throw new Error(error.error || 'Failed to load company defaults');
+    }
+
+    const data = await response.json();
+    return data.defaults;
+  } catch (error: any) {
+    console.error('Error loading company defaults:', error);
+    throw error;
+  }
+}
+
+/**
+ * Save company defaults to database
+ */
+export async function saveCompanyDefaultsAPI(defaults: any): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/company-defaults`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(defaults),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to save company defaults');
+      }
+      throw new Error(error.error || 'Failed to save company defaults');
+    }
+
+    const data = await response.json();
+    return data.defaults;
+  } catch (error: any) {
+    console.error('Error saving company defaults:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete company defaults
+ */
+export async function deleteCompanyDefaultsAPI(): Promise<void> {
+  try {
+    const response = await fetch(`${API_BASE}/api/company-defaults`, {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to delete company defaults');
+      }
+      throw new Error(error.error || 'Failed to delete company defaults');
+    }
+  } catch (error: any) {
+    console.error('Error deleting company defaults:', error);
     throw error;
   }
 }

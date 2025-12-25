@@ -20,20 +20,14 @@ import {
   formatCurrency,
 } from '@/lib/calculations';
 import {
-  saveInvoice,
-  loadInvoices,
-  loadInvoice,
-  deleteInvoice,
-  saveCompanyDefaults,
-  loadCompanyDefaults,
-} from '@/lib/storage';
-import {
   saveInvoiceAPI,
   loadInvoicesAPI,
   loadInvoiceAPI,
   deleteInvoiceAPI,
   generatePaymentLinkAPI,
   sendInvoiceEmailAPI,
+  getCompanyDefaultsAPI,
+  saveCompanyDefaultsAPI,
 } from '@/lib/api-client';
 import LineItems from './LineItems';
 import { format } from 'date-fns';
@@ -120,19 +114,27 @@ export default function InvoiceForm() {
 
   // Load company defaults on mount
   useEffect(() => {
-    const defaults = loadCompanyDefaults();
-    if (defaults) {
-      setInvoice((prev) => ({
-        ...prev,
-        company: defaults.company,
-        currency: defaults.defaultCurrency,
-        theme: defaults.defaultTheme,
-        taxRate: defaults.defaultTaxRate,
-        notes: defaults.defaultNotes || '',
-        bankDetails: defaults.defaultBankDetails || '',
-        terms: defaults.defaultTerms || '',
-      }));
-    }
+    const loadDefaults = async () => {
+      try {
+        const defaults = await getCompanyDefaultsAPI();
+        if (defaults) {
+          setInvoice((prev) => ({
+            ...prev,
+            company: defaults.companyInfo as CompanyInfo,
+            currency: defaults.defaultCurrency as Currency,
+            theme: defaults.defaultTheme as Theme,
+            taxRate: defaults.defaultTaxRate || 0,
+            notes: defaults.defaultNotes || '',
+            bankDetails: defaults.defaultBankDetails || '',
+            terms: defaults.defaultTerms || '',
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading company defaults:', error);
+        // Continue without defaults
+      }
+    };
+    loadDefaults();
   }, []);
 
   // Load invoice history
@@ -140,11 +142,41 @@ export default function InvoiceForm() {
     const loadHistory = async () => {
       try {
         const invoices = await loadInvoicesAPI();
-        setInvoiceHistory(invoices);
+        // Convert database format to Invoice format
+        const formattedInvoices = invoices.map((inv: any) => ({
+          id: inv.id,
+          invoiceNumber: inv.invoiceNumber,
+          invoiceDate: inv.invoiceDate,
+          dueDate: inv.dueDate,
+          purchaseOrder: inv.purchaseOrder,
+          company: inv.companyInfo,
+          client: inv.clientInfo,
+          shipTo: inv.shipToInfo,
+          lineItems: inv.lineItems,
+          subtotal: inv.subtotal,
+          taxRate: inv.taxRate,
+          taxAmount: inv.taxAmount,
+          discountRate: inv.discountRate,
+          discountAmount: inv.discountAmount,
+          shipping: inv.shipping,
+          total: inv.total,
+          currency: inv.currency,
+          theme: inv.theme,
+          notes: inv.notes,
+          bankDetails: inv.bankDetails,
+          terms: inv.terms,
+          paymentStatus: inv.paymentStatus,
+          paymentLink: inv.paymentLink,
+          paymentProvider: inv.paymentProvider,
+          paidAmount: inv.paidAmount,
+          paymentDate: inv.paymentDate,
+          createdAt: inv.createdAt,
+          updatedAt: inv.updatedAt,
+        }));
+        setInvoiceHistory(formattedInvoices);
       } catch (error) {
-        // Fallback to localStorage
-        const invoices = loadInvoices();
-        setInvoiceHistory(invoices);
+        console.error('Error loading invoices:', error);
+        setInvoiceHistory([]);
       }
     };
     loadHistory();
@@ -301,12 +333,41 @@ export default function InvoiceForm() {
         }
         // Reload history
         const invoices = await loadInvoicesAPI();
-        setInvoiceHistory(invoices);
+        // Convert database format to Invoice format
+        const formattedInvoices = invoices.map((inv: any) => ({
+          id: inv.id,
+          invoiceNumber: inv.invoiceNumber,
+          invoiceDate: inv.invoiceDate,
+          dueDate: inv.dueDate,
+          purchaseOrder: inv.purchaseOrder,
+          company: inv.companyInfo,
+          client: inv.clientInfo,
+          shipTo: inv.shipToInfo,
+          lineItems: inv.lineItems,
+          subtotal: inv.subtotal,
+          taxRate: inv.taxRate,
+          taxAmount: inv.taxAmount,
+          discountRate: inv.discountRate,
+          discountAmount: inv.discountAmount,
+          shipping: inv.shipping,
+          total: inv.total,
+          currency: inv.currency,
+          theme: inv.theme,
+          notes: inv.notes,
+          bankDetails: inv.bankDetails,
+          terms: inv.terms,
+          paymentStatus: inv.paymentStatus,
+          paymentLink: inv.paymentLink,
+          paymentProvider: inv.paymentProvider,
+          paidAmount: inv.paidAmount,
+          paymentDate: inv.paymentDate,
+          createdAt: inv.createdAt,
+          updatedAt: inv.updatedAt,
+        }));
+        setInvoiceHistory(formattedInvoices);
       } catch (error: any) {
-        console.error('Error saving to database, using localStorage fallback:', error);
-        // Fallback to localStorage
-        saveInvoice(completeInvoice);
-        setInvoiceHistory(loadInvoices());
+        console.error('Error saving invoice:', error);
+        alert('Failed to save invoice. Please try again.');
       } finally {
         setSavingInvoice(false);
       }
@@ -319,25 +380,30 @@ export default function InvoiceForm() {
   };
 
   // Save company defaults
-  const handleSaveDefaults = () => {
+  const handleSaveDefaults = async () => {
     if (!invoice.company?.name) {
       alert('Please enter company name first');
       return;
     }
 
-    const defaults: CompanyDefaults = {
-      company: invoice.company!,
-      defaultCurrency: invoice.currency!,
-      defaultTheme: invoice.theme!,
-      defaultTaxRate: invoice.taxRate || 0,
-      defaultNotes: invoice.notes,
-      defaultBankDetails: invoice.bankDetails,
-      defaultTerms: invoice.terms,
-    };
+    try {
+      const defaults = {
+        companyInfo: invoice.company!,
+        defaultCurrency: invoice.currency!,
+        defaultTheme: invoice.theme!,
+        defaultTaxRate: invoice.taxRate || 0,
+        defaultNotes: invoice.notes,
+        defaultBankDetails: invoice.bankDetails,
+        defaultTerms: invoice.terms,
+      };
 
-    saveCompanyDefaults(defaults);
-    setShowSaveDefaults(false);
-    alert('Company defaults saved!');
+      await saveCompanyDefaultsAPI(defaults);
+      setShowSaveDefaults(false);
+      alert('Company defaults saved!');
+    } catch (error: any) {
+      console.error('Error saving company defaults:', error);
+      alert('Failed to save company defaults. Please try again.');
+    }
   };
 
   // Load invoice from history
@@ -375,12 +441,8 @@ export default function InvoiceForm() {
         setShowHistory(false);
       }
     } catch (error) {
-      // Fallback to localStorage
-      const loaded = loadInvoice(id);
-      if (loaded) {
-        setInvoice(loaded);
-        setShowHistory(false);
-      }
+      console.error('Error loading invoice:', error);
+      alert('Failed to load invoice. Please try again.');
     }
   };
 
@@ -392,23 +454,27 @@ export default function InvoiceForm() {
         const invoices = await loadInvoicesAPI();
         setInvoiceHistory(invoices);
       } catch (error) {
-        // Fallback to localStorage
-        deleteInvoice(id);
-        setInvoiceHistory(loadInvoices());
+        console.error('Error deleting invoice:', error);
+        alert('Failed to delete invoice. Please try again.');
       }
     }
   };
 
   // Create new invoice
-  const handleNewInvoice = () => {
+  const handleNewInvoice = async () => {
     if (confirm('Create a new invoice? Current data will be cleared.')) {
-      const defaults = loadCompanyDefaults();
+      let defaults = null;
+      try {
+        defaults = await getCompanyDefaultsAPI();
+      } catch (error) {
+        console.error('Error loading company defaults:', error);
+      }
       setInvoice({
         invoiceNumber: '',
         invoiceDate: format(new Date(), 'yyyy-MM-dd'),
         dueDate: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
         purchaseOrder: '',
-        company: defaults?.company || {
+        company: (defaults?.companyInfo as CompanyInfo) || {
           name: '',
           address: '',
           city: '',
@@ -447,8 +513,8 @@ export default function InvoiceForm() {
         discountAmount: 0,
         shipping: 0,
         total: 0,
-        currency: defaults?.defaultCurrency || 'USD',
-        theme: defaults?.defaultTheme || 'slate',
+        currency: (defaults?.defaultCurrency as Currency) || 'USD',
+        theme: (defaults?.defaultTheme as Theme) || 'slate',
         notes: defaults?.defaultNotes || '',
         bankDetails: defaults?.defaultBankDetails || '',
         terms: defaults?.defaultTerms || '',

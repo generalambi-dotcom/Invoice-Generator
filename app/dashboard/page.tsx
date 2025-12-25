@@ -4,13 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser, signOut } from '@/lib/auth';
-import {
-  loadInvoices,
-  loadDeletedInvoices,
-  restoreInvoice,
-  permanentlyDeleteInvoice,
-  deleteInvoice,
-} from '@/lib/storage';
 import { loadInvoicesAPI, deleteInvoiceAPI } from '@/lib/api-client';
 import { Invoice, currencySymbols } from '@/types/invoice';
 import { formatCurrency } from '@/lib/calculations';
@@ -37,9 +30,44 @@ export default function DashboardPage() {
 
   const loadInvoiceData = async () => {
     try {
-      // Try to load from API first
-      const active = await loadInvoicesAPI();
-      const deleted = loadDeletedInvoices(); // Deleted invoices still in localStorage for now
+      // Load from API only
+      const invoices = await loadInvoicesAPI();
+      
+      // Convert database format to Invoice format and separate active/deleted
+      const formattedInvoices = invoices.map((inv: any) => ({
+        id: inv.id,
+        invoiceNumber: inv.invoiceNumber,
+        invoiceDate: inv.invoiceDate,
+        dueDate: inv.dueDate,
+        purchaseOrder: inv.purchaseOrder,
+        company: inv.companyInfo,
+        client: inv.clientInfo,
+        shipTo: inv.shipToInfo,
+        lineItems: inv.lineItems,
+        subtotal: inv.subtotal,
+        taxRate: inv.taxRate,
+        taxAmount: inv.taxAmount,
+        discountRate: inv.discountRate,
+        discountAmount: inv.discountAmount,
+        shipping: inv.shipping,
+        total: inv.total,
+        currency: inv.currency,
+        theme: inv.theme,
+        notes: inv.notes,
+        bankDetails: inv.bankDetails,
+        terms: inv.terms,
+        paymentStatus: inv.paymentStatus,
+        paymentLink: inv.paymentLink,
+        paymentProvider: inv.paymentProvider,
+        paidAmount: inv.paidAmount,
+        paymentDate: inv.paymentDate,
+        createdAt: inv.createdAt,
+        updatedAt: inv.updatedAt,
+      })) as Invoice[];
+      
+      // Separate active and deleted (cancelled status = deleted)
+      const active = formattedInvoices.filter(inv => inv.paymentStatus !== 'cancelled');
+      const deleted = formattedInvoices.filter(inv => inv.paymentStatus === 'cancelled');
       
       setActiveInvoices(active.sort((a, b) => {
         const dateA = new Date(a.createdAt || a.invoiceDate).getTime();
@@ -47,24 +75,14 @@ export default function DashboardPage() {
         return dateB - dateA;
       }));
       setDeletedInvoices(deleted.sort((a, b) => {
-        const dateA = new Date((a as any).deletedAt || a.createdAt || a.invoiceDate).getTime();
-        const dateB = new Date((b as any).deletedAt || b.createdAt || b.invoiceDate).getTime();
-        return dateB - dateA;
-      }));
-    } catch (error) {
-      // Fallback to localStorage
-      const active = loadInvoices();
-      const deleted = loadDeletedInvoices();
-      setActiveInvoices(active.sort((a, b) => {
         const dateA = new Date(a.createdAt || a.invoiceDate).getTime();
         const dateB = new Date(b.createdAt || b.invoiceDate).getTime();
         return dateB - dateA;
       }));
-      setDeletedInvoices(deleted.sort((a, b) => {
-        const dateA = new Date((a as any).deletedAt || a.createdAt || a.invoiceDate).getTime();
-        const dateB = new Date((b as any).deletedAt || b.createdAt || b.invoiceDate).getTime();
-        return dateB - dateA;
-      }));
+    } catch (error) {
+      console.error('Error loading invoices:', error);
+      setActiveInvoices([]);
+      setDeletedInvoices([]);
     } finally {
       setIsLoading(false);
     }
@@ -104,30 +122,41 @@ export default function DashboardPage() {
     router.push('/');
   };
 
-  const handleRestore = (id: string) => {
+  const handleRestore = async (id: string) => {
     if (confirm('Restore this invoice?')) {
-      restoreInvoice(id);
-      loadInvoiceData();
+      try {
+        // Update invoice status from 'cancelled' to 'pending'
+        await fetch(`/api/invoices/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          },
+          body: JSON.stringify({ paymentStatus: 'pending' }),
+        });
+        loadInvoiceData();
+      } catch (error) {
+        console.error('Error restoring invoice:', error);
+        alert('Failed to restore invoice. Please try again.');
+      }
     }
   };
 
-  const handlePermanentDelete = (id: string) => {
+  const handlePermanentDelete = async (id: string) => {
     if (confirm('Permanently delete this invoice? This action cannot be undone.')) {
-      permanentlyDeleteInvoice(id);
-      loadInvoiceData();
+      try {
+        await deleteInvoiceAPI(id);
+        loadInvoiceData();
+      } catch (error) {
+        console.error('Error deleting invoice:', error);
+        alert('Failed to delete invoice. Please try again.');
+      }
     }
   };
 
   const handleView = (invoice: Invoice) => {
-    // For database invoices, use the ID; for localStorage, use sessionStorage
-    if (invoice.id && invoice.id.length > 10) {
-      // Likely a database ID (cuid format)
-      router.push(`/?invoiceId=${invoice.id}`);
-    } else {
-      // Legacy localStorage invoice
-      sessionStorage.setItem('loadInvoice', JSON.stringify(invoice));
-      router.push('/');
-    }
+    // Use invoice ID to load from database
+    router.push(`/?invoiceId=${invoice.id}`);
   };
 
   if (isLoading) {
@@ -380,10 +409,23 @@ export default function DashboardPage() {
                             </>
                           ) : (
                             <button
-                              onClick={() => {
-                                if (confirm('Delete this invoice?')) {
-                                  deleteInvoice(invoice.id);
-                                  loadInvoiceData();
+                              onClick={async () => {
+                                if (confirm('Delete this invoice? It will be moved to deleted invoices.')) {
+                                  try {
+                                    // Update invoice status to 'cancelled' instead of deleting
+                                    await fetch(`/api/invoices/${invoice.id}`, {
+                                      method: 'PATCH',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+                                      },
+                                      body: JSON.stringify({ paymentStatus: 'cancelled' }),
+                                    });
+                                    loadInvoiceData();
+                                  } catch (error) {
+                                    console.error('Error deleting invoice:', error);
+                                    alert('Failed to delete invoice. Please try again.');
+                                  }
                                 }
                               }}
                               className="text-red-600 hover:text-red-800"

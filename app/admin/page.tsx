@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth';
 import { getUsers, updateUserSubscription, getPaymentConfig, savePaymentConfig } from '@/lib/admin';
 import { getCoupons, createCoupon, deleteCoupon } from '@/lib/coupons';
@@ -237,6 +238,19 @@ export default function AdminDashboard() {
             >
               {saveLoading ? 'Saving...' : 'Save Configuration'}
             </button>
+          </div>
+        </div>
+
+        {/* Quick Links */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4">Admin Quick Links</h2>
+          <div className="flex flex-wrap gap-4">
+            <Link
+              href="/admin/pricing"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Pricing Settings
+            </Link>
           </div>
         </div>
 

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth';
 import { initiatePayment } from '@/lib/payments';
 import { validateCoupon, applyCoupon } from '@/lib/coupons';
+import { getPricing, formatPrice, detectUserRegion } from '@/lib/pricing';
 
 export default function UpgradePage() {
   const router = useRouter();
@@ -16,6 +17,8 @@ export default function UpgradePage() {
   const [couponError, setCouponError] = useState('');
   const [couponSuccess, setCouponSuccess] = useState(false);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [pricing, setPricing] = useState<any>(null);
+  const [region, setRegion] = useState<'nigeria' | 'rest-of-world'>('rest-of-world');
 
   useEffect(() => {
     const currentUser = getCurrentUser();
@@ -29,7 +32,17 @@ export default function UpgradePage() {
     if (currentUser.isAdmin || (currentUser.subscription?.plan === 'premium' && currentUser.subscription?.status === 'active')) {
       router.push('/dashboard');
     }
+
+    // Load pricing based on region
+    loadPricing();
   }, [router]);
+
+  const loadPricing = async () => {
+    const detectedRegion = detectUserRegion();
+    setRegion(detectedRegion);
+    const priceData = await getPricing(detectedRegion);
+    setPricing(priceData);
+  };
 
   const handleApplyCoupon = async () => {
     if (!user || !couponCode.trim()) {
@@ -64,7 +77,7 @@ export default function UpgradePage() {
   };
 
   const handleUpgrade = async (provider: 'paypal' | 'paystack') => {
-    if (!user) return;
+    if (!user || !pricing) return;
     
     setLoading(true);
     setPaymentProvider(provider);
@@ -74,8 +87,8 @@ export default function UpgradePage() {
         userId: user.id,
         plan: 'premium',
         provider,
-        amount: 9.99,
-        currency: 'USD',
+        amount: pricing.premiumPrice,
+        currency: pricing.currency,
         userEmail: user.email,
       });
       
@@ -212,10 +225,26 @@ export default function UpgradePage() {
         <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-lg shadow-lg p-8 mb-8">
           <div className="text-center mb-8">
             <div className="mb-4">
-              <span className="text-5xl font-bold text-gray-900">$9.99</span>
-              <span className="text-gray-600 text-xl ml-2">/month</span>
+              {pricing ? (
+                <>
+                  <span className="text-5xl font-bold text-gray-900">
+                    {formatPrice(pricing.premiumPrice, pricing.currency)}
+                  </span>
+                  <span className="text-gray-600 text-xl ml-2">/month</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-5xl font-bold text-gray-900">...</span>
+                  <span className="text-gray-600 text-xl ml-2">/month</span>
+                </>
+              )}
             </div>
             <p className="text-gray-600">Cancel anytime. No hidden fees.</p>
+            {pricing && (
+              <p className="text-sm text-gray-500 mt-2">
+                {region === 'nigeria' ? 'Nigerian pricing' : 'International pricing'}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

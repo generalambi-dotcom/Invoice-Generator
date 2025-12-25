@@ -361,13 +361,22 @@ export default function Header() {
                           Reports
                         </Link>
                         {user.isAdmin && (
-                          <Link
-                            href="/admin"
-                            onClick={closeMenus}
-                            className="block px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-medium"
-                          >
-                            Admin
-                          </Link>
+                          <>
+                            <Link
+                              href="/admin"
+                              onClick={closeMenus}
+                              className="block px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-medium"
+                            >
+                              Admin Dashboard
+                            </Link>
+                            <Link
+                              href="/admin/pricing"
+                              onClick={closeMenus}
+                              className="block px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-medium"
+                            >
+                              Pricing Settings
+                            </Link>
+                          </>
                         )}
                         {isPremium && (
                           <Link
@@ -451,13 +460,22 @@ export default function Header() {
                           Reports
                         </Link>
                         {user.isAdmin && (
-                          <Link
-                            href="/admin"
-                            onClick={closeMenus}
-                            className="block px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-medium"
-                          >
-                            Admin
-                          </Link>
+                          <>
+                            <Link
+                              href="/admin"
+                              onClick={closeMenus}
+                              className="block px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-medium"
+                            >
+                              Admin Dashboard
+                            </Link>
+                            <Link
+                              href="/admin/pricing"
+                              onClick={closeMenus}
+                              className="block px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-medium"
+                            >
+                              Pricing Settings
+                            </Link>
+                          </>
                         )}
                         {isPremium && (
                           <Link

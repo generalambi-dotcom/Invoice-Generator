@@ -45,6 +45,10 @@ export async function refreshAccessToken(): Promise<string | null> {
     if (data.user) {
       localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
     }
+    // Update cookie for middleware
+    if (typeof document !== 'undefined') {
+      document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
+    }
 
     return data.token;
   } catch (error) {

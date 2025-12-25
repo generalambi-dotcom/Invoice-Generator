@@ -136,6 +136,11 @@ export async function clearSession(): Promise<void> {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('invoice-generator-current-user');
+    
+    // Clear cookie
+    if (typeof document !== 'undefined') {
+      document.cookie = 'auth_token=; path=/; max-age=0; SameSite=Lax';
+    }
 
     // Revoke refresh tokens on server via API call (client-safe, non-blocking)
     if (refreshToken) {

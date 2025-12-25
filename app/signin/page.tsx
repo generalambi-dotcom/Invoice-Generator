@@ -43,13 +43,16 @@ function SignInContent() {
 
       if (response.ok) {
         const data = await response.json();
-        // Store tokens
+        // Store tokens in localStorage
         localStorage.setItem('auth_token', data.token);
         if (data.refreshToken) {
           localStorage.setItem('refresh_token', data.refreshToken);
         }
         // Use the correct key that getCurrentUser() expects
         localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
+        
+        // Set token as cookie so middleware can access it
+        document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
         
         // Create session
         createSession(data.user);

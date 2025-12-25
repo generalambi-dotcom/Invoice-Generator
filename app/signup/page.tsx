@@ -59,6 +59,8 @@ export default function SignUpPage() {
           localStorage.setItem('auth_token', data.token);
           localStorage.setItem('refresh_token', data.refreshToken || '');
           localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
+          // Set token as cookie so middleware can access it
+          document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
           router.push('/dashboard');
           return;
         }

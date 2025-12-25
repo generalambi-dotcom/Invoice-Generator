@@ -14,26 +14,27 @@ interface User {
   isAdmin?: boolean;
 }
 
-// Validate JWT_SECRET on module load
-const JWT_SECRET_ENV = process.env.JWT_SECRET;
+// Get JWT_SECRET with lazy validation (only when actually used)
+function getJWTSecret(): string {
+  const JWT_SECRET_ENV = process.env.JWT_SECRET;
 
-if (!JWT_SECRET_ENV) {
-  throw new Error(
-    'JWT_SECRET environment variable is not set. ' +
-    'Please set it in your environment variables. ' +
-    'For security, use a strong random string (minimum 32 characters).'
-  );
+  if (!JWT_SECRET_ENV) {
+    throw new Error(
+      'JWT_SECRET environment variable is not set. ' +
+      'Please set it in your environment variables. ' +
+      'For security, use a strong random string (minimum 32 characters).'
+    );
+  }
+
+  if (JWT_SECRET_ENV.length < 32) {
+    console.warn(
+      '⚠️  WARNING: JWT_SECRET is less than 32 characters. ' +
+      'For security, please use a longer secret (minimum 32 characters recommended).'
+    );
+  }
+
+  return JWT_SECRET_ENV;
 }
-
-if (JWT_SECRET_ENV.length < 32) {
-  console.warn(
-    '⚠️  WARNING: JWT_SECRET is less than 32 characters. ' +
-    'For security, please use a longer secret (minimum 32 characters recommended).'
-  );
-}
-
-// Type assertion: JWT_SECRET is guaranteed to be a string after validation
-const JWT_SECRET: string = JWT_SECRET_ENV;
 
 // Access token expires in 15 minutes
 const ACCESS_TOKEN_EXPIRES_IN = '15m';
@@ -58,7 +59,7 @@ export function generateToken(user: User): string {
     isAdmin: user.isAdmin || false,
   };
 
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, getJWTSecret(), {
     expiresIn: ACCESS_TOKEN_EXPIRES_IN,
   });
 }
@@ -68,7 +69,7 @@ export function generateToken(user: User): string {
  */
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    const decoded = jwt.verify(token, getJWTSecret()) as JWTPayload;
     return decoded;
   } catch (error) {
     return null;
@@ -90,15 +91,8 @@ export function getUserFromToken(token: string | null): JWTPayload | null {
  * Generate refresh token (longer-lived token for getting new access tokens)
  */
 export function generateRefreshToken(userId: string): string {
-  return jwt.sign({ userId, type: 'refresh' }, JWT_SECRET, {
+  return jwt.sign({ userId, type: 'refresh' }, getJWTSecret(), {
     expiresIn: REFRESH_TOKEN_EXPIRES_IN,
   });
-}
-
-/**
- * Get JWT secret (for use in other modules if needed)
- */
-export function getJWTSecret(): string {
-  return JWT_SECRET;
 }
 

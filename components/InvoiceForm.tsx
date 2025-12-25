@@ -9,6 +9,7 @@ import {
   Theme,
   Currency,
   CompanyDefaults,
+  CompanyInfo,
   currencySymbols,
   themeColors,
 } from '@/types/invoice';

@@ -15,9 +15,9 @@ interface User {
 }
 
 // Validate JWT_SECRET on module load
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET_ENV = process.env.JWT_SECRET;
 
-if (!JWT_SECRET) {
+if (!JWT_SECRET_ENV) {
   throw new Error(
     'JWT_SECRET environment variable is not set. ' +
     'Please set it in your environment variables. ' +
@@ -25,12 +25,15 @@ if (!JWT_SECRET) {
   );
 }
 
-if (JWT_SECRET.length < 32) {
+if (JWT_SECRET_ENV.length < 32) {
   console.warn(
     '⚠️  WARNING: JWT_SECRET is less than 32 characters. ' +
     'For security, please use a longer secret (minimum 32 characters recommended).'
   );
 }
+
+// Type assertion: JWT_SECRET is guaranteed to be a string after validation
+const JWT_SECRET: string = JWT_SECRET_ENV;
 
 // Access token expires in 15 minutes
 const ACCESS_TOKEN_EXPIRES_IN = '15m';

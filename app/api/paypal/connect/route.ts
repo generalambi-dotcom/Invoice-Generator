@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 
+// Force dynamic rendering since we use request.headers
+export const dynamic = 'force-dynamic';
+
 /**
  * Initiate PayPal OAuth connection
  * This redirects the user to PayPal to authorize our app

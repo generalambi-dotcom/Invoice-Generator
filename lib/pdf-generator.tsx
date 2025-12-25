@@ -215,6 +215,7 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
           <View style={styles.companyInfo}>
             {invoice.company.logo && (
               <View style={styles.logoContainer}>
+                {/* eslint-disable-next-line jsx-a11y/alt-text */}
                 <Image src={invoice.company.logo} style={styles.logo} />
               </View>
             )}

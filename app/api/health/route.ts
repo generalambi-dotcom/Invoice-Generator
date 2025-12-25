@@ -15,6 +15,17 @@ export async function GET() {
   };
 
   try {
+    // Check if DATABASE_URL is configured
+    if (!process.env.DATABASE_URL) {
+      healthStatus.status = 'error';
+      healthStatus.services.database = {
+        status: 'not_configured',
+        error: 'DATABASE_URL environment variable is not set',
+      };
+      healthStatus.responseTime = `${Date.now() - startTime}ms`;
+      return NextResponse.json(healthStatus, { status: 500 });
+    }
+
     // Test database connection
     const dbStartTime = Date.now();
     await prisma.$queryRaw`SELECT 1`;

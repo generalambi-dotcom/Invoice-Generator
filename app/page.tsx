@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   },
 };
 
+// Make this page dynamic to avoid prerendering issues with client components
 export const dynamic = 'force-dynamic';
 
 export default function Home() {

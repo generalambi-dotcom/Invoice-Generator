@@ -31,7 +31,7 @@ export async function refreshAccessToken(): Promise<string | null> {
       // Refresh token invalid - clear storage
       localStorage.removeItem('auth_token');
       localStorage.removeItem('refresh_token');
-      localStorage.removeItem('current_user');
+      localStorage.removeItem('invoice-generator-current-user');
       return null;
     }
 
@@ -43,7 +43,7 @@ export async function refreshAccessToken(): Promise<string | null> {
       localStorage.setItem('refresh_token', data.refreshToken);
     }
     if (data.user) {
-      localStorage.setItem('current_user', JSON.stringify(data.user));
+      localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
     }
 
     return data.token;

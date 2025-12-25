@@ -79,7 +79,7 @@ export function getSession(): SessionInfo | null {
       localStorage.removeItem(LAST_ACTIVITY_KEY);
       localStorage.removeItem('auth_token');
       localStorage.removeItem('refresh_token');
-      localStorage.removeItem('current_user');
+      localStorage.removeItem('invoice-generator-current-user');
       return null;
     }
 
@@ -135,7 +135,7 @@ export async function clearSession(): Promise<void> {
     localStorage.removeItem(LAST_ACTIVITY_KEY);
     localStorage.removeItem('auth_token');
     localStorage.removeItem('refresh_token');
-    localStorage.removeItem('current_user');
+    localStorage.removeItem('invoice-generator-current-user');
 
     // Revoke refresh tokens on server via API call (client-safe, non-blocking)
     if (refreshToken) {

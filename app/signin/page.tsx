@@ -48,13 +48,15 @@ function SignInContent() {
         if (data.refreshToken) {
           localStorage.setItem('refresh_token', data.refreshToken);
         }
-        localStorage.setItem('current_user', JSON.stringify(data.user));
+        // Use the correct key that getCurrentUser() expects
+        localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
         
         // Create session
         createSession(data.user);
         
+        // Force a page reload to ensure authentication state is properly set
         const redirectUrl = searchParams.get('redirect') || '/dashboard';
-        router.push(redirectUrl);
+        window.location.href = redirectUrl;
         return;
       }
 

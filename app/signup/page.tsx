@@ -58,7 +58,7 @@ export default function SignUpPage() {
         if (data.token) {
           localStorage.setItem('auth_token', data.token);
           localStorage.setItem('refresh_token', data.refreshToken || '');
-          localStorage.setItem('current_user', JSON.stringify(data.user));
+          localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
           router.push('/dashboard');
           return;
         }

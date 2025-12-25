@@ -21,28 +21,56 @@ export default function DashboardPage() {
   const [sendingReminders, setSendingReminders] = useState(false);
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
-    if (!currentUser) {
-      router.push('/signin');
-      return;
-    }
-
-    setUser(currentUser);
-    loadInvoiceData();
-    loadPaymentReminders();
-    
-    // Update overdue invoices on mount
-    const updateOverdue = async () => {
-      try {
-        await updateOverdueInvoicesAPI();
-        loadInvoiceData();
-      } catch (error) {
-        console.error('Error updating overdue invoices:', error);
+    const checkAuth = async () => {
+      // Check for token first
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        router.push('/signin?redirect=/dashboard');
+        return;
       }
-    };
-    if (currentUser) {
+
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        // Try to get user from token if localStorage user is missing
+        // This handles cases where localStorage was cleared but token exists
+        try {
+          const response = await fetch('/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          if (response.ok) {
+            const userData = await response.json();
+            localStorage.setItem('invoice-generator-current-user', JSON.stringify(userData.user));
+            setUser(userData.user);
+            loadInvoiceData();
+            loadPaymentReminders();
+            return;
+          }
+        } catch (error) {
+          console.error('Error fetching user:', error);
+        }
+        router.push('/signin?redirect=/dashboard');
+        return;
+      }
+
+      setUser(currentUser);
+      loadInvoiceData();
+      loadPaymentReminders();
+      
+      // Update overdue invoices on mount
+      const updateOverdue = async () => {
+        try {
+          await updateOverdueInvoicesAPI();
+          loadInvoiceData();
+        } catch (error) {
+          console.error('Error updating overdue invoices:', error);
+        }
+      };
       updateOverdue();
-    }
+    };
+
+    checkAuth();
   }, [router]);
 
   const loadPaymentReminders = async () => {

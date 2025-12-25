@@ -51,10 +51,18 @@ export function middleware(request: NextRequest) {
   const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
 
   // Redirect to signin if accessing protected route without auth
+  // But allow client-side navigation to handle auth checks for better UX
   if (isProtectedRoute && !user) {
-    const signInUrl = new URL('/signin', request.url);
-    signInUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(signInUrl);
+    // Check if this is a client-side navigation (has referer from same origin)
+    const referer = request.headers.get('referer');
+    const isClientNavigation = referer && new URL(referer).origin === request.nextUrl.origin;
+    
+    // Only redirect on server-side requests, let client handle navigation
+    if (!isClientNavigation) {
+      const signInUrl = new URL('/signin', request.url);
+      signInUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(signInUrl);
+    }
   }
 
   // Redirect to dashboard if accessing public-only routes while authenticated

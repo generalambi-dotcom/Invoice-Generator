@@ -282,6 +282,7 @@ export default function Header() {
             {user ? (
               <>
                 {/* Desktop View */}
+                {/* Upgrade Button - Always Separate */}
                 {user.subscription?.plan !== 'premium' && (
                   <Link
                     href="/upgrade"
@@ -290,46 +291,103 @@ export default function Header() {
                     ⭐ Upgrade
                   </Link>
                 )}
-                {user.isAdmin && (
-                  <Link
-                    href="/admin"
-                    className="hidden md:block px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                
+                {/* Account Dropdown */}
+                <div className="hidden md:block relative">
+                  <button
+                    onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                    className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100"
+                    aria-label="Account menu"
                   >
-                    Admin
-                  </Link>
-                )}
-                {isPremium && (
-                  <Link
-                    href="/settings/payment-methods"
-                    className="hidden md:block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm"
-                  >
-                    Payment Methods
-                  </Link>
-                )}
-                <Link
-                  href="/dashboard"
-                  className="hidden md:block text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/clients"
-                  className="hidden md:block text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Clients
-                </Link>
-                <Link
-                  href="/reports"
-                  className="hidden md:block text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Reports
-                </Link>
-                <button
-                  onClick={handleSignOut}
-                  className="hidden md:block text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Sign Out
-                </button>
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium">{user.name || 'Account'}</span>
+                    <svg
+                      className={`w-4 h-4 transition-transform ${accountMenuOpen ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+                  {accountMenuOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setAccountMenuOpen(false)}
+                      />
+                      <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-200 dark:border-gray-700">
+                        <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                        </div>
+                        <Link
+                          href="/dashboard"
+                          onClick={closeMenus}
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          Dashboard
+                        </Link>
+                        <Link
+                          href="/clients"
+                          onClick={closeMenus}
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          Clients
+                        </Link>
+                        <Link
+                          href="/reports"
+                          onClick={closeMenus}
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          Reports
+                        </Link>
+                        {user.isAdmin && (
+                          <Link
+                            href="/admin"
+                            onClick={closeMenus}
+                            className="block px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-medium"
+                          >
+                            Admin
+                          </Link>
+                        )}
+                        {isPremium && (
+                          <Link
+                            href="/settings/payment-methods"
+                            onClick={closeMenus}
+                            className="block px-4 py-2 text-sm text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                          >
+                            Payment Methods
+                          </Link>
+                        )}
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+                        <button
+                          onClick={handleSignOut}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          Sign Out
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
 
                 {/* Mobile: Account Icon with Dropdown */}
                 <div className="md:hidden relative">
@@ -353,48 +411,64 @@ export default function Header() {
                     </svg>
                   </button>
                   {accountMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
-                      {user.subscription?.plan !== 'premium' && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setAccountMenuOpen(false)}
+                      />
+                      <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-200 dark:border-gray-700">
+                        <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                        </div>
                         <Link
-                          href="/upgrade"
+                          href="/dashboard"
                           onClick={closeMenus}
-                          className="block px-4 py-2 text-gray-700 hover:bg-gray-100 font-medium"
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
-                          ⭐ Upgrade
+                          Dashboard
                         </Link>
-                      )}
-                      {user.isAdmin && (
                         <Link
-                          href="/admin"
+                          href="/clients"
                           onClick={closeMenus}
-                          className="block px-4 py-2 text-purple-700 hover:bg-purple-50 font-medium"
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
-                          Admin
+                          Clients
                         </Link>
-                      )}
-                      {isPremium && (
                         <Link
-                          href="/settings/payment-methods"
+                          href="/reports"
                           onClick={closeMenus}
-                          className="block px-4 py-2 text-indigo-700 hover:bg-indigo-50 font-medium"
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
-                          Payment Methods
+                          Reports
                         </Link>
-                      )}
-                      <Link
-                        href="/dashboard"
-                        onClick={closeMenus}
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                      >
-                        Dashboard
-                      </Link>
-                      <button
-                        onClick={handleSignOut}
-                        className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
-                      >
-                        Sign Out
-                      </button>
-                    </div>
+                        {user.isAdmin && (
+                          <Link
+                            href="/admin"
+                            onClick={closeMenus}
+                            className="block px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-medium"
+                          >
+                            Admin
+                          </Link>
+                        )}
+                        {isPremium && (
+                          <Link
+                            href="/settings/payment-methods"
+                            onClick={closeMenus}
+                            className="block px-4 py-2 text-sm text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                          >
+                            Payment Methods
+                          </Link>
+                        )}
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+                        <button
+                          onClick={handleSignOut}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          Sign Out
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
               </>

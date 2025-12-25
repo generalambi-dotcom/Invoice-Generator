@@ -153,12 +153,21 @@ export async function sendPasswordResetEmail({
     // Check if Resend API key is configured
     if (!process.env.RESEND_API_KEY) {
       // In development, just log the email
-      console.log('Password reset email would be sent:', {
+      console.log('⚠️  RESEND_API_KEY not set. Password reset email would be sent:', {
         to,
-        resetUrl,
+        resetUrl: resetUrl.substring(0, 50) + '...',
       });
-      return { success: true, emailId: 'dev-email-id' };
+      return { 
+        success: false, 
+        error: 'RESEND_API_KEY environment variable is not configured' 
+      };
     }
+
+    console.log('📧 Attempting to send password reset email:', {
+      to,
+      hasApiKey: !!process.env.RESEND_API_KEY,
+      apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 10) + '...',
+    });
 
     // Initialize Resend client lazily
     const resend = new Resend(process.env.RESEND_API_KEY);
@@ -174,6 +183,12 @@ export async function sendPasswordResetEmail({
       text: emailText,
     };
 
+    console.log('📤 Sending email via Resend:', {
+      from: emailData.from,
+      to: emailData.to,
+      subject: emailData.subject,
+    });
+
     // Send email with retry logic
     const result = await retryWithBackoff(async () => {
       return await resend.emails.send(emailData);
@@ -188,16 +203,32 @@ export async function sendPasswordResetEmail({
     const { data, error } = result;
 
     if (error) {
-      console.error('Resend error:', error);
+      console.error('❌ Resend API error:', {
+        message: error.message,
+        name: error.name,
+        statusCode: (error as any).statusCode,
+        code: (error as any).code,
+        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
+      });
       return { 
         success: false, 
         error: formatErrorMessage(error, 'sending password reset email') 
       };
     }
 
+    console.log('✅ Email sent successfully via Resend:', {
+      emailId: data?.id,
+      to,
+    });
+
     return { success: true, emailId: data?.id };
   } catch (error: any) {
-    console.error('Error sending password reset email:', error);
+    console.error('❌ Exception in sendPasswordResetEmail:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      fullError: JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
+    });
     return { 
       success: false, 
       error: formatErrorMessage(error, 'sending password reset email') 

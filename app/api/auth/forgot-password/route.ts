@@ -59,13 +59,33 @@ export async function POST(request: NextRequest) {
 
       // Send password reset email
       try {
-        await sendPasswordResetEmail({
+        const emailResult = await sendPasswordResetEmail({
           to: user.email,
           name: user.name,
           resetUrl,
         });
+
+        if (!emailResult.success) {
+          console.error('❌ Failed to send password reset email:', {
+            email: user.email,
+            error: emailResult.error,
+            resetUrl: resetUrl.substring(0, 50) + '...', // Log partial URL for debugging
+          });
+          // Still return success to user (security best practice)
+          // But log the error for debugging
+        } else {
+          console.log('✅ Password reset email sent successfully:', {
+            email: user.email,
+            emailId: emailResult.emailId,
+          });
+        }
       } catch (emailError: any) {
-        console.error('Error sending password reset email:', emailError);
+        console.error('❌ Exception sending password reset email:', {
+          email: user.email,
+          error: emailError.message || emailError,
+          stack: emailError.stack,
+          name: emailError.name,
+        });
         // Don't fail the request if email fails - token is still saved
       }
     }

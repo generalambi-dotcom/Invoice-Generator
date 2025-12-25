@@ -4,6 +4,7 @@
 
 import { Resend } from 'resend';
 import { retryWithBackoff, formatErrorMessage } from './error-handler';
+import { getPasswordResetEmailHtml, getPasswordResetEmailText } from './password-reset-email';
 
 // Don't initialize Resend at module level - do it lazily in the function
 // This prevents build-time errors when RESEND_API_KEY is not set
@@ -130,6 +131,76 @@ export async function sendInvoiceEmail({
     return { 
       success: false, 
       error: formatErrorMessage(error, 'sending email') 
+    };
+  }
+}
+
+/**
+ * Send password reset email
+ */
+interface SendPasswordResetEmailParams {
+  to: string;
+  name?: string;
+  resetUrl: string;
+}
+
+export async function sendPasswordResetEmail({
+  to,
+  name,
+  resetUrl,
+}: SendPasswordResetEmailParams): Promise<{ success: boolean; error?: string; emailId?: string }> {
+  try {
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      // In development, just log the email
+      console.log('Password reset email would be sent:', {
+        to,
+        resetUrl,
+      });
+      return { success: true, emailId: 'dev-email-id' };
+    }
+
+    // Initialize Resend client lazily
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    const emailHtml = getPasswordResetEmailHtml(resetUrl, name);
+    const emailText = getPasswordResetEmailText(resetUrl, name);
+
+    const emailData = {
+      from: 'Invoice Generator <onboarding@resend.dev>', // Update to your verified domain for production
+      to,
+      subject: 'Reset Your Password - Invoice Generator Nigeria',
+      html: emailHtml,
+      text: emailText,
+    };
+
+    // Send email with retry logic
+    const result = await retryWithBackoff(async () => {
+      return await resend.emails.send(emailData);
+    }, {
+      maxRetries: 2,
+      retryDelay: 1000,
+      retryable: (error: any) => {
+        return error.statusCode === 429 || error.code === 'ECONNABORTED';
+      },
+    });
+
+    const { data, error } = result;
+
+    if (error) {
+      console.error('Resend error:', error);
+      return { 
+        success: false, 
+        error: formatErrorMessage(error, 'sending password reset email') 
+      };
+    }
+
+    return { success: true, emailId: data?.id };
+  } catch (error: any) {
+    console.error('Error sending password reset email:', error);
+    return { 
+      success: false, 
+      error: formatErrorMessage(error, 'sending password reset email') 
     };
   }
 }

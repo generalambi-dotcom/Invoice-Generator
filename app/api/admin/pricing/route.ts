@@ -49,6 +49,7 @@ export async function PUT(request: NextRequest) {
     const user = getAuthenticatedUser(request);
     
     if (!user) {
+      console.error('PUT /api/admin/pricing: No authenticated user');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -59,11 +60,14 @@ export async function PUT(request: NextRequest) {
     });
 
     if (!dbUser?.isAdmin) {
+      console.error('PUT /api/admin/pricing: User is not admin', { userId: user.userId });
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     const body = await request.json();
     const { region, premiumPrice, currency, isActive } = body;
+
+    console.log('PUT /api/admin/pricing: Request body', { region, premiumPrice, currency, isActive });
 
     // Validation
     if (!region || !['nigeria', 'rest-of-world', 'default'].includes(region)) {
@@ -104,14 +108,24 @@ export async function PUT(request: NextRequest) {
       },
     });
 
+    console.log('PUT /api/admin/pricing: Success', { pricingSetting });
+
     return NextResponse.json({
       pricingSetting,
       message: 'Pricing setting updated successfully',
     });
   } catch (error: any) {
     console.error('Error updating pricing settings:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+    });
     return NextResponse.json(
-      { error: 'Failed to update pricing settings' },
+      { 
+        error: 'Failed to update pricing settings',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      },
       { status: 500 }
     );
   }

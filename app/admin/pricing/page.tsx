@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
+import { getValidAccessToken } from '@/lib/token-refresh';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 function PricingSettingsContent() {
@@ -42,15 +43,17 @@ function PricingSettingsContent() {
 
   const loadPricingSettings = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = await getValidAccessToken();
       const response = await fetch('/api/admin/pricing', {
         headers: {
+          'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` }),
         },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to load pricing settings');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to load pricing settings');
       }
 
       const data = await response.json();
@@ -61,15 +64,17 @@ function PricingSettingsContent() {
         'rest-of-world': { premiumPrice: 9.99, currency: 'USD', isActive: true },
       };
 
-      data.pricingSettings.forEach((setting: any) => {
-        if (setting.region === 'nigeria' || setting.region === 'rest-of-world') {
-          settings[setting.region] = {
-            premiumPrice: setting.premiumPrice,
-            currency: setting.currency,
-            isActive: setting.isActive,
-          };
-        }
-      });
+      if (data.pricingSettings && Array.isArray(data.pricingSettings)) {
+        data.pricingSettings.forEach((setting: any) => {
+          if (setting.region === 'nigeria' || setting.region === 'rest-of-world') {
+            settings[setting.region] = {
+              premiumPrice: setting.premiumPrice,
+              currency: setting.currency,
+              isActive: setting.isActive,
+            };
+          }
+        });
+      }
 
       setPricingSettings(settings);
     } catch (err: any) {
@@ -86,14 +91,23 @@ function PricingSettingsContent() {
     setSaving(true);
 
     try {
-      const token = localStorage.getItem('auth_token');
+      const token = await getValidAccessToken();
+      if (!token) {
+        throw new Error('Authentication required. Please sign in again.');
+      }
+
       const setting = pricingSettings[region];
       
+      // Validate price
+      if (typeof setting.premiumPrice !== 'number' || setting.premiumPrice < 0) {
+        throw new Error('Price must be a positive number');
+      }
+
       const response = await fetch('/api/admin/pricing', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           region,
@@ -104,13 +118,19 @@ function PricingSettingsContent() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save pricing setting');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('API Error:', errorData);
+        throw new Error(errorData.error || `Failed to save pricing setting (${response.status})`);
       }
 
+      const result = await response.json();
       setSuccess(`${region === 'nigeria' ? 'Nigeria' : 'Rest of World'} pricing updated successfully!`);
       setTimeout(() => setSuccess(''), 3000);
+      
+      // Reload settings to ensure UI is in sync
+      await loadPricingSettings();
     } catch (err: any) {
+      console.error('Error saving pricing:', err);
       setError(err.message || 'Failed to save pricing setting');
     } finally {
       setSaving(false);

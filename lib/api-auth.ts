@@ -15,11 +15,18 @@ export interface AuthenticatedRequest {
 
 /**
  * Get authenticated user from request
- * Checks Authorization header for JWT token
+ * Checks Authorization header, x-auth-token header, and cookies for JWT token
  */
 export function getAuthenticatedUser(request: NextRequest): AuthenticatedRequest | null {
-  const authHeader = request.headers.get('authorization');
+  // Try Authorization header first
+  let authHeader = request.headers.get('authorization');
   let token = authHeader || request.headers.get('x-auth-token');
+  
+  // If no token in headers, try cookies (for server-side requests)
+  if (!token) {
+    const cookies = request.cookies;
+    token = cookies.get('auth_token')?.value || null;
+  }
   
   if (!token) {
     return null;

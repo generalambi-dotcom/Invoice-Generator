@@ -3,8 +3,6 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { registerUser } from '@/lib/auth';
-
 export default function SignUpPage() {
   const router = useRouter();
   const [name, setName] = useState('');
@@ -31,8 +29,25 @@ export default function SignUpPage() {
     setIsLoading(true);
 
     try {
-      registerUser(email, password, name);
-      router.push('/dashboard');
+      // Use API registration instead of localStorage
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Store JWT token
+        localStorage.setItem('auth_token', data.token);
+        localStorage.setItem('current_user', JSON.stringify(data.user));
+        router.push('/dashboard');
+        return;
+      }
+
+      // Handle errors
+      const errorData = await response.json();
+      setError(errorData.error || 'Failed to create account. Please try again.');
     } catch (err: any) {
       setError(err.message || 'Failed to create account. Please try again.');
     } finally {

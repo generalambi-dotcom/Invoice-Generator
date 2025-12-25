@@ -1,0 +1,247 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { getCurrentUser } from '@/lib/auth';
+import ProtectedRoute from '@/components/ProtectedRoute';
+
+function PublicLinkSettingsContent() {
+  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [publicSlug, setPublicSlug] = useState<string>('');
+  const [customSlug, setCustomSlug] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+      router.push('/signin');
+      return;
+    }
+    setUser(currentUser);
+    loadPublicSlug();
+  }, [router]);
+
+  const loadPublicSlug = async () => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/user/public-slug', {
+        headers: {
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load public link');
+      }
+
+      const data = await response.json();
+      setPublicSlug(data.publicSlug || '');
+      setCustomSlug(data.publicSlug || '');
+    } catch (err: any) {
+      console.error('Error loading public slug:', err);
+      setError(err.message || 'Failed to load public link');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateLink = async () => {
+    setError('');
+    setSuccess('');
+    setSaving(true);
+
+    try {
+      const token = localStorage.getItem('auth_token');
+      const response = await fetch('/api/user/public-slug', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: JSON.stringify({
+          customSlug: customSlug.trim() || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create public link');
+      }
+
+      const data = await response.json();
+      setPublicSlug(data.publicSlug);
+      setSuccess('Public invoice link created successfully!');
+      
+      // Show success message briefly
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create public link');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCopyLink = () => {
+    const link = `${window.location.origin}/i/${publicSlug}`;
+    navigator.clipboard.writeText(link);
+    setSuccess('Link copied to clipboard!');
+    setTimeout(() => setSuccess(''), 3000);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
+
+  return (
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-lg shadow p-6 sm:p-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+              Public Invoice Link
+            </h1>
+            <p className="text-gray-600 mb-6">
+              Share this link with your customers so they can create invoices themselves. No login required for them!
+            </p>
+
+            {/* Success Message */}
+            {success && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-green-800">{success}</p>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-800">{error}</p>
+              </div>
+            )}
+
+            {/* Existing Link */}
+            {publicSlug ? (
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Your Public Invoice Link
+                  </label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      value={`${typeof window !== 'undefined' ? window.location.origin : ''}/i/${publicSlug}`}
+                      readOnly
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+                    />
+                    <button
+                      onClick={handleCopyLink}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                    >
+                      Copy Link
+                    </button>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500">
+                    Share this link with your customers. They can use it to create invoices without logging in.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Customize Your Link (Optional)
+                  </label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      value={customSlug}
+                      onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                      placeholder="company-name"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button
+                      onClick={handleCreateLink}
+                      disabled={saving || customSlug === publicSlug}
+                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    >
+                      {saving ? 'Updating...' : 'Update Link'}
+                    </button>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500">
+                    Choose a custom slug (lowercase letters, numbers, and hyphens only). Your link will be: /i/your-custom-slug
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Create Your Public Invoice Link
+                  </label>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Your customers will be able to create invoices at: /i/your-slug
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex-1 flex items-center gap-2">
+                      <span className="text-gray-500">{typeof window !== 'undefined' ? window.location.origin : ''}/i/</span>
+                      <input
+                        type="text"
+                        value={customSlug}
+                        onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                        placeholder="company-name"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <button
+                      onClick={handleCreateLink}
+                      disabled={saving || !customSlug.trim()}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    >
+                      {saving ? 'Creating...' : 'Create Link'}
+                    </button>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500">
+                    Leave empty to auto-generate a link, or choose a custom slug (lowercase letters, numbers, and hyphens only).
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* How It Works */}
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">How It Works</h2>
+              <ul className="space-y-3 text-gray-600">
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-2">1.</span>
+                  <span>Share your public invoice link with customers</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-2">2.</span>
+                  <span>Customers click the link and fill in their invoice details (no login required)</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-2">3.</span>
+                  <span>Invoices are automatically saved to your account</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-600 mr-2">4.</span>
+                  <span>Customers can download PDFs and pay directly</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ProtectedRoute>
+  );
+}
+
+export default function PublicLinkSettings() {
+  return <PublicLinkSettingsContent />;
+}
+

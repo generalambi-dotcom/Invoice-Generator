@@ -15,6 +15,7 @@ model User {
   name          String
   password      String    // Hashed password
   isAdmin       Boolean   @default(false)
+  publicSlug    String?   @unique // Public username/slug for invoice links (e.g., "company-name")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -114,6 +115,10 @@ model Invoice {
   paymentProvider String? // 'paypal' | 'paystack' | 'stripe'
   paidAmount    Float?   @default(0)
   paymentDate   DateTime?
+  
+  // Invoice source tracking
+  createdBy     String?  // 'owner' | 'customer' - who created this invoice
+  customerEmail String?  // Email of customer who created (if customer-created)
   
   // Email tracking
   sentAt        DateTime?

@@ -159,6 +159,8 @@ export async function POST(request: NextRequest) {
         bankDetails: bankDetails || null,
         terms: terms || null,
         paymentStatus: 'pending',
+        createdBy: 'owner', // Mark as owner-created
+        customerEmail: null,
       },
     });
 

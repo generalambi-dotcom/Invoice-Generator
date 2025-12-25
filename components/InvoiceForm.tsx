@@ -29,6 +29,11 @@ import {
   sendInvoiceEmailAPI,
   getCompanyDefaultsAPI,
   saveCompanyDefaultsAPI,
+  getNextInvoiceNumberAPI,
+  getClientsAPI,
+  createClientAPI,
+  getInvoicePaymentHistoryAPI,
+  recordPaymentAPI,
 } from '@/lib/api-client';
 import LineItems from './LineItems';
 import { format } from 'date-fns';
@@ -99,6 +104,20 @@ export default function InvoiceForm() {
   const [user, setUser] = useState<any>(null);
   const [savingInvoice, setSavingInvoice] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [clients, setClients] = useState<any[]>([]);
+  const [showClientModal, setShowClientModal] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
+  const [showPaymentHistory, setShowPaymentHistory] = useState(false);
+  const [newClient, setNewClient] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zip: '',
+    country: '',
+  });
 
   // Check premium status and load user
   useEffect(() => {
@@ -113,7 +132,7 @@ export default function InvoiceForm() {
     }
   }, []);
 
-  // Load company defaults on mount
+  // Load company defaults and generate invoice number on mount
   useEffect(() => {
     const loadDefaults = async () => {
       try {
@@ -130,6 +149,18 @@ export default function InvoiceForm() {
             terms: defaults.defaultTerms || '',
           }));
         }
+        
+        // Auto-generate invoice number
+        try {
+          const numberResult = await getNextInvoiceNumberAPI();
+          setInvoice((prev) => ({
+            ...prev,
+            invoiceNumber: numberResult.invoiceNumber,
+          }));
+        } catch (error) {
+          console.error('Error generating invoice number:', error);
+          // Continue without auto-number
+        }
       } catch (error) {
         console.error('Error loading company defaults:', error);
         // Continue without defaults
@@ -137,6 +168,21 @@ export default function InvoiceForm() {
     };
     loadDefaults();
   }, []);
+
+  // Load clients
+  useEffect(() => {
+    const loadClients = async () => {
+      try {
+        const clientList = await getClientsAPI();
+        setClients(clientList);
+      } catch (error) {
+        console.error('Error loading clients:', error);
+      }
+    };
+    if (user) {
+      loadClients();
+    }
+  }, [user]);
 
   // Load invoice history
   useEffect(() => {
@@ -438,8 +484,19 @@ export default function InvoiceForm() {
           paymentStatus: loaded.paymentStatus,
           paymentLink: loaded.paymentLink,
           paymentProvider: loaded.paymentProvider,
+          paidAmount: loaded.paidAmount,
         });
         setShowHistory(false);
+        
+        // Load payment history
+        if (loaded.id) {
+          try {
+            const history = await getInvoicePaymentHistoryAPI(loaded.id);
+            setPaymentHistory(history.payments || []);
+          } catch (error) {
+            console.error('Error loading payment history:', error);
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading invoice:', error);
@@ -867,15 +924,56 @@ export default function InvoiceForm() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Client Name *
+                    Client *
                   </label>
-                  <input
-                    type="text"
-                    value={invoice.client?.name || ''}
-                    onChange={(e) => updateField('client.name', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                    required
-                  />
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <select
+                        value=""
+                        onChange={async (e) => {
+                          const clientId = e.target.value;
+                          if (clientId && clientId !== 'new') {
+                            const selectedClient = clients.find(c => c.id === clientId);
+                            if (selectedClient) {
+                              setInvoice((prev) => ({
+                                ...prev,
+                                client: {
+                                  name: selectedClient.name,
+                                  email: selectedClient.email || '',
+                                  phone: selectedClient.phone || '',
+                                  address: selectedClient.address || '',
+                                  city: selectedClient.city || '',
+                                  state: selectedClient.state || '',
+                                  zip: selectedClient.zip || '',
+                                  country: selectedClient.country || '',
+                                },
+                              }));
+                            }
+                          } else if (clientId === 'new') {
+                            setShowClientModal(true);
+                          }
+                          e.target.value = '';
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                      >
+                        <option value="">Select a client or enter manually...</option>
+                        {clients.map((client) => (
+                          <option key={client.id} value={client.id}>
+                            {client.name} {client.email ? `(${client.email})` : ''}
+                          </option>
+                        ))}
+                        <option value="new">+ Add New Client</option>
+                      </select>
+                    </div>
+                    <input
+                      type="text"
+                      value={invoice.client?.name || ''}
+                      onChange={(e) => updateField('client.name', e.target.value)}
+                      placeholder="Client Name"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                      required
+                    />
+                  </div>
                 </div>
                 
                 {/* Address Section - Simple or Detailed */}
@@ -981,13 +1079,33 @@ export default function InvoiceForm() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Invoice Number *
                     </label>
-                    <input
-                      type="text"
-                      value={invoice.invoiceNumber || ''}
-                      onChange={(e) => updateField('invoiceNumber', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                      required
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={invoice.invoiceNumber || ''}
+                        onChange={(e) => updateField('invoiceNumber', e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const numberResult = await getNextInvoiceNumberAPI();
+                            setInvoice((prev) => ({
+                              ...prev,
+                              invoiceNumber: numberResult.invoiceNumber,
+                            }));
+                          } catch (error: any) {
+                            alert('Failed to generate invoice number: ' + error.message);
+                          }
+                        }}
+                        className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm whitespace-nowrap"
+                        title="Generate next invoice number"
+                      >
+                        🔄 Auto
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">PO Number</label>
@@ -1412,10 +1530,128 @@ export default function InvoiceForm() {
                           {formatCurrency(invoice.total || 0, invoice.currency || 'USD')}
                         </span>
                       </div>
+                      {invoice.paidAmount && invoice.paidAmount > 0 && (
+                        <>
+                          <div className="flex justify-between text-sm text-green-600 pt-2 border-t border-gray-200">
+                            <span>Paid:</span>
+                            <span className="font-semibold">
+                              {currencySymbol}{' '}
+                              {formatCurrency(invoice.paidAmount, invoice.currency || 'USD')}
+                            </span>
+                          </div>
+                          {invoice.paidAmount && invoice.total && invoice.paidAmount < invoice.total && (
+                            <div className="flex justify-between text-sm text-red-600">
+                              <span>Outstanding:</span>
+                              <span className="font-semibold">
+                                {currencySymbol}{' '}
+                                {formatCurrency(invoice.total - invoice.paidAmount, invoice.currency || 'USD')}
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
+
+              {/* Payment History Section */}
+              {invoice.id && (
+                <div className="mt-4 sm:mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-gray-700">Payment History</h3>
+                    <button
+                      onClick={async () => {
+                        if (!invoice.id) return;
+                        try {
+                          const history = await getInvoicePaymentHistoryAPI(invoice.id);
+                          setPaymentHistory(history.payments || []);
+                          setShowPaymentHistory(!showPaymentHistory);
+                        } catch (error: any) {
+                          alert('Failed to load payment history: ' + error.message);
+                        }
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      {showPaymentHistory ? 'Hide' : 'View'} History
+                    </button>
+                  </div>
+                  {showPaymentHistory && (
+                    <div className="space-y-2">
+                      {paymentHistory.length > 0 ? (
+                        paymentHistory.map((payment: any) => (
+                          <div key={payment.id} className="bg-white p-3 rounded border border-gray-200">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="text-sm font-medium">
+                                  {currencySymbol} {formatCurrency(payment.amount, payment.currency)}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  {payment.provider === 'manual' ? 'Manual Payment' : payment.provider}
+                                  {payment.paidAt && ` • ${format(new Date(payment.paidAt), 'MMM dd, yyyy')}`}
+                                </div>
+                                {payment.transactionId && (
+                                  <div className="text-xs text-gray-400 mt-1">
+                                    Transaction: {payment.transactionId}
+                                  </div>
+                                )}
+                              </div>
+                              <span className={`px-2 py-1 text-xs font-semibold rounded ${
+                                payment.status === 'completed'
+                                  ? 'bg-green-100 text-green-800'
+                                  : payment.status === 'pending'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {payment.status}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-sm text-gray-500 text-center py-4">
+                          No payment history yet
+                        </div>
+                      )}
+                      {invoice.paymentStatus !== 'paid' && invoice.id && invoice.total && (
+                        <button
+                          onClick={async () => {
+                            const amount = prompt(
+                              `Enter payment amount (Outstanding: ${currencySymbol}${formatCurrency(invoice.total - (invoice.paidAmount || 0), invoice.currency || 'USD')}):`
+                            );
+                            if (amount && !isNaN(parseFloat(amount))) {
+                              try {
+                                await recordPaymentAPI(
+                                  invoice.id,
+                                  parseFloat(amount),
+                                  invoice.currency || 'USD'
+                                );
+                                // Reload invoice and payment history
+                                const loaded = await loadInvoiceAPI(invoice.id);
+                                if (loaded) {
+                                  setInvoice((prev) => ({
+                                    ...prev,
+                                    paidAmount: loaded.paidAmount,
+                                    paymentStatus: loaded.paymentStatus,
+                                  }));
+                                }
+                                const history = await getInvoicePaymentHistoryAPI(invoice.id);
+                                setPaymentHistory(history.payments || []);
+                                alert('Payment recorded successfully!');
+                              } catch (error: any) {
+                                alert('Failed to record payment: ' + error.message);
+                              }
+                            }
+                          }}
+                          className="w-full mt-2 px-3 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                          + Record Payment
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Payment Link Section - Premium Only */}
               {isPremium && invoice.total && invoice.total > 0 && (
@@ -1572,6 +1808,171 @@ export default function InvoiceForm() {
           </div>
         </div>
       </div>
+
+      {/* Client Modal */}
+      {showClientModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-semibold mb-4">Add New Client</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  value={newClient.name}
+                  onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={newClient.email}
+                    onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={newClient.phone}
+                    onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Address
+                </label>
+                <input
+                  type="text"
+                  value={newClient.address}
+                  onChange={(e) => setNewClient({ ...newClient, address: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    value={newClient.city}
+                    onChange={(e) => setNewClient({ ...newClient, city: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    State
+                  </label>
+                  <input
+                    type="text"
+                    value={newClient.state}
+                    onChange={(e) => setNewClient({ ...newClient, state: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    ZIP
+                  </label>
+                  <input
+                    type="text"
+                    value={newClient.zip}
+                    onChange={(e) => setNewClient({ ...newClient, zip: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Country
+                </label>
+                <input
+                  type="text"
+                  value={newClient.country}
+                  onChange={(e) => setNewClient({ ...newClient, country: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={async () => {
+                    if (!newClient.name) {
+                      alert('Client name is required');
+                      return;
+                    }
+                    try {
+                      const created = await createClientAPI(newClient);
+                      setClients([...clients, created]);
+                      setInvoice((prev) => ({
+                        ...prev,
+                        client: {
+                          name: created.name,
+                          email: created.email || '',
+                          phone: created.phone || '',
+                          address: created.address || '',
+                          city: created.city || '',
+                          state: created.state || '',
+                          zip: created.zip || '',
+                          country: created.country || '',
+                        },
+                      }));
+                      setNewClient({
+                        name: '',
+                        email: '',
+                        phone: '',
+                        address: '',
+                        city: '',
+                        state: '',
+                        zip: '',
+                        country: '',
+                      });
+                      setShowClientModal(false);
+                    } catch (error: any) {
+                      alert('Failed to create client: ' + error.message);
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                >
+                  Save Client
+                </button>
+                <button
+                  onClick={() => {
+                    setShowClientModal(false);
+                    setNewClient({
+                      name: '',
+                      email: '',
+                      phone: '',
+                      address: '',
+                      city: '',
+                      state: '',
+                      zip: '',
+                      country: '',
+                    });
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

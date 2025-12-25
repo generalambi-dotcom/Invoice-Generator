@@ -163,6 +163,14 @@ export async function PATCH(
         ...(body.paymentProvider !== undefined && { paymentProvider: body.paymentProvider }),
         ...(body.paidAmount !== undefined && { paidAmount: body.paidAmount }),
         ...(body.paymentDate && { paymentDate: new Date(body.paymentDate) }),
+        // Auto-update payment status based on paid amount
+        ...(body.paidAmount !== undefined && {
+          paymentStatus: body.paidAmount >= existingInvoice.total
+            ? 'paid'
+            : body.paidAmount > 0
+            ? 'pending' // Partial payment - keep as pending
+            : existingInvoice.paymentStatus,
+        }),
       },
     });
 

@@ -45,6 +45,8 @@ model User {
   sentEmails        EmailLog[]
   refreshTokens     RefreshToken[]
   companyDefaults   CompanyDefaults?
+  clients           Client[]
+  invoiceNumberSequences InvoiceNumberSequence[]
 }
 
 model PaymentCredential {
@@ -83,6 +85,7 @@ model Invoice {
   companyInfo   Json
   
   // Client info (JSON)
+  clientId      String?  // Reference to Client model (optional for backward compatibility)
   clientInfo    Json
   shipToInfo    Json?
   
@@ -120,12 +123,14 @@ model Invoice {
   updatedAt     DateTime @updatedAt
 
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client        Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
   payments      Payment[]
 
   @@index([userId])
   @@index([invoiceNumber])
   @@index([paymentStatus])
   @@index([createdAt])
+  @@index([clientId])
 }
 
 model Payment {
@@ -210,4 +215,50 @@ model CompanyDefaults {
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model Client {
+  id            String   @id @default(cuid())
+  userId        String
+  name          String
+  email         String?
+  phone         String?
+  address       String?
+  city          String?
+  state         String?
+  zip           String?
+  country       String?
+  website       String?
+  notes         String?
+  tags          String[]  @default([])
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices      Invoice[]
+
+  @@index([userId])
+  @@index([email])
+  @@index([name])
+}
+
+model InvoiceNumberSequence {
+  id            String   @id @default(cuid())
+  userId        String
+  prefix        String   @default("INV")
+  format        String   @default("PREFIX-YYYY-NNNN") // PREFIX-YYYY-NNNN, PREFIX-NNNN, etc.
+  currentNumber Int      @default(1)
+  year          Int?     // For year-based sequences
+  month         Int?     // For month-based sequences
+  resetPeriod   String?  // 'year' | 'month' | null (never reset)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, prefix, year, month])
+  @@index([userId])
+  @@index([prefix])
 }

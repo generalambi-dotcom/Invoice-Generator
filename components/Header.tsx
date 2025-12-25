@@ -312,6 +312,18 @@ export default function Header() {
                 >
                   Dashboard
                 </Link>
+                <Link
+                  href="/clients"
+                  className="hidden md:block text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Clients
+                </Link>
+                <Link
+                  href="/reports"
+                  className="hidden md:block text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Reports
+                </Link>
                 <button
                   onClick={handleSignOut}
                   className="hidden md:block text-gray-700 hover:text-gray-900 transition-colors"

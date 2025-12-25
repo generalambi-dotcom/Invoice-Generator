@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser, signOut } from '@/lib/auth';
-import { loadInvoicesAPI, deleteInvoiceAPI } from '@/lib/api-client';
+import { loadInvoicesAPI, deleteInvoiceAPI, updateOverdueInvoicesAPI, getPaymentRemindersAPI, sendPaymentRemindersAPI } from '@/lib/api-client';
 import { Invoice, currencySymbols } from '@/types/invoice';
 import { formatCurrency } from '@/lib/calculations';
 import { format } from 'date-fns';
@@ -16,6 +16,9 @@ export default function DashboardPage() {
   const [deletedInvoices, setDeletedInvoices] = useState<Invoice[]>([]);
   const [showDeleted, setShowDeleted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [paymentReminders, setPaymentReminders] = useState<any[]>([]);
+  const [showReminders, setShowReminders] = useState(false);
+  const [sendingReminders, setSendingReminders] = useState(false);
 
   useEffect(() => {
     const currentUser = getCurrentUser();
@@ -26,7 +29,30 @@ export default function DashboardPage() {
 
     setUser(currentUser);
     loadInvoiceData();
+    loadPaymentReminders();
+    
+    // Update overdue invoices on mount
+    const updateOverdue = async () => {
+      try {
+        await updateOverdueInvoicesAPI();
+        loadInvoiceData();
+      } catch (error) {
+        console.error('Error updating overdue invoices:', error);
+      }
+    };
+    if (currentUser) {
+      updateOverdue();
+    }
   }, [router]);
+
+  const loadPaymentReminders = async () => {
+    try {
+      const reminders = await getPaymentRemindersAPI();
+      setPaymentReminders(reminders.reminders || []);
+    } catch (error) {
+      console.error('Error loading payment reminders:', error);
+    }
+  };
 
   const loadInvoiceData = async () => {
     try {
@@ -348,6 +374,11 @@ export default function DashboardPage() {
                         <div className="text-sm font-medium text-gray-900">
                           {currencySymbols[invoice.currency]} {formatCurrency(invoice.total, invoice.currency)}
                         </div>
+                        {invoice.paidAmount && invoice.paidAmount > 0 && invoice.paidAmount < invoice.total && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Paid: {currencySymbols[invoice.currency]} {formatCurrency(invoice.paidAmount, invoice.currency)}
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
@@ -379,6 +410,40 @@ export default function DashboardPage() {
                           >
                             View
                           </button>
+                          {!showDeleted && (invoice.paymentStatus === 'pending' || invoice.paymentStatus === 'overdue') && (
+                            <button
+                              onClick={async () => {
+                                const amount = prompt(
+                                  `Enter payment amount (Total: ${currencySymbols[invoice.currency]}${formatCurrency(invoice.total, invoice.currency)}):`
+                                );
+                                if (amount && !isNaN(parseFloat(amount))) {
+                                  const paidAmount = parseFloat(amount);
+                                  const currentPaid = invoice.paidAmount || 0;
+                                  const newPaidAmount = currentPaid + paidAmount;
+                                  
+                                  try {
+                                    await fetch(`/api/invoices/${invoice.id}`, {
+                                      method: 'PATCH',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+                                      },
+                                      body: JSON.stringify({
+                                        paidAmount: newPaidAmount,
+                                        paymentDate: new Date().toISOString(),
+                                      }),
+                                    });
+                                    loadInvoiceData();
+                                  } catch (error) {
+                                    alert('Failed to record payment');
+                                  }
+                                }
+                              }}
+                              className="text-green-600 hover:text-green-800 font-medium text-sm"
+                            >
+                              Record Payment
+                            </button>
+                          )}
                           {showDeleted ? (
                             <>
                               <button

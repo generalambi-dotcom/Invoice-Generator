@@ -19,10 +19,15 @@ export interface AuthenticatedRequest {
  */
 export function getAuthenticatedUser(request: NextRequest): AuthenticatedRequest | null {
   const authHeader = request.headers.get('authorization');
-  const token = authHeader || request.headers.get('x-auth-token');
+  let token = authHeader || request.headers.get('x-auth-token');
   
   if (!token) {
     return null;
+  }
+
+  // Extract token from "Bearer <token>" format if present
+  if (token.startsWith('Bearer ')) {
+    token = token.substring(7);
   }
 
   const user = getUserFromToken(token);

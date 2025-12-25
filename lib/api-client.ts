@@ -6,7 +6,8 @@
 import { getCurrentUser } from './auth';
 import { getValidAccessToken } from './token-refresh';
 
-const API_BASE = process.env.NEXT_PUBLIC_APP_URL || '';
+// Use relative URLs for API calls (works in both dev and production)
+const API_BASE = '';
 
 /**
  * Get authentication headers with JWT token
@@ -448,21 +449,34 @@ export async function createClientAPI(client: any): Promise<any> {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      let errorMessage = 'Failed to create client';
+      try {
+        const error = await response.json();
+        errorMessage = error.error || errorMessage;
+      } catch (e) {
+        // If response is not JSON, use status text
+        errorMessage = response.statusText || errorMessage;
+      }
+      
       if (response.status === 401) {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth_token');
         }
         throw new Error('Please sign in to create client');
       }
-      throw new Error(error.error || 'Failed to create client');
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
     return data.client;
   } catch (error: any) {
     console.error('Error creating client:', error);
-    throw error;
+    // If it's already an Error object, throw it as-is
+    if (error instanceof Error) {
+      throw error;
+    }
+    // Otherwise wrap it
+    throw new Error(error.message || 'Failed to create client');
   }
 }
 

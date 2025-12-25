@@ -1,8 +1,7 @@
 /**
  * Session management utilities
+ * Client-side only - does not import server-side modules
  */
-
-import { revokeAllUserRefreshTokens } from './refresh-token';
 
 /**
  * Session information interface
@@ -75,7 +74,12 @@ export function getSession(): SessionInfo | null {
     const timeSinceActivity = now.getTime() - lastActivity.getTime();
 
     if (timeSinceActivity > SESSION_TIMEOUT) {
-      clearSession();
+      // Clear session data without calling API (to avoid circular dependency)
+      localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(LAST_ACTIVITY_KEY);
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('current_user');
       return null;
     }
 
@@ -122,9 +126,9 @@ export async function clearSession(): Promise<void> {
   }
 
   try {
-    // Get user ID before clearing
+    // Get user ID and token before clearing
     const session = getSession();
-    const userId = session?.userId;
+    const refreshToken = localStorage.getItem('refresh_token');
 
     // Clear local storage
     localStorage.removeItem(SESSION_KEY);
@@ -133,14 +137,20 @@ export async function clearSession(): Promise<void> {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('current_user');
 
-    // Revoke refresh tokens on server (if we have userId)
-    if (userId) {
-      try {
-        await revokeAllUserRefreshTokens(userId);
-      } catch (error) {
-        // If revoke fails, continue with local cleanup
-        console.error('Error revoking refresh tokens:', error);
-      }
+    // Revoke refresh tokens on server via API call (client-safe, non-blocking)
+    if (refreshToken) {
+      const authToken = localStorage.getItem('auth_token');
+      // Make API call to revoke tokens (fire and forget)
+      fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+        },
+        body: JSON.stringify({ refreshToken }),
+      }).catch(() => {
+        // Ignore errors - local cleanup already done
+      });
     }
   } catch (error) {
     console.error('Error clearing session:', error);

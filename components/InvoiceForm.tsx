@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { pdf } from '@react-pdf/renderer';
 import { InvoicePDF } from '@/lib/pdf-generator';
 import {
@@ -42,7 +43,10 @@ import { format } from 'date-fns';
 import { getCurrentUser } from '@/lib/auth';
 import { isPremiumUser } from '@/lib/payments';
 
-export default function InvoiceForm() {
+function InvoiceFormContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  
   // Form state
   const [invoice, setInvoice] = useState<Partial<Invoice>>({
     invoiceNumber: '',
@@ -244,21 +248,87 @@ export default function InvoiceForm() {
     loadHistory();
   }, []);
 
-  // Load invoice from history page (sessionStorage)
+  // Load invoice from URL query parameter (invoiceId) or sessionStorage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const loadInvoiceData = sessionStorage.getItem('loadInvoice');
-      if (loadInvoiceData) {
+    const loadInvoiceById = async () => {
+      // First check URL query parameter
+      const invoiceId = searchParams.get('invoiceId');
+      if (invoiceId) {
         try {
-          const invoice = JSON.parse(loadInvoiceData);
-          setInvoice(invoice);
-          sessionStorage.removeItem('loadInvoice');
+          const loaded = await loadInvoiceAPI(invoiceId);
+          if (loaded) {
+            // Convert database format to form format
+            setInvoice({
+              id: loaded.id,
+              invoiceNumber: loaded.invoiceNumber,
+              invoiceDate: new Date(loaded.invoiceDate).toISOString().split('T')[0],
+              dueDate: new Date(loaded.dueDate).toISOString().split('T')[0],
+              purchaseOrder: loaded.purchaseOrder,
+              company: loaded.companyInfo,
+              client: loaded.clientInfo,
+              shipTo: loaded.shipToInfo,
+              lineItems: loaded.lineItems,
+              subtotal: loaded.subtotal,
+              taxRate: loaded.taxRate,
+              taxAmount: loaded.taxAmount,
+              discountRate: loaded.discountRate,
+              discountAmount: loaded.discountAmount,
+              shipping: loaded.shipping,
+              total: loaded.total,
+              currency: loaded.currency,
+              theme: loaded.theme,
+              notes: loaded.notes,
+              bankDetails: loaded.bankDetails,
+              terms: loaded.terms,
+              paymentStatus: loaded.paymentStatus,
+              paymentLink: loaded.paymentLink,
+              paymentProvider: loaded.paymentProvider,
+              paidAmount: loaded.paidAmount,
+              paymentDate: loaded.paymentDate,
+              createdAt: loaded.createdAt,
+              updatedAt: loaded.updatedAt,
+            });
+            
+            // Update simple address formats
+            if (loaded.companyInfo && typeof loaded.companyInfo === 'object') {
+              const company = loaded.companyInfo as any;
+              if (company.address) {
+                setSimpleCompanyAddress(company.address);
+              }
+            }
+            if (loaded.clientInfo && typeof loaded.clientInfo === 'object') {
+              const client = loaded.clientInfo as any;
+              if (client.address) {
+                setSimpleClientAddress(client.address);
+              }
+            }
+            
+            // Remove invoiceId from URL
+            router.replace('/', { scroll: false });
+          }
         } catch (error) {
-          console.error('Error loading invoice from session:', error);
+          console.error('Error loading invoice by ID:', error);
+        }
+        return; // Don't check sessionStorage if invoiceId was in URL
+      }
+      
+      // Fallback to sessionStorage
+      if (typeof window !== 'undefined') {
+        const loadInvoiceData = sessionStorage.getItem('loadInvoice');
+        if (loadInvoiceData) {
+          try {
+            const invoice = JSON.parse(loadInvoiceData);
+            setInvoice(invoice);
+            sessionStorage.removeItem('loadInvoice');
+          } catch (error) {
+            console.error('Error loading invoice from session:', error);
+          }
         }
       }
-    }
-  }, []);
+    };
+    
+    loadInvoiceById();
+  }, [searchParams, router]);
 
   // Recalculate totals when line items, tax, discount, or shipping change
   useEffect(() => {
@@ -2177,3 +2247,14 @@ export default function InvoiceForm() {
   );
 }
 
+export default function InvoiceForm() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    }>
+      <InvoiceFormContent />
+    </Suspense>
+  );
+}

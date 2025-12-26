@@ -363,20 +363,27 @@ export default function Header() {
                             Payment Methods
                           </Link>
                         )}
-                        <Link
-                          href="/settings/public-link"
-                          onClick={closeMenus}
-                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          Public Invoice Link
-                        </Link>
-                        <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
-                        <button
-                          onClick={handleSignOut}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          Sign Out
-                        </button>
+                          <Link
+                            href="/settings/public-link"
+                            onClick={closeMenus}
+                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          >
+                            Public Invoice Link
+                          </Link>
+                          <Link
+                            href="/settings/whatsapp"
+                            onClick={closeMenus}
+                            className="block px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                          >
+                            WhatsApp Connection
+                          </Link>
+                          <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+                          <button
+                            onClick={handleSignOut}
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          >
+                            Sign Out
+                          </button>
                       </div>
                     </>
                   )}
@@ -477,6 +484,13 @@ export default function Header() {
                             className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                           >
                             Public Invoice Link
+                          </Link>
+                          <Link
+                            href="/settings/whatsapp"
+                            onClick={closeMenus}
+                            className="block px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                          >
+                            WhatsApp Connection
                           </Link>
                           <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
                           <button

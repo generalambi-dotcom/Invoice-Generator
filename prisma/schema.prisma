@@ -51,6 +51,7 @@ model User {
   recurringInvoices      RecurringInvoice[]
   creditNotes            CreditNote[]
   estimates              Estimate[]
+  whatsappCredential     WhatsAppCredential?
 }
 
 model PaymentCredential {
@@ -412,4 +413,76 @@ model Estimate {
   @@index([userId])
   @@index([status])
   @@index([expiryDate])
+}
+
+model WhatsAppCredential {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  phoneNumber   String   // WhatsApp phone number (e.g., +2348012345678)
+  provider      String   @default("twilio") // 'twilio' | 'meta' | 'whatsapp-web'
+  
+  // Provider-specific credentials (encrypted)
+  accountSid    String?  // For Twilio
+  authToken     String?  // Encrypted auth token
+  apiKey        String?  // For other providers
+  apiSecret     String?  // Encrypted
+  webhookUrl    String?  // Webhook URL for receiving messages
+  
+  // Connection status
+  isActive      Boolean  @default(true)
+  isVerified    Boolean  @default(false)
+  verifiedAt    DateTime?
+  lastMessageAt DateTime?
+  
+  // Metadata
+  metadata      Json?    // Store provider-specific data
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([phoneNumber])
+  @@index([isActive])
+}
+
+model WhatsAppSettings {
+  id            String   @id @default(cuid())
+  
+  // Global WhatsApp API settings (admin-configured)
+  provider      String   @default("twilio") // 'twilio' | 'meta' | 'whatsapp-web'
+  
+  // Twilio settings
+  twilioAccountSid    String?
+  twilioAuthToken     String?  // Encrypted
+  twilioWhatsAppNumber String? // Twilio WhatsApp number
+  
+  // Meta/WhatsApp Business API settings
+  metaAppId           String?
+  metaAppSecret       String?  // Encrypted
+  metaAccessToken     String?  // Encrypted
+  metaPhoneNumberId   String?
+  metaBusinessAccountId String?
+  
+  // WhatsApp Web settings (for development)
+  whatsappWebSessionPath String?
+  
+  // Webhook configuration
+  webhookUrl          String?
+  webhookSecret      String?  // For webhook verification
+  webhookVerified    Boolean  @default(false)
+  
+  // Feature flags
+  isEnabled           Boolean  @default(false)
+  allowUserConnections Boolean @default(true) // Allow users to connect their own WhatsApp
+  
+  // Rate limiting
+  messagesPerMinute   Int      @default(60)
+  messagesPerDay      Int      @default(1000)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([provider])
 }

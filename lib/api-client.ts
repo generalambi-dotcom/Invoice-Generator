@@ -31,38 +31,46 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 }
 
 /**
- * Save invoice to database
+ * Save invoice to database (creates new or updates existing)
  */
 export async function saveInvoiceAPI(invoice: any): Promise<any> {
   try {
-    const response = await fetch(`${API_BASE}/api/invoices`, {
-      method: 'POST',
+    const invoiceData = {
+      invoiceNumber: invoice.invoiceNumber,
+      invoiceDate: invoice.invoiceDate,
+      dueDate: invoice.dueDate,
+      purchaseOrder: invoice.purchaseOrder,
+      companyInfo: invoice.company,
+      clientInfo: invoice.client,
+      shipToInfo: invoice.shipTo,
+      lineItems: invoice.lineItems,
+      subtotal: invoice.subtotal,
+      taxRate: invoice.taxRate,
+      taxAmount: invoice.taxAmount,
+      discountRate: invoice.discountRate,
+      discountAmount: invoice.discountAmount,
+      shipping: invoice.shipping,
+      total: invoice.total,
+      currency: invoice.currency,
+      theme: invoice.theme,
+      notes: invoice.notes,
+      bankDetails: invoice.bankDetails,
+      terms: invoice.terms,
+      paymentStatus: invoice.paymentStatus || 'pending',
+      paymentLink: invoice.paymentLink,
+      paymentProvider: invoice.paymentProvider,
+    };
+
+    // If invoice has an ID, update it; otherwise create new
+    const url = invoice.id 
+      ? `${API_BASE}/api/invoices/${invoice.id}`
+      : `${API_BASE}/api/invoices`;
+    const method = invoice.id ? 'PATCH' : 'POST';
+
+    const response = await fetch(url, {
+      method,
       headers: await getAuthHeaders(),
-      body: JSON.stringify({
-        invoiceNumber: invoice.invoiceNumber,
-        invoiceDate: invoice.invoiceDate,
-        dueDate: invoice.dueDate,
-        purchaseOrder: invoice.purchaseOrder,
-        companyInfo: invoice.company,
-        clientInfo: invoice.client,
-        shipToInfo: invoice.shipTo,
-        lineItems: invoice.lineItems,
-        subtotal: invoice.subtotal,
-        taxRate: invoice.taxRate,
-        taxAmount: invoice.taxAmount,
-        discountRate: invoice.discountRate,
-        discountAmount: invoice.discountAmount,
-        shipping: invoice.shipping,
-        total: invoice.total,
-        currency: invoice.currency,
-        theme: invoice.theme,
-        notes: invoice.notes,
-        bankDetails: invoice.bankDetails,
-        terms: invoice.terms,
-        paymentStatus: invoice.paymentStatus || 'pending',
-        paymentLink: invoice.paymentLink,
-        paymentProvider: invoice.paymentProvider,
-      }),
+      body: JSON.stringify(invoiceData),
     });
 
     if (!response.ok) {

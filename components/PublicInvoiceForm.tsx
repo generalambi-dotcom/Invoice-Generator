@@ -158,6 +158,7 @@ export default function PublicInvoiceForm({ slug }: PublicInvoiceFormProps) {
   const handleSave = async () => {
     setError('');
     setSaving(true);
+    setSuccess(false);
 
     try {
       // Validation
@@ -169,16 +170,11 @@ export default function PublicInvoiceForm({ slug }: PublicInvoiceFormProps) {
         throw new Error('Please add at least one line item');
       }
 
-      if (!invoice.invoiceNumber) {
-        // Generate a simple invoice number if not provided
-        setInvoice((prev) => ({
-          ...prev,
-          invoiceNumber: `INV-${Date.now()}`,
-        }));
-      }
-
+      // Ensure invoice number is set synchronously
+      const finalInvoiceNumber = invoice.invoiceNumber || `INV-${Date.now()}`;
+      
       const invoiceData = {
-        invoiceNumber: invoice.invoiceNumber || `INV-${Date.now()}`,
+        invoiceNumber: finalInvoiceNumber,
         invoiceDate: invoice.invoiceDate || format(new Date(), 'yyyy-MM-dd'),
         dueDate: invoice.dueDate || format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
         purchaseOrder: invoice.purchaseOrder || null,

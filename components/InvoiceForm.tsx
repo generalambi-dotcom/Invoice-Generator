@@ -343,6 +343,96 @@ export default function InvoiceForm() {
     updateField(`${type}.country`, parts[4] || '');
   };
 
+  // Save invoice to database (without generating PDF)
+  const handleSaveInvoice = async () => {
+    // Basic validation
+    if (!invoice.invoiceNumber || !invoice.company?.name || !invoice.client?.name) {
+      alert('Please fill in required fields: Invoice Number, Company Name, and Client Name');
+      return;
+    }
+
+    setSavingInvoice(true);
+    try {
+      const completeInvoice: Invoice = {
+        id: invoice.id || Date.now().toString(),
+        invoiceNumber: invoice.invoiceNumber!,
+        invoiceDate: invoice.invoiceDate!,
+        dueDate: invoice.dueDate!,
+        purchaseOrder: invoice.purchaseOrder,
+        company: invoice.company!,
+        client: invoice.client!,
+        shipTo: invoice.shipTo,
+        lineItems: invoice.lineItems || [],
+        subtotal: invoice.subtotal || 0,
+        taxRate: invoice.taxRate || 0,
+        taxAmount: invoice.taxAmount || 0,
+        discountRate: invoice.discountRate || 0,
+        discountAmount: invoice.discountAmount || 0,
+        shipping: invoice.shipping || 0,
+        total: invoice.total || 0,
+        currency: invoice.currency!,
+        theme: invoice.theme!,
+        notes: invoice.notes,
+        bankDetails: invoice.bankDetails,
+        terms: invoice.terms,
+        paymentStatus: invoice.paymentStatus || 'pending',
+        paymentLink: invoice.paymentLink,
+        paymentProvider: invoice.paymentProvider,
+        createdAt: invoice.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Save invoice to database
+      const result = await saveInvoiceAPI(completeInvoice);
+      // Update invoice with database ID
+      if (result.invoice) {
+        setInvoice(prev => ({ ...prev, id: result.invoice.id }));
+      }
+      
+      // Reload history
+      const invoices = await loadInvoicesAPI();
+      // Convert database format to Invoice format
+      const formattedInvoices = invoices.map((inv: any) => ({
+        id: inv.id,
+        invoiceNumber: inv.invoiceNumber,
+        invoiceDate: inv.invoiceDate,
+        dueDate: inv.dueDate,
+        purchaseOrder: inv.purchaseOrder,
+        company: inv.companyInfo,
+        client: inv.clientInfo,
+        shipTo: inv.shipToInfo,
+        lineItems: inv.lineItems,
+        subtotal: inv.subtotal,
+        taxRate: inv.taxRate,
+        taxAmount: inv.taxAmount,
+        discountRate: inv.discountRate,
+        discountAmount: inv.discountAmount,
+        shipping: inv.shipping,
+        total: inv.total,
+        currency: inv.currency,
+        theme: inv.theme,
+        notes: inv.notes,
+        bankDetails: inv.bankDetails,
+        terms: inv.terms,
+        paymentStatus: inv.paymentStatus,
+        paymentLink: inv.paymentLink,
+        paymentProvider: inv.paymentProvider,
+        paidAmount: inv.paidAmount,
+        paymentDate: inv.paymentDate,
+        createdAt: inv.createdAt,
+        updatedAt: inv.updatedAt,
+      }));
+      setInvoiceHistory(formattedInvoices);
+      
+      alert('Invoice saved successfully!');
+    } catch (error: any) {
+      console.error('Error saving invoice:', error);
+      alert('Failed to save invoice: ' + (error.message || 'Please try again.'));
+    } finally {
+      setSavingInvoice(false);
+    }
+  };
+
   // Generate and download PDF
   const handleDownloadPDF = async () => {
     if (!invoice.invoiceNumber || !invoice.company?.name || !invoice.client?.name) {
@@ -1864,6 +1954,15 @@ export default function InvoiceForm() {
 
               {/* Action Buttons */}
               <div className="mt-4 sm:mt-6 space-y-3">
+                {/* Save Invoice Button */}
+                <button
+                  onClick={handleSaveInvoice}
+                  disabled={savingInvoice || isGeneratingPDF}
+                  className="w-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {savingInvoice ? 'Saving...' : '💾 Save Invoice'}
+                </button>
+
                 {/* Send Invoice Button - Premium Only */}
                 {isPremium && user && invoice.id && invoice.client?.email && (
                   <button
@@ -1900,7 +1999,7 @@ export default function InvoiceForm() {
                   disabled={isGeneratingPDF || savingInvoice}
                   className="w-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-theme-primary text-white rounded-lg hover:bg-theme-primary-dark transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isGeneratingPDF ? 'Generating PDF...' : savingInvoice ? 'Saving...' : 'Download PDF'}
+                  {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
                 </button>
               </div>
             </div>

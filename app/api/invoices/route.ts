@@ -135,58 +135,73 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const invoice = await prisma.invoice.create({
-      data: {
-        userId: user.userId,
-        invoiceNumber,
-        invoiceDate: new Date(invoiceDate),
-        dueDate: new Date(dueDate),
-        purchaseOrder: purchaseOrder || null,
-        companyInfo,
-        clientInfo,
-        shipToInfo: shipToInfo || null,
-        lineItems,
-        subtotal,
-        taxRate: taxRate || 0,
-        taxAmount: taxAmount || 0,
-        discountRate: discountRate || 0,
-        discountAmount: discountAmount || 0,
-        shipping: shipping || 0,
-        total,
-        currency: currency || 'USD',
-        theme: theme || 'slate',
-        notes: notes || null,
-        bankDetails: bankDetails || null,
-        terms: terms || null,
-        paymentStatus: 'pending',
-        createdBy: 'owner', // Mark as owner-created
-        customerEmail: null,
-      },
-    });
+    try {
+      const invoice = await prisma.invoice.create({
+        data: {
+          userId: user.userId,
+          invoiceNumber,
+          invoiceDate: new Date(invoiceDate),
+          dueDate: new Date(dueDate),
+          purchaseOrder: purchaseOrder || null,
+          companyInfo,
+          clientInfo,
+          shipToInfo: shipToInfo || null,
+          lineItems,
+          subtotal,
+          taxRate: taxRate || 0,
+          taxAmount: taxAmount || 0,
+          discountRate: discountRate || 0,
+          discountAmount: discountAmount || 0,
+          shipping: shipping || 0,
+          total,
+          currency: currency || 'USD',
+          theme: theme || 'slate',
+          notes: notes || null,
+          bankDetails: bankDetails || null,
+          terms: terms || null,
+          paymentStatus: 'pending',
+          createdBy: 'owner', // Mark as owner-created
+          customerEmail: null,
+        },
+      });
 
-    // Auto-generate payment link if credentials are configured
-    // Only if no payment link was provided in the request
-    if (!body.paymentLink && total > 0) {
-      try {
-        const paymentLinkResult = await autoGeneratePaymentLink(invoice.id, user.userId, total);
-        if (paymentLinkResult) {
-          // Update invoice with generated payment link
-          const updatedInvoice = await prisma.invoice.update({
-            where: { id: invoice.id },
-            data: {
-              paymentLink: paymentLinkResult.paymentLink,
-              paymentProvider: paymentLinkResult.provider,
-            },
-          });
-          return NextResponse.json({ invoice: updatedInvoice });
+      console.log(`✅ Invoice created: ${invoice.id} for user ${user.userId} (${invoiceNumber})`);
+
+      // Auto-generate payment link if credentials are configured
+      // Only if no payment link was provided in the request
+      if (!body.paymentLink && total > 0) {
+        try {
+          const paymentLinkResult = await autoGeneratePaymentLink(invoice.id, user.userId, total);
+          if (paymentLinkResult) {
+            // Update invoice with generated payment link
+            const updatedInvoice = await prisma.invoice.update({
+              where: { id: invoice.id },
+              data: {
+                paymentLink: paymentLinkResult.paymentLink,
+                paymentProvider: paymentLinkResult.provider,
+              },
+            });
+            console.log(`✅ Payment link generated for invoice ${invoice.id}`);
+            return NextResponse.json({ invoice: updatedInvoice });
+          }
+        } catch (error) {
+          // Don't fail invoice creation if payment link generation fails
+          console.error('Error auto-generating payment link:', error);
         }
-      } catch (error) {
-        // Don't fail invoice creation if payment link generation fails
-        console.error('Error auto-generating payment link:', error);
       }
-    }
 
-    return NextResponse.json({ invoice });
+      return NextResponse.json({ invoice });
+    } catch (dbError: any) {
+      console.error('Database error creating invoice:', dbError);
+      // Check if it's a unique constraint violation (duplicate invoice number)
+      if (dbError.code === 'P2002') {
+        return NextResponse.json(
+          { error: 'Invoice number already exists. Please use a different invoice number.' },
+          { status: 400 }
+        );
+      }
+      throw dbError;
+    }
   } catch (error: any) {
     console.error('Error creating invoice:', error);
     return NextResponse.json(

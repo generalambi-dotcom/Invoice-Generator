@@ -121,56 +121,71 @@ export async function POST(
     }
 
     // Create invoice with source tracking
-    const invoice = await prisma.invoice.create({
-      data: {
-        userId: user.id,
-        invoiceNumber,
-        invoiceDate: new Date(invoiceDate),
-        dueDate: new Date(dueDate),
-        purchaseOrder: purchaseOrder || null,
-        companyInfo,
-        clientInfo,
-        shipToInfo: shipToInfo || null,
-        lineItems,
-        subtotal,
-        taxRate: taxRate || 0,
-        taxAmount: taxAmount || 0,
-        discountRate: discountRate || 0,
-        discountAmount: discountAmount || 0,
-        shipping: shipping || 0,
-        total,
-        currency: currency || 'USD',
-        theme: theme || 'slate',
-        notes: notes || null,
-        bankDetails: bankDetails || null,
-        terms: terms || null,
-        paymentStatus: 'pending',
-        createdBy: 'customer', // Mark as customer-created
-        customerEmail: customerEmail || null,
-      },
-    });
+    try {
+      const invoice = await prisma.invoice.create({
+        data: {
+          userId: user.id,
+          invoiceNumber,
+          invoiceDate: new Date(invoiceDate),
+          dueDate: new Date(dueDate),
+          purchaseOrder: purchaseOrder || null,
+          companyInfo,
+          clientInfo,
+          shipToInfo: shipToInfo || null,
+          lineItems,
+          subtotal,
+          taxRate: taxRate || 0,
+          taxAmount: taxAmount || 0,
+          discountRate: discountRate || 0,
+          discountAmount: discountAmount || 0,
+          shipping: shipping || 0,
+          total,
+          currency: currency || 'USD',
+          theme: theme || 'slate',
+          notes: notes || null,
+          bankDetails: bankDetails || null,
+          terms: terms || null,
+          paymentStatus: 'pending',
+          createdBy: 'customer', // Mark as customer-created
+          customerEmail: customerEmail || null,
+        },
+      });
 
-    // Auto-generate payment link if credentials are configured
-    if (total > 0) {
-      try {
-        const paymentLinkResult = await autoGeneratePaymentLink(invoice.id, user.id, total);
-        if (paymentLinkResult) {
-          const updatedInvoice = await prisma.invoice.update({
-            where: { id: invoice.id },
-            data: {
-              paymentLink: paymentLinkResult.paymentLink,
-              paymentProvider: paymentLinkResult.provider,
-            },
-          });
-          return NextResponse.json({ invoice: updatedInvoice }, { status: 201 });
+      console.log(`✅ Public invoice created: ${invoice.id} for user ${user.id} (${invoiceNumber})`);
+
+      // Auto-generate payment link if credentials are configured
+      if (total > 0) {
+        try {
+          const paymentLinkResult = await autoGeneratePaymentLink(invoice.id, user.id, total);
+          if (paymentLinkResult) {
+            const updatedInvoice = await prisma.invoice.update({
+              where: { id: invoice.id },
+              data: {
+                paymentLink: paymentLinkResult.paymentLink,
+                paymentProvider: paymentLinkResult.provider,
+              },
+            });
+            console.log(`✅ Payment link generated for invoice ${invoice.id}`);
+            return NextResponse.json({ invoice: updatedInvoice }, { status: 201 });
+          }
+        } catch (error) {
+          // Don't fail invoice creation if payment link generation fails
+          console.error('Error auto-generating payment link:', error);
         }
-      } catch (error) {
-        // Don't fail invoice creation if payment link generation fails
-        console.error('Error auto-generating payment link:', error);
       }
-    }
 
-    return NextResponse.json({ invoice }, { status: 201 });
+      return NextResponse.json({ invoice }, { status: 201 });
+    } catch (dbError: any) {
+      console.error('Database error creating public invoice:', dbError);
+      // Check if it's a unique constraint violation (duplicate invoice number)
+      if (dbError.code === 'P2002') {
+        return NextResponse.json(
+          { error: 'Invoice number already exists. Please use a different invoice number.' },
+          { status: 400 }
+        );
+      }
+      throw dbError;
+    }
   } catch (error: any) {
     console.error('Error creating public invoice:', error);
     return NextResponse.json(
@@ -224,57 +239,71 @@ export async function PATCH(
     }
 
     // Update invoice
-    const updatedInvoice = await prisma.invoice.update({
-      where: { id: invoiceId },
-      data: {
-        ...(updateData.invoiceNumber && { invoiceNumber: updateData.invoiceNumber }),
-        ...(updateData.invoiceDate && { invoiceDate: new Date(updateData.invoiceDate) }),
-        ...(updateData.dueDate && { dueDate: new Date(updateData.dueDate) }),
-        ...(updateData.purchaseOrder !== undefined && { purchaseOrder: updateData.purchaseOrder }),
-        ...(updateData.companyInfo && { companyInfo: updateData.companyInfo }),
-        ...(updateData.clientInfo && { clientInfo: updateData.clientInfo }),
-        ...(updateData.shipToInfo !== undefined && { shipToInfo: updateData.shipToInfo }),
-        ...(updateData.lineItems && { lineItems: updateData.lineItems }),
-        ...(updateData.subtotal !== undefined && { subtotal: updateData.subtotal }),
-        ...(updateData.taxRate !== undefined && { taxRate: updateData.taxRate }),
-        ...(updateData.taxAmount !== undefined && { taxAmount: updateData.taxAmount }),
-        ...(updateData.discountRate !== undefined && { discountRate: updateData.discountRate }),
-        ...(updateData.discountAmount !== undefined && { discountAmount: updateData.discountAmount }),
-        ...(updateData.shipping !== undefined && { shipping: updateData.shipping }),
-        ...(updateData.total !== undefined && { total: updateData.total }),
-        ...(updateData.currency && { currency: updateData.currency }),
-        ...(updateData.theme && { theme: updateData.theme }),
-        ...(updateData.notes !== undefined && { notes: updateData.notes }),
-        ...(updateData.bankDetails !== undefined && { bankDetails: updateData.bankDetails }),
-        ...(updateData.terms !== undefined && { terms: updateData.terms }),
-        updatedAt: new Date(),
-      },
-    });
+    try {
+      const updatedInvoice = await prisma.invoice.update({
+        where: { id: invoiceId },
+        data: {
+          ...(updateData.invoiceNumber && { invoiceNumber: updateData.invoiceNumber }),
+          ...(updateData.invoiceDate && { invoiceDate: new Date(updateData.invoiceDate) }),
+          ...(updateData.dueDate && { dueDate: new Date(updateData.dueDate) }),
+          ...(updateData.purchaseOrder !== undefined && { purchaseOrder: updateData.purchaseOrder }),
+          ...(updateData.companyInfo && { companyInfo: updateData.companyInfo }),
+          ...(updateData.clientInfo && { clientInfo: updateData.clientInfo }),
+          ...(updateData.shipToInfo !== undefined && { shipToInfo: updateData.shipToInfo }),
+          ...(updateData.lineItems && { lineItems: updateData.lineItems }),
+          ...(updateData.subtotal !== undefined && { subtotal: updateData.subtotal }),
+          ...(updateData.taxRate !== undefined && { taxRate: updateData.taxRate }),
+          ...(updateData.taxAmount !== undefined && { taxAmount: updateData.taxAmount }),
+          ...(updateData.discountRate !== undefined && { discountRate: updateData.discountRate }),
+          ...(updateData.discountAmount !== undefined && { discountAmount: updateData.discountAmount }),
+          ...(updateData.shipping !== undefined && { shipping: updateData.shipping }),
+          ...(updateData.total !== undefined && { total: updateData.total }),
+          ...(updateData.currency && { currency: updateData.currency }),
+          ...(updateData.theme && { theme: updateData.theme }),
+          ...(updateData.notes !== undefined && { notes: updateData.notes }),
+          ...(updateData.bankDetails !== undefined && { bankDetails: updateData.bankDetails }),
+          ...(updateData.terms !== undefined && { terms: updateData.terms }),
+          updatedAt: new Date(),
+        },
+      });
 
-    // Regenerate payment link if total changed
-    if (updateData.total && updateData.total > 0 && updateData.total !== existingInvoice.total) {
-      try {
-        const paymentLinkResult = await autoGeneratePaymentLink(
-          invoiceId,
-          user.id,
-          updateData.total
-        );
-        if (paymentLinkResult) {
-          const finalInvoice = await prisma.invoice.update({
-            where: { id: invoiceId },
-            data: {
-              paymentLink: paymentLinkResult.paymentLink,
-              paymentProvider: paymentLinkResult.provider,
-            },
-          });
-          return NextResponse.json({ invoice: finalInvoice });
+      console.log(`✅ Public invoice updated: ${invoiceId} (${updatedInvoice.invoiceNumber})`);
+
+      // Regenerate payment link if total changed
+      if (updateData.total && updateData.total > 0 && updateData.total !== existingInvoice.total) {
+        try {
+          const paymentLinkResult = await autoGeneratePaymentLink(
+            invoiceId,
+            user.id,
+            updateData.total
+          );
+          if (paymentLinkResult) {
+            const finalInvoice = await prisma.invoice.update({
+              where: { id: invoiceId },
+              data: {
+                paymentLink: paymentLinkResult.paymentLink,
+                paymentProvider: paymentLinkResult.provider,
+              },
+            });
+            console.log(`✅ Payment link regenerated for invoice ${invoiceId}`);
+            return NextResponse.json({ invoice: finalInvoice });
+          }
+        } catch (error) {
+          console.error('Error regenerating payment link:', error);
         }
-      } catch (error) {
-        console.error('Error regenerating payment link:', error);
       }
-    }
 
-    return NextResponse.json({ invoice: updatedInvoice });
+      return NextResponse.json({ invoice: updatedInvoice });
+    } catch (dbError: any) {
+      console.error('Database error updating public invoice:', dbError);
+      if (dbError.code === 'P2025') {
+        return NextResponse.json(
+          { error: 'Invoice not found' },
+          { status: 404 }
+        );
+      }
+      throw dbError;
+    }
   } catch (error: any) {
     console.error('Error updating public invoice:', error);
     return NextResponse.json(

@@ -129,6 +129,10 @@ model Invoice {
   approvedAt     DateTime?
   rejectionReason String?
   
+  // Customer editing
+  editableToken String?  @unique // Token for customer to edit invoice
+  editableTokenExpiry DateTime? // When the editing token expires
+  
   // Email tracking
   sentAt        DateTime?
   viewedAt      DateTime?

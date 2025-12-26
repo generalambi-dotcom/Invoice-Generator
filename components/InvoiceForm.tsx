@@ -35,6 +35,7 @@ import {
   createClientAPI,
   getInvoicePaymentHistoryAPI,
   recordPaymentAPI,
+  generateInvoiceEditTokenAPI,
 } from '@/lib/api-client';
 import LineItems from './LineItems';
 import { format } from 'date-fns';

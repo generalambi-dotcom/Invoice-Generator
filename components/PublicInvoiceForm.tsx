@@ -201,10 +201,16 @@ export default function PublicInvoiceForm({ slug }: PublicInvoiceFormProps) {
         customerEmail: invoice.client?.email,
       };
 
+      // If invoiceId exists, update existing invoice; otherwise create new one
+      const method = invoiceId ? 'PATCH' : 'POST';
+      const requestData = invoiceId 
+        ? { invoiceId, ...invoiceData }
+        : invoiceData;
+
       const response = await fetch(`/api/public/invoice/${slug}`, {
-        method: 'POST',
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invoiceData),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
@@ -213,7 +219,12 @@ export default function PublicInvoiceForm({ slug }: PublicInvoiceFormProps) {
       }
 
       const result = await response.json();
-      setInvoiceId(result.invoice.id);
+      
+      // Set invoiceId if it's a new invoice, or keep existing one if updating
+      if (!invoiceId && result.invoice?.id) {
+        setInvoiceId(result.invoice.id);
+      }
+      
       setSuccess(true);
       
       // Scroll to top to show success message

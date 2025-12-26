@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { pdf } from '@react-pdf/renderer';
+import { CreditNotePDF } from '@/lib/credit-note-pdf';
 import { getCurrentUser } from '@/lib/auth';
 import {
   createCreditNoteAPI,
@@ -38,6 +40,7 @@ export default function CreditNoteForm({ id, editMode = false, onSuccess }: Cred
   const [loading, setLoading] = useState(!!id);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
   const [creditNote, setCreditNote] = useState({
     creditNoteNumber: '',
@@ -234,6 +237,48 @@ export default function CreditNoteForm({ id, editMode = false, onSuccess }: Cred
       setError(error.message || 'Failed to save credit note');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!creditNote.creditNoteNumber || !creditNote.company?.name || !creditNote.client?.name) {
+      alert('Please fill in required fields: Credit Note Number, Company Name, and Client Name');
+      return;
+    }
+
+    setIsGeneratingPDF(true);
+    try {
+      const completeCreditNote = {
+        id: id || Date.now().toString(),
+        creditNoteNumber: creditNote.creditNoteNumber,
+        creditNoteDate: creditNote.creditNoteDate,
+        reason: creditNote.reason || null,
+        invoice: creditNote.invoiceId ? { invoiceNumber: 'REF-' + creditNote.invoiceId } : null,
+        companyInfo: creditNote.company,
+        clientInfo: creditNote.client,
+        lineItems: creditNote.lineItems || [],
+        subtotal: creditNote.subtotal || 0,
+        taxRate: creditNote.taxRate || 0,
+        taxAmount: creditNote.taxAmount || 0,
+        total: creditNote.total || 0,
+        currency: creditNote.currency,
+        notes: creditNote.notes || null,
+      };
+
+      const blob = await pdf(<CreditNotePDF creditNote={completeCreditNote} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `credit-note-${completeCreditNote.creditNoteNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -466,23 +511,39 @@ export default function CreditNoteForm({ id, editMode = false, onSuccess }: Cred
           </div>
 
           {/* Actions */}
-          {(!id || editMode) && (
-            <div className="border-t pt-4 flex justify-end gap-3">
+          <div className="border-t pt-4 flex justify-between items-center gap-3">
+            <div>
+              {id && (
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={isGeneratingPDF}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
+                </button>
+              )}
+            </div>
+            <div className="flex gap-3">
               <Link
                 href="/credit-notes"
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                Cancel
+                {id ? 'Back' : 'Cancel'}
               </Link>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {saving ? 'Saving...' : id && editMode ? 'Update Credit Note' : 'Create Credit Note'}
-              </button>
+              {(!id || editMode) && (
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {saving ? 'Saving...' : id && editMode ? 'Update Credit Note' : 'Create Credit Note'}
+                </button>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

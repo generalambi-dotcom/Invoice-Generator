@@ -151,9 +151,9 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
             {/* Quantity, Rate, Amount Row */}
             <div className="flex items-center gap-2">
               {/* Rate */}
-              <div className="flex-1">
+              <div className="w-28">
                 <div className="flex items-center border border-gray-300 rounded">
-                  <span className="px-2 text-gray-600">{currencySymbol}</span>
+                  <span className="px-1.5 text-gray-600 text-sm">{currencySymbol}</span>
                   <input
                     type="number"
                     value={item.rate || ''}
@@ -163,7 +163,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
                     min="0"
                     step="0.01"
                     placeholder="0"
-                    className="flex-1 px-2 py-2 border-0 rounded-r focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                    className="flex-1 px-1.5 py-2 border-0 rounded-r focus:outline-none focus:ring-2 focus:ring-theme-primary text-sm"
                   />
                 </div>
               </div>
@@ -172,7 +172,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
               <span className="text-gray-400 text-xl">×</span>
               
               {/* Quantity */}
-              <div className="w-20">
+              <div className="w-24">
                 <input
                   type="number"
                   value={item.quantity || ''}
@@ -181,7 +181,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
                   }
                   min="0"
                   step="0.01"
-                  className="w-full px-2 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-transparent"
+                  className="w-full px-2 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-transparent text-sm"
                 />
               </div>
               

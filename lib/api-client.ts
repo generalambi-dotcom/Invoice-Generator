@@ -1145,3 +1145,31 @@ export async function sendPaymentRemindersAPI(
   }
 }
 
+/**
+ * Generate edit token for customer invoice editing
+ */
+export async function generateInvoiceEditTokenAPI(invoiceId: string): Promise<{ token: string; editUrl: string; expiresAt: string }> {
+  try {
+    const response = await fetch(`${API_BASE}/api/invoices/${invoiceId}/generate-edit-token`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to generate edit link');
+      }
+      const error = await response.json().catch(() => ({ error: 'Failed to generate edit token' }));
+      throw new Error(error.error || 'Failed to generate edit token');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error generating edit token:', error);
+    throw error;
+  }
+}
+

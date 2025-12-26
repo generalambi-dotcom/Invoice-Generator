@@ -8,6 +8,31 @@ import { saveInvoiceAPI } from '@/lib/api-client';
 export const dynamic = 'force-dynamic';
 
 /**
+ * Normalize phone number to consistent format (+country code + number)
+ */
+function normalizePhoneNumber(phone: string): string {
+  if (!phone) return '';
+  
+  // Remove whatsapp: prefix if present
+  let normalized = phone.replace(/^whatsapp:/i, '').trim();
+  
+  // Remove any spaces, dashes, or other formatting
+  normalized = normalized.replace(/[\s\-\(\)]/g, '');
+  
+  // Ensure it starts with +
+  if (!normalized.startsWith('+')) {
+    // If it starts with 0, replace with country code (UK = +44)
+    if (normalized.startsWith('0')) {
+      normalized = '+44' + normalized.substring(1);
+    } else {
+      normalized = '+' + normalized;
+    }
+  }
+  
+  return normalized;
+}
+
+/**
  * POST - Handle incoming WhatsApp messages
  */
 export async function POST(request: NextRequest) {
@@ -38,13 +63,24 @@ export async function POST(request: NextRequest) {
  * Handle Twilio webhook
  */
 async function handleTwilioWebhook(body: any) {
-  const from = body.From.replace('whatsapp:', ''); // Remove whatsapp: prefix
+  // Log full webhook payload for debugging
+  console.log('🔍 Twilio webhook received:', {
+    From: body.From,
+    To: body.To,
+    Body: body.Body,
+    MessageSid: body.MessageSid,
+    AccountSid: body.AccountSid,
+  });
+
+  // Normalize the phone number from Twilio
+  const fromRaw = body.From || '';
+  const from = normalizePhoneNumber(fromRaw);
   const message = body.Body;
 
-  console.log(`📱 WhatsApp message from ${from}: ${message}`);
+  console.log(`📱 WhatsApp message from ${fromRaw} (normalized: ${from}): ${message}`);
 
-  // Find user by phone number
-  const credential = await prisma.whatsAppCredential.findFirst({
+  // Find user by phone number (try exact match first)
+  let credential = await prisma.whatsAppCredential.findFirst({
     where: {
       phoneNumber: from,
       isActive: true,
@@ -52,10 +88,39 @@ async function handleTwilioWebhook(body: any) {
     include: { user: true },
   });
 
+  // If not found, try variations (with/without +, with/without country code)
   if (!credential) {
-    console.log(`⚠️ No WhatsApp credential found for ${from}`);
+    const fromWithoutPlus = from.startsWith('+') ? from.substring(1) : from;
+    const variations = [
+      from,
+      `+${fromWithoutPlus}`,
+      fromWithoutPlus,
+      fromRaw.replace('whatsapp:', '').trim(),
+    ];
+
+    console.log(`🔍 Trying phone number variations:`, variations);
+
+    credential = await prisma.whatsAppCredential.findFirst({
+      where: {
+        OR: variations.map(v => ({ phoneNumber: v })),
+        isActive: true,
+      },
+      include: { user: true },
+    });
+  }
+
+  if (!credential) {
+    console.log(`⚠️ No WhatsApp credential found for ${from} (raw: ${fromRaw})`);
+    // Log all active credentials for debugging
+    const allCredentials = await prisma.whatsAppCredential.findMany({
+      where: { isActive: true },
+      select: { phoneNumber: true, userId: true, isVerified: true },
+    });
+    console.log('📋 Active credentials in database:', allCredentials);
     return NextResponse.json({ message: 'Not connected' }, { status: 200 });
   }
+
+  console.log(`✅ Found credential for ${credential.phoneNumber} (user: ${credential.userId})`);
 
   // Mark as verified if not already
   if (!credential.isVerified) {
@@ -98,7 +163,7 @@ async function handleTwilioWebhook(body: any) {
     `- List items with quantities and prices\n` +
     `- Specify due date if needed`;
 
-  await sendWhatsAppMessage(`whatsapp:${from}`, helpMessage);
+  await sendWhatsAppMessage(from, helpMessage);
 
   return NextResponse.json({ message: 'Help sent' }, { status: 200 });
 }
@@ -107,6 +172,9 @@ async function handleTwilioWebhook(body: any) {
  * Handle Meta webhook
  */
 async function handleMetaWebhook(body: any) {
+  // Log full webhook payload for debugging
+  console.log('🔍 Meta webhook received:', JSON.stringify(body, null, 2));
+
   const entry = body.entry[0];
   const change = entry.changes[0];
   const value = change.value;
@@ -116,23 +184,55 @@ async function handleMetaWebhook(body: any) {
   }
 
   const message = value.messages[0];
-  const from = message.from;
+  const fromRaw = message.from;
+  const from = normalizePhoneNumber(`+${fromRaw}`);
   const text = message.text?.body || '';
 
-  console.log(`📱 WhatsApp message from ${from}: ${text}`);
+  console.log(`📱 WhatsApp message from ${fromRaw} (normalized: ${from}): ${text}`);
 
-  // Find user by phone number
-  const credential = await prisma.whatsAppCredential.findFirst({
+  // Find user by phone number (try exact match first)
+  let credential = await prisma.whatsAppCredential.findFirst({
     where: {
-      phoneNumber: `+${from}`,
+      phoneNumber: from,
       isActive: true,
     },
     include: { user: true },
   });
 
+  // If not found, try variations
   if (!credential) {
+    const fromWithoutPlus = from.startsWith('+') ? from.substring(1) : from;
+    const variations = [
+      from,
+      `+${fromWithoutPlus}`,
+      fromWithoutPlus,
+      `+${fromRaw}`,
+      fromRaw,
+    ];
+
+    console.log(`🔍 Trying phone number variations:`, variations);
+
+    credential = await prisma.whatsAppCredential.findFirst({
+      where: {
+        OR: variations.map(v => ({ phoneNumber: v })),
+        isActive: true,
+      },
+      include: { user: true },
+    });
+  }
+
+  if (!credential) {
+    console.log(`⚠️ No WhatsApp credential found for ${from} (raw: ${fromRaw})`);
+    // Log all active credentials for debugging
+    const allCredentials = await prisma.whatsAppCredential.findMany({
+      where: { isActive: true },
+      select: { phoneNumber: true, userId: true, isVerified: true },
+    });
+    console.log('📋 Active credentials in database:', allCredentials);
     return NextResponse.json({ message: 'Not connected' }, { status: 200 });
   }
+
+  console.log(`✅ Found credential for ${credential.phoneNumber} (user: ${credential.userId})`);
 
   // Similar handling as Twilio
   const lowerMessage = text.toLowerCase().trim();
@@ -144,14 +244,14 @@ async function handleMetaWebhook(body: any) {
     (lowerMessage.includes('client') && lowerMessage.includes('$'));
 
   if (isInvoiceCommand) {
-    return await handleInvoiceCreation(credential.userId, text, `+${from}`);
+    return await handleInvoiceCreation(credential.userId, text, from);
   }
 
   const helpMessage = `👋 Hello! I can help you create invoices via WhatsApp.\n\n` +
     `📝 To create an invoice, send a message like:\n` +
     `"Create invoice for John Doe, 5 items at $100 each, due in 30 days"`;
 
-  await sendWhatsAppMessage(`+${from}`, helpMessage);
+  await sendWhatsAppMessage(from, helpMessage);
 
   return NextResponse.json({ message: 'Help sent' }, { status: 200 });
 }
@@ -168,7 +268,7 @@ async function handleInvoiceCreation(userId: string, message: string, from: stri
     if (!validation.valid) {
       const errorMessage = `❌ Invoice creation failed:\n\n${validation.errors.join('\n')}\n\n` +
         `Please provide all required information.`;
-      await sendWhatsAppMessage(`whatsapp:${from}`, errorMessage);
+      await sendWhatsAppMessage(from, errorMessage);
       return NextResponse.json({ message: 'Validation failed' }, { status: 200 });
     }
 
@@ -179,7 +279,7 @@ async function handleInvoiceCreation(userId: string, message: string, from: stri
 
     if (!defaults) {
       await sendWhatsAppMessage(
-        `whatsapp:${from}`,
+        from,
         '❌ Please set up your company information first in the web dashboard.'
       );
       return NextResponse.json({ message: 'No company defaults' }, { status: 200 });
@@ -257,18 +357,18 @@ async function handleInvoiceCreation(userId: string, message: string, from: stri
       `View: ${process.env.NEXT_PUBLIC_BASE_URL || 'https://invoicegenerator.ng'}/?invoiceId=${invoice.id}\n\n` +
       `Sending PDF...`;
 
-    await sendWhatsAppMessage(`whatsapp:${from}`, confirmationMessage);
+    await sendWhatsAppMessage(from, confirmationMessage);
 
     // Send PDF (you'll need to implement PDF generation and upload)
     // For now, just send the link
     const pdfMessage = `📄 Invoice PDF:\n${process.env.NEXT_PUBLIC_BASE_URL || 'https://invoicegenerator.ng'}/api/invoices/${invoice.id}/pdf`;
-    await sendWhatsAppMessage(`whatsapp:${from}`, pdfMessage);
+    await sendWhatsAppMessage(from, pdfMessage);
 
     return NextResponse.json({ message: 'Invoice created' }, { status: 200 });
   } catch (error: any) {
     console.error('Error creating invoice from WhatsApp:', error);
     await sendWhatsAppMessage(
-      `whatsapp:${from}`,
+      from,
       '❌ Sorry, there was an error creating your invoice. Please try again or use the web dashboard.'
     );
     return NextResponse.json({ error: error.message }, { status: 500 });

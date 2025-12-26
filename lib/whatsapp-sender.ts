@@ -43,11 +43,19 @@ async function sendViaTwilio(
 
     const accountSid = settings.twilioAccountSid;
     const authToken = decrypt(settings.twilioAuthToken);
-    const from = settings.twilioWhatsAppNumber || 'whatsapp:+14155238886'; // Default sandbox
+    const fromRaw = settings.twilioWhatsAppNumber || '+14155238886'; // Default sandbox
 
-    // Ensure phone numbers are in correct format
-    const toFormatted = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
-    const fromFormatted = from.startsWith('whatsapp:') ? from : `whatsapp:${from}`;
+    // Normalize phone numbers - ensure they have + prefix and no whatsapp: prefix
+    const normalizeForTwilio = (phone: string): string => {
+      let normalized = phone.replace(/^whatsapp:/i, '').trim();
+      if (!normalized.startsWith('+')) {
+        normalized = '+' + normalized;
+      }
+      return `whatsapp:${normalized}`;
+    };
+
+    const toFormatted = normalizeForTwilio(to);
+    const fromFormatted = normalizeForTwilio(fromRaw);
 
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
 

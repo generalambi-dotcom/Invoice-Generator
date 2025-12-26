@@ -102,39 +102,8 @@ export default function Header() {
     <header className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 relative z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo and Hamburger Menu */}
+          {/* Logo */}
           <div className="flex items-center space-x-3">
-            {/* Hamburger Menu Button - Mobile Only */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-gray-700 hover:text-gray-900 transition-colors"
-              aria-label="Toggle menu"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                {mobileMenuOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
-            </button>
-
-            {/* Logo */}
             <Link href="/" className="flex items-center space-x-2" onClick={closeMenus}>
               <div className="w-8 h-8 bg-green-500 rounded flex items-center justify-center">
                 <svg
@@ -187,6 +156,36 @@ export default function Header() {
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Hamburger Menu Button - Mobile Only (moved to right) */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors relative z-50"
+              aria-label="Toggle menu"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                {mobileMenuOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                )}
+              </svg>
+            </button>
+
             {/* Language Selector - Hidden on Mobile */}
             <div className="hidden sm:block relative">
               <button
@@ -360,6 +359,13 @@ export default function Header() {
                         >
                           Reports
                         </Link>
+                        <Link
+                          href="/credit-notes"
+                          onClick={closeMenus}
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          Credit Notes
+                        </Link>
                         {user.isAdmin && (
                           <>
                             <Link
@@ -458,6 +464,13 @@ export default function Header() {
                           className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
                           Reports
+                        </Link>
+                        <Link
+                          href="/credit-notes"
+                          onClick={closeMenus}
+                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          Credit Notes
                         </Link>
                         {user.isAdmin && (
                           <>
@@ -572,9 +585,17 @@ export default function Header() {
           </div>
         </div>
 
+        {/* Overlay for mobile menu - positioned first so menu can be on top */}
+        {mobileMenuOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+            onClick={closeMenus}
+          />
+        )}
+
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 relative z-50">
             <nav className="px-4 py-4 space-y-3">
               <Link
                 href="/help"
@@ -717,14 +738,6 @@ export default function Header() {
           </div>
         )}
       </div>
-
-      {/* Overlay for mobile menu */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-          onClick={closeMenus}
-        />
-      )}
     </header>
   );
 }

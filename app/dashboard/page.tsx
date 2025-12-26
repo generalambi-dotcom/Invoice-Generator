@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser, signOut } from '@/lib/auth';
-import { loadInvoicesAPI, deleteInvoiceAPI, updateOverdueInvoicesAPI, getPaymentRemindersAPI, sendPaymentRemindersAPI } from '@/lib/api-client';
+import { loadInvoicesAPI, deleteInvoiceAPI, updateOverdueInvoicesAPI, getPaymentRemindersAPI, sendPaymentRemindersAPI, approveInvoiceAPI, rejectInvoiceAPI, requestApprovalAPI, markInvoiceSentAPI } from '@/lib/api-client';
 import { Invoice, currencySymbols } from '@/types/invoice';
 import { formatCurrency } from '@/lib/calculations';
 import { format } from 'date-fns';
@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const [paymentReminders, setPaymentReminders] = useState<any[]>([]);
   const [showReminders, setShowReminders] = useState(false);
   const [sendingReminders, setSendingReminders] = useState(false);
+  const [processingApproval, setProcessingApproval] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -117,7 +118,11 @@ export default function DashboardPage() {
         paymentDate: inv.paymentDate,
         createdAt: inv.createdAt,
         updatedAt: inv.updatedAt,
-      })) as Invoice[];
+        approvalStatus: inv.approvalStatus || 'draft',
+        approvedBy: inv.approvedBy,
+        approvedAt: inv.approvedAt,
+        rejectionReason: inv.rejectionReason,
+      })) as any[];
       
       // Separate active and deleted (cancelled status = deleted)
       const active = formattedInvoices.filter(inv => inv.paymentStatus !== 'cancelled');
@@ -211,6 +216,77 @@ export default function DashboardPage() {
   const handleView = (invoice: Invoice) => {
     // Use invoice ID to load from database
     router.push(`/?invoiceId=${invoice.id}`);
+  };
+
+  const handleApproveInvoice = async (invoiceId: string) => {
+    if (!confirm('Approve this invoice?')) return;
+    
+    setProcessingApproval(invoiceId);
+    try {
+      await approveInvoiceAPI(invoiceId);
+      loadInvoiceData();
+    } catch (error: any) {
+      alert(error.message || 'Failed to approve invoice');
+    } finally {
+      setProcessingApproval(null);
+    }
+  };
+
+  const handleRejectInvoice = async (invoiceId: string) => {
+    const reason = prompt('Please provide a reason for rejection:');
+    if (reason === null) return;
+    
+    setProcessingApproval(invoiceId);
+    try {
+      await rejectInvoiceAPI(invoiceId, reason);
+      loadInvoiceData();
+    } catch (error: any) {
+      alert(error.message || 'Failed to reject invoice');
+    } finally {
+      setProcessingApproval(null);
+    }
+  };
+
+  const handleRequestApproval = async (invoiceId: string) => {
+    setProcessingApproval(invoiceId);
+    try {
+      await requestApprovalAPI(invoiceId);
+      loadInvoiceData();
+    } catch (error: any) {
+      alert(error.message || 'Failed to request approval');
+    } finally {
+      setProcessingApproval(null);
+    }
+  };
+
+  const handleMarkAsSent = async (invoiceId: string) => {
+    if (!confirm('Mark this invoice as sent?')) return;
+    
+    setProcessingApproval(invoiceId);
+    try {
+      await markInvoiceSentAPI(invoiceId);
+      loadInvoiceData();
+    } catch (error: any) {
+      alert(error.message || 'Failed to mark invoice as sent');
+    } finally {
+      setProcessingApproval(null);
+    }
+  };
+
+  const getApprovalStatusBadge = (status: string) => {
+    const statusMap: Record<string, { bg: string; text: string; label: string }> = {
+      draft: { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Draft' },
+      pending_approval: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'Pending Approval' },
+      approved: { bg: 'bg-green-100', text: 'text-green-800', label: 'Approved' },
+      rejected: { bg: 'bg-red-100', text: 'text-red-800', label: 'Rejected' },
+      sent: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Sent' },
+    };
+    const config = statusMap[status] || statusMap.draft;
+    return (
+      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${config.bg} ${config.text}`}>
+        {config.label}
+      </span>
+    );
   };
 
   if (isLoading) {
@@ -365,7 +441,10 @@ export default function DashboardPage() {
                       Total
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      Payment Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Approval Status
                     </th>
                     {showDeleted && (
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -421,6 +500,9 @@ export default function DashboardPage() {
                           {invoice.paymentStatus || 'pending'}
                         </span>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {getApprovalStatusBadge((invoice as any).approvalStatus || 'draft')}
+                      </td>
                       {showDeleted && (
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-500">
@@ -430,114 +512,135 @@ export default function DashboardPage() {
                           </div>
                         </td>
                       )}
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex items-center justify-center gap-3">
-                          <button
-                            onClick={() => handleView(invoice)}
-                            className="text-blue-600 hover:text-blue-800 font-medium text-sm"
-                          >
-                            View
-                          </button>
-                          {!showDeleted && (invoice.paymentStatus === 'pending' || invoice.paymentStatus === 'overdue') && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center justify-center gap-2">
                             <button
-                              onClick={async () => {
-                                const amount = prompt(
-                                  `Enter payment amount (Total: ${currencySymbols[invoice.currency]}${formatCurrency(invoice.total, invoice.currency)}):`
-                                );
-                                if (amount && !isNaN(parseFloat(amount))) {
-                                  const paidAmount = parseFloat(amount);
-                                  const currentPaid = invoice.paidAmount || 0;
-                                  const newPaidAmount = currentPaid + paidAmount;
-                                  
-                                  try {
-                                    await fetch(`/api/invoices/${invoice.id}`, {
-                                      method: 'PATCH',
-                                      headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-                                      },
-                                      body: JSON.stringify({
-                                        paidAmount: newPaidAmount,
-                                        paymentDate: new Date().toISOString(),
-                                      }),
-                                    });
-                                    loadInvoiceData();
-                                  } catch (error) {
-                                    alert('Failed to record payment');
-                                  }
-                                }
-                              }}
-                              className="text-green-600 hover:text-green-800 font-medium text-sm"
+                              onClick={() => handleView(invoice)}
+                              className="text-blue-600 hover:text-blue-800 font-medium text-sm"
                             >
-                              Record Payment
+                              View
                             </button>
-                          )}
-                          {showDeleted ? (
-                            <>
-                              <button
-                                onClick={() => handleRestore(invoice.id)}
-                                className="text-green-600 hover:text-green-800 font-medium text-sm"
-                              >
-                                Restore
-                              </button>
-                              <button
-                                onClick={() => handlePermanentDelete(invoice.id)}
-                                className="text-red-600 hover:text-red-800"
-                                aria-label="Permanently delete"
-                              >
-                                <svg
-                                  className="w-5 h-5"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
+                          </div>
+                          {!showDeleted && (
+                            <div className="flex items-center justify-center gap-1 flex-wrap">
+                              {(invoice as any).approvalStatus === 'draft' && (
+                                <button
+                                  onClick={() => handleRequestApproval(invoice.id!)}
+                                  disabled={processingApproval === invoice.id}
+                                  className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 disabled:opacity-50"
+                                  title="Request Approval"
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                  />
-                                </svg>
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              onClick={async () => {
-                                if (confirm('Delete this invoice? It will be moved to deleted invoices.')) {
-                                  try {
-                                    // Update invoice status to 'cancelled' instead of deleting
-                                    await fetch(`/api/invoices/${invoice.id}`, {
-                                      method: 'PATCH',
-                                      headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-                                      },
-                                      body: JSON.stringify({ paymentStatus: 'cancelled' }),
-                                    });
-                                    loadInvoiceData();
-                                  } catch (error) {
-                                    console.error('Error deleting invoice:', error);
-                                    alert('Failed to delete invoice. Please try again.');
-                                  }
-                                }
-                              }}
-                              className="text-red-600 hover:text-red-800"
-                              aria-label="Delete invoice"
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                            </button>
+                                  {processingApproval === invoice.id ? '...' : 'Request Approval'}
+                                </button>
+                              )}
+                              {(invoice as any).approvalStatus === 'pending_approval' && user?.isAdmin && (
+                                <>
+                                  <button
+                                    onClick={() => handleApproveInvoice(invoice.id!)}
+                                    disabled={processingApproval === invoice.id}
+                                    className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200 disabled:opacity-50"
+                                    title="Approve"
+                                  >
+                                    {processingApproval === invoice.id ? '...' : 'Approve'}
+                                  </button>
+                                  <button
+                                    onClick={() => handleRejectInvoice(invoice.id!)}
+                                    disabled={processingApproval === invoice.id}
+                                    className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded hover:bg-red-200 disabled:opacity-50"
+                                    title="Reject"
+                                  >
+                                    {processingApproval === invoice.id ? '...' : 'Reject'}
+                                  </button>
+                                </>
+                              )}
+                              {(invoice as any).approvalStatus === 'approved' && (
+                                <button
+                                  onClick={() => handleMarkAsSent(invoice.id!)}
+                                  disabled={processingApproval === invoice.id}
+                                  className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded hover:bg-blue-200 disabled:opacity-50"
+                                  title="Mark as Sent"
+                                >
+                                  {processingApproval === invoice.id ? '...' : 'Mark as Sent'}
+                                </button>
+                              )}
+                              {!showDeleted && (invoice.paymentStatus === 'pending' || invoice.paymentStatus === 'overdue') && (
+                                <button
+                                  onClick={async () => {
+                                    const amount = prompt(
+                                      `Enter payment amount (Total: ${currencySymbols[invoice.currency]}${formatCurrency(invoice.total, invoice.currency)}):`
+                                    );
+                                    if (amount && !isNaN(parseFloat(amount))) {
+                                      const paidAmount = parseFloat(amount);
+                                      const currentPaid = invoice.paidAmount || 0;
+                                      const newPaidAmount = currentPaid + paidAmount;
+                                      
+                                      try {
+                                        await fetch(`/api/invoices/${invoice.id}`, {
+                                          method: 'PATCH',
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+                                          },
+                                          body: JSON.stringify({
+                                            paidAmount: newPaidAmount,
+                                            paymentDate: new Date().toISOString(),
+                                          }),
+                                        });
+                                        loadInvoiceData();
+                                      } catch (error) {
+                                        alert('Failed to record payment');
+                                      }
+                                    }
+                                  }}
+                                  className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200"
+                                >
+                                  Record Payment
+                                </button>
+                              )}
+                              {showDeleted ? (
+                                <>
+                                  <button
+                                    onClick={() => handleRestore(invoice.id!)}
+                                    className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200"
+                                  >
+                                    Restore
+                                  </button>
+                                  <button
+                                    onClick={() => handlePermanentDelete(invoice.id!)}
+                                    className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded hover:bg-red-200"
+                                    aria-label="Permanently delete"
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={async () => {
+                                    if (confirm('Delete this invoice? It will be moved to deleted invoices.')) {
+                                      try {
+                                        await fetch(`/api/invoices/${invoice.id}`, {
+                                          method: 'PATCH',
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+                                          },
+                                          body: JSON.stringify({ paymentStatus: 'cancelled' }),
+                                        });
+                                        loadInvoiceData();
+                                      } catch (error) {
+                                        console.error('Error deleting invoice:', error);
+                                        alert('Failed to delete invoice. Please try again.');
+                                      }
+                                    }
+                                  }}
+                                  className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded hover:bg-red-200"
+                                  aria-label="Delete invoice"
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
                       </td>

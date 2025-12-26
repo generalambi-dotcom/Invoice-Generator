@@ -22,17 +22,11 @@ export default function UpgradePage() {
 
   useEffect(() => {
     const currentUser = getCurrentUser();
-    if (!currentUser) {
-      router.push('/signin');
-      return;
-    }
     setUser(currentUser);
     
-    // If already premium or admin, redirect to dashboard
-    if (currentUser.isAdmin || (currentUser.subscription?.plan === 'premium' && currentUser.subscription?.status === 'active')) {
-      router.push('/dashboard');
-    }
-
+    // If already premium or admin, allow them to view but show a message
+    // No redirect - let them view pricing even if premium
+    
     // Load pricing based on region
     loadPricing();
   }, [router]);
@@ -77,7 +71,13 @@ export default function UpgradePage() {
   };
 
   const handleUpgrade = async (provider: 'paypal' | 'paystack') => {
-    if (!user || !pricing) return;
+    if (!pricing) return;
+    
+    // If user is not logged in, redirect to signin with redirect back to upgrade
+    if (!user) {
+      router.push(`/signin?redirect=/upgrade`);
+      return;
+    }
     
     setLoading(true);
     setPaymentProvider(provider);
@@ -106,14 +106,6 @@ export default function UpgradePage() {
       setPaymentProvider(null);
     }
   };
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -247,63 +239,91 @@ export default function UpgradePage() {
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => handleUpgrade('paypal')}
-              disabled={loading}
-              className="px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-lg flex items-center justify-center gap-2"
-            >
-              {loading && paymentProvider === 'paypal' ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.174 1.346 1.416 3.14 1.416 4.502 0 2.153-.789 4.014-2.23 5.186-1.318 1.08-3.032 1.561-5.13 1.561H9.577l-1.017 6.638c-.076.499-.558.86-1.05.86zm-.193-2.025l.774-5.043h6.88c1.4 0 2.503-.33 3.245-.98.65-.58.978-1.39.978-2.38 0-1.01-.336-1.89-1.01-2.52-.68-.64-1.74-.97-3.18-.97H6.67l-.79 5.15z"/>
-                  </svg>
-                  Upgrade with PayPal
-                </>
+          {user && (user.isAdmin || (user.subscription?.plan === 'premium' && user.subscription?.status === 'active')) ? (
+            <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800 font-medium">You already have premium access!</p>
+              <Link href="/dashboard" className="text-blue-600 hover:text-blue-800 underline mt-2 inline-block">
+                Go to Dashboard
+              </Link>
+            </div>
+          ) : (
+            <>
+              {!user && (
+                <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+                  <p className="text-yellow-800">
+                    <Link href="/signup" className="font-medium underline">Sign up</Link> or{' '}
+                    <Link href={`/signin?redirect=/upgrade`} className="font-medium underline">sign in</Link> to upgrade
+                  </p>
+                </div>
               )}
-            </button>
-            
-            <button
-              onClick={() => handleUpgrade('paystack')}
-              disabled={loading}
-              className="px-8 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-lg flex items-center justify-center gap-2"
-            >
-              {loading && paymentProvider === 'paystack' ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                  </svg>
-                  Upgrade with Paystack
-                </>
-              )}
-            </button>
-          </div>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => handleUpgrade('paypal')}
+                  disabled={loading}
+                  className="px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-lg flex items-center justify-center gap-2"
+                >
+                  {loading && paymentProvider === 'paypal' ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.174 1.346 1.416 3.14 1.416 4.502 0 2.153-.789 4.014-2.23 5.186-1.318 1.08-3.032 1.561-5.13 1.561H9.577l-1.017 6.638c-.076.499-.558.86-1.05.86zm-.193-2.025l.774-5.043h6.88c1.4 0 2.503-.33 3.245-.98.65-.58.978-1.39.978-2.38 0-1.01-.336-1.89-1.01-2.52-.68-.64-1.74-.97-3.18-.97H6.67l-.79 5.15z"/>
+                      </svg>
+                      Upgrade with PayPal
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={() => handleUpgrade('paystack')}
+                  disabled={loading}
+                  className="px-8 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-lg flex items-center justify-center gap-2"
+                >
+                  {loading && paymentProvider === 'paystack' ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                      </svg>
+                      Upgrade with Paystack
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Back Link */}
         <div className="text-center">
-          <Link
-            href="/dashboard"
-            className="text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            ← Back to Dashboard
-          </Link>
+          {user ? (
+            <Link
+              href="/dashboard"
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              ← Back to Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/"
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              ← Back to Home
+            </Link>
+          )}
         </div>
       </div>
     </div>

@@ -829,6 +829,296 @@ export async function updateDefaultPaymentProviderAPI(provider: 'paypal' | 'pays
   }
 }
 
+// ===== Invoice Approval Workflow =====
+
+/**
+ * Approve an invoice
+ */
+export async function approveInvoiceAPI(invoiceId: string): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/invoices/${invoiceId}/approve`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to approve invoices');
+      }
+      throw new Error(error.error || 'Failed to approve invoice');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error approving invoice:', error);
+    throw error;
+  }
+}
+
+/**
+ * Reject an invoice
+ */
+export async function rejectInvoiceAPI(invoiceId: string, reason?: string): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/invoices/${invoiceId}/reject`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ reason }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to reject invoices');
+      }
+      throw new Error(error.error || 'Failed to reject invoice');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error rejecting invoice:', error);
+    throw error;
+  }
+}
+
+/**
+ * Request approval for an invoice
+ */
+export async function requestApprovalAPI(invoiceId: string): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/invoices/${invoiceId}/request-approval`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to request approval');
+      }
+      throw new Error(error.error || 'Failed to request approval');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error requesting approval:', error);
+    throw error;
+  }
+}
+
+/**
+ * Mark invoice as sent
+ */
+export async function markInvoiceSentAPI(invoiceId: string): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/invoices/${invoiceId}/send`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to mark invoice as sent');
+      }
+      throw new Error(error.error || 'Failed to mark invoice as sent');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error marking invoice as sent:', error);
+    throw error;
+  }
+}
+
+// ===== Credit Notes =====
+
+/**
+ * Get credit notes
+ */
+export async function getCreditNotesAPI(invoiceId?: string, status?: string): Promise<any> {
+  try {
+    const params = new URLSearchParams();
+    if (invoiceId) params.append('invoiceId', invoiceId);
+    if (status) params.append('status', status);
+
+    const response = await fetch(`${API_BASE}/api/credit-notes?${params.toString()}`, {
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to view credit notes');
+      }
+      throw new Error(error.error || 'Failed to load credit notes');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error loading credit notes:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get a single credit note
+ */
+export async function getCreditNoteAPI(creditNoteId: string): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/credit-notes/${creditNoteId}`, {
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to view credit note');
+      }
+      throw new Error(error.error || 'Failed to load credit note');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error loading credit note:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a credit note
+ */
+export async function createCreditNoteAPI(creditNote: any): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/credit-notes`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(creditNote),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to create credit notes');
+      }
+      throw new Error(error.error || 'Failed to create credit note');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error creating credit note:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update a credit note
+ */
+export async function updateCreditNoteAPI(creditNoteId: string, creditNote: any): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/credit-notes/${creditNoteId}`, {
+      method: 'PUT',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(creditNote),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to update credit notes');
+      }
+      throw new Error(error.error || 'Failed to update credit note');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error updating credit note:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a credit note
+ */
+export async function deleteCreditNoteAPI(creditNoteId: string): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/credit-notes/${creditNoteId}`, {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to delete credit notes');
+      }
+      throw new Error(error.error || 'Failed to delete credit note');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error deleting credit note:', error);
+    throw error;
+  }
+}
+
+/**
+ * Apply a credit note to an invoice
+ */
+export async function applyCreditNoteAPI(creditNoteId: string, invoiceId: string): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/credit-notes/${creditNoteId}/apply`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ invoiceId }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to apply credit notes');
+      }
+      throw new Error(error.error || 'Failed to apply credit note');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error applying credit note:', error);
+    throw error;
+  }
+}
+
 /**
  * Send payment reminders
  */

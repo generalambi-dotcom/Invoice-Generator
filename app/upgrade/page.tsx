@@ -19,6 +19,15 @@ export default function UpgradePage() {
   const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [pricing, setPricing] = useState<any>(null);
   const [region, setRegion] = useState<'nigeria' | 'rest-of-world'>('rest-of-world');
+  const [availableProviders, setAvailableProviders] = useState<{
+    paypal: boolean;
+    paystack: boolean;
+    stripe: boolean;
+  }>({
+    paypal: false,
+    paystack: false,
+    stripe: false,
+  });
 
   useEffect(() => {
     const currentUser = getCurrentUser();
@@ -29,6 +38,9 @@ export default function UpgradePage() {
     
     // Load pricing based on region
     loadPricing();
+
+    // Load available payment providers
+    loadAvailableProviders();
 
     // Check for Stripe success/cancel redirect
     if (typeof window !== 'undefined') {
@@ -58,6 +70,22 @@ export default function UpgradePage() {
     setRegion(detectedRegion);
     const priceData = await getPricing(detectedRegion);
     setPricing(priceData);
+  };
+
+  const loadAvailableProviders = async () => {
+    try {
+      const response = await fetch('/api/subscriptions/available-providers');
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableProviders(data.providers || {
+          paypal: false,
+          paystack: false,
+          stripe: false,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading available providers:', error);
+    }
   };
 
   const handleApplyCoupon = async () => {
@@ -279,51 +307,88 @@ export default function UpgradePage() {
                 </div>
               )}
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
-                  onClick={() => handleUpgrade('paypal')}
-                  disabled={loading}
-                  className="px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-lg flex items-center justify-center gap-2"
-                >
-                  {loading && paymentProvider === 'paypal' ? (
-                    <>
-                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.174 1.346 1.416 3.14 1.416 4.502 0 2.153-.789 4.014-2.23 5.186-1.318 1.08-3.032 1.561-5.13 1.561H9.577l-1.017 6.638c-.076.499-.558.86-1.05.86zm-.193-2.025l.774-5.043h6.88c1.4 0 2.503-.33 3.245-.98.65-.58.978-1.39.978-2.38 0-1.01-.336-1.89-1.01-2.52-.68-.64-1.74-.97-3.18-.97H6.67l-.79 5.15z"/>
-                      </svg>
-                      Upgrade with PayPal
-                    </>
-                  )}
-                </button>
+                {availableProviders.paypal && (
+                  <button
+                    onClick={() => handleUpgrade('paypal')}
+                    disabled={loading}
+                    className="px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-lg flex items-center justify-center gap-2"
+                  >
+                    {loading && paymentProvider === 'paypal' ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.174 1.346 1.416 3.14 1.416 4.502 0 2.153-.789 4.014-2.23 5.186-1.318 1.08-3.032 1.561-5.13 1.561H9.577l-1.017 6.638c-.076.499-.558.86-1.05.86zm-.193-2.025l.774-5.043h6.88c1.4 0 2.503-.33 3.245-.98.65-.58.978-1.39.978-2.38 0-1.01-.336-1.89-1.01-2.52-.68-.64-1.74-.97-3.18-.97H6.67l-.79 5.15z"/>
+                        </svg>
+                        Upgrade with PayPal
+                      </>
+                    )}
+                  </button>
+                )}
                 
-                <button
-                  onClick={() => handleUpgrade('paystack')}
-                  disabled={loading}
-                  className="px-8 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-lg flex items-center justify-center gap-2"
-                >
-                  {loading && paymentProvider === 'paystack' ? (
-                    <>
-                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                      </svg>
-                      Upgrade with Paystack
-                    </>
-                  )}
-                </button>
+                {availableProviders.paystack && (
+                  <button
+                    onClick={() => handleUpgrade('paystack')}
+                    disabled={loading}
+                    className="px-8 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-lg flex items-center justify-center gap-2"
+                  >
+                    {loading && paymentProvider === 'paystack' ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        Upgrade with Paystack
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {availableProviders.stripe && (
+                  <button
+                    onClick={() => handleUpgrade('stripe')}
+                    disabled={loading}
+                    className="px-8 py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-lg flex items-center justify-center gap-2"
+                  >
+                    {loading && paymentProvider === 'stripe' ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l-2.541 4.083c-.48-.202-1.08-.42-1.94-.42v-.58zm6.777 2.944c.602-.604 1.376-1.015 1.376-1.81 0-1.21-1.044-2.21-2.9-2.21-2.115 0-4.592.92-6.584 2.067l-2.545-4.097c2.194-1.333 5.23-2.18 7.66-2.18 3.74 0 6.662 1.88 6.662 5.14 0 2.353-1.735 4.1-3.99 4.843l-2.679-4.753zM14.471 15.108c-2.29.861-4.691 1.413-6.74 1.413-3.701 0-5.78-1.838-5.78-4.8 0-3.24 2.82-5.5 7.27-5.5 2.366 0 4.94.69 7.27 1.856l-2.58 4.16c-.49-.175-1.03-.35-1.9-.35v-.58c0-1.28.65-1.95 1.84-1.95 1.84 0 3.26.45 4.77 1.11l-2.64 4.24c-.38.15-1.02.33-1.51.44v.37z"/>
+                        </svg>
+                        Upgrade with Stripe
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {!availableProviders.paypal && !availableProviders.paystack && !availableProviders.stripe && (
+                  <div className="w-full p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+                    <p className="text-yellow-800 font-medium">
+                      ⚠️ No payment methods are currently configured. Please contact the administrator.
+                    </p>
+                  </div>
+                )}
               </div>
             </>
           )}

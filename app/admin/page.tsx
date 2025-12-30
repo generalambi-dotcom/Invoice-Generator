@@ -19,6 +19,7 @@ export default function AdminDashboard() {
     stripePublicKey: '',
     stripeSecretKey: '',
   });
+  const [paymentCredentials, setPaymentCredentials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -49,20 +50,44 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
-  const loadData = () => {
+  const loadData = async () => {
     try {
       const allUsers = getUsers();
       setUsers(allUsers);
       
-      // Load payment config
-      const config = getPaymentConfig();
-      setPaymentConfig({
-        paypalClientId: config.paypalClientId || '',
-        paystackPublicKey: config.paystackPublicKey || '',
-        paystackSecretKey: config.paystackSecretKey || '',
-        stripePublicKey: config.stripePublicKey || '',
-        stripeSecretKey: config.stripeSecretKey || '',
-      });
+      // Load payment config from database (new unified system)
+      try {
+        const response = await fetch('/api/admin/payment-config');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.config?.credentials) {
+            setPaymentCredentials(data.config.credentials);
+            // Populate form with existing credentials
+            const config: any = {};
+            data.config.credentials.forEach((cred: any) => {
+              if (cred.provider === 'paypal') {
+                config.paypalClientId = cred.clientId || '';
+              } else if (cred.provider === 'paystack') {
+                config.paystackPublicKey = cred.publicKey || '';
+              } else if (cred.provider === 'stripe') {
+                config.stripePublicKey = cred.publicKey || '';
+              }
+            });
+            setPaymentConfig(prev => ({ ...prev, ...config }));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading payment config from API:', error);
+        // Fallback to localStorage for backward compatibility
+        const config = getPaymentConfig();
+        setPaymentConfig({
+          paypalClientId: config.paypalClientId || '',
+          paystackPublicKey: config.paystackPublicKey || '',
+          paystackSecretKey: config.paystackSecretKey || '',
+          stripePublicKey: config.stripePublicKey || '',
+          stripeSecretKey: config.stripeSecretKey || '',
+        });
+      }
       
       // Load coupons
       const allCoupons = getCoupons();
@@ -74,11 +99,60 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleSavePaymentConfig = () => {
+  const handleSavePaymentConfig = async () => {
     setSaveLoading(true);
     try {
+      // Save each provider separately to database
+      const providers = [
+        { 
+          provider: 'paypal', 
+          clientId: paymentConfig.paypalClientId,
+          clientSecret: '', // Will be set separately if needed
+        },
+        { 
+          provider: 'paystack', 
+          publicKey: paymentConfig.paystackPublicKey,
+          secretKey: paymentConfig.paystackSecretKey,
+        },
+        { 
+          provider: 'stripe', 
+          publicKey: paymentConfig.stripePublicKey,
+          secretKey: paymentConfig.stripeSecretKey,
+        },
+      ];
+
+      // Save each provider
+      for (const providerConfig of providers) {
+        if (
+          (providerConfig.provider === 'paypal' && providerConfig.clientId) ||
+          (providerConfig.provider === 'paystack' && (providerConfig.publicKey || providerConfig.secretKey)) ||
+          (providerConfig.provider === 'stripe' && (providerConfig.publicKey || providerConfig.secretKey))
+        ) {
+          try {
+            const response = await fetch('/api/admin/payment-config', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(providerConfig),
+            });
+
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.error || `Failed to save ${providerConfig.provider}`);
+            }
+          } catch (error: any) {
+            console.error(`Error saving ${providerConfig.provider}:`, error);
+            // Continue with other providers even if one fails
+          }
+        }
+      }
+
+      // Also save to localStorage for backward compatibility
       savePaymentConfig(paymentConfig);
+      
       alert('Payment configuration saved successfully!');
+      loadData(); // Reload to show updated config
     } catch (error: any) {
       alert('Failed to save configuration: ' + error.message);
     } finally {

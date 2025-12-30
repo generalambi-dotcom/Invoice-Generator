@@ -33,11 +33,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Get Stripe credentials from admin settings or environment
-    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    // Get Stripe credentials - check database first, then environment variables
+    let stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    
+    // Try to get from admin's payment credentials in database
+    if (!stripeSecretKey) {
+      const adminUser = await prisma.user.findFirst({
+        where: { isAdmin: true },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      if (adminUser) {
+        const stripeCredential = await prisma.paymentCredential.findUnique({
+          where: {
+            userId_provider: {
+              userId: adminUser.id,
+              provider: 'stripe',
+            },
+          },
+        });
+
+        if (stripeCredential?.secretKey && stripeCredential.isActive) {
+          // Decrypt the secret key
+          const { decryptPaymentCredential } = require('@/lib/encryption');
+          const decrypted = decryptPaymentCredential({
+            secretKey: stripeCredential.secretKey,
+          });
+          stripeSecretKey = decrypted.secretKey || undefined;
+        }
+      }
+    }
+
     if (!stripeSecretKey) {
       return NextResponse.json(
-        { error: 'Stripe is not configured. Please contact administrator.' },
+        { error: 'Stripe is not configured. Please configure Stripe in Admin Dashboard or set STRIPE_SECRET_KEY in environment variables.' },
         { status: 500 }
       );
     }

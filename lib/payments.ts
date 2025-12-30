@@ -16,12 +16,11 @@ export async function initiatePayment(params: {
     throw new Error('Payment can only be initiated in the browser');
   }
 
-  const config = getPaymentConfig();
-  
+  // For subscription payments, we'll use the API endpoint which handles credentials
+  // This function now just redirects to the appropriate API endpoint
   if (params.provider === 'paypal') {
-    // PayPal integration
-    // For now, we'll create a simple payment link
-    // In production, you'd use PayPal SDK
+    // PayPal subscription payments - redirect to API
+    // Note: PayPal subscription flow needs to be implemented via API
     const paymentId = `paypal_${Date.now()}`;
     localStorage.setItem(`payment_${paymentId}`, JSON.stringify({
       userId: params.userId,
@@ -32,10 +31,11 @@ export async function initiatePayment(params: {
       status: 'pending',
     }));
     
-    // Return a placeholder URL - in production, this would be the actual PayPal checkout URL
+    // Return a placeholder URL - PayPal subscription flow needs API implementation
     return `/payment/paypal?paymentId=${paymentId}`;
   } else if (params.provider === 'paystack') {
-    // Paystack integration
+    // Paystack integration - get config for public key
+    const config = getPaymentConfig();
     if (!config.paystackPublicKey) {
       throw new Error('Paystack public key not configured');
     }

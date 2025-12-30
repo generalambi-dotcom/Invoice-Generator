@@ -11,14 +11,42 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     // Check environment variables for secret keys (required for backend processing)
+    // Also check database for admin payment credentials
     // For PayPal: Check if client ID or secret is configured
     // For Paystack: Check if secret key is configured
     // For Stripe: Check if secret key OR publishable key is configured
-    // Note: Publishable key alone indicates Stripe is configured (secret key should be in env vars)
     
-    const hasPayPal = !!(process.env.PAYPAL_CLIENT_ID || process.env.PAYPAL_CLIENT_SECRET);
-    const hasPaystack = !!process.env.PAYSTACK_SECRET_KEY;
-    const hasStripe = !!(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_PUBLISHABLE_KEY);
+    const hasPayPalEnv = !!(process.env.PAYPAL_CLIENT_ID || process.env.PAYPAL_CLIENT_SECRET);
+    const hasPaystackEnv = !!process.env.PAYSTACK_SECRET_KEY;
+    const hasStripeEnv = !!(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_PUBLISHABLE_KEY);
+
+    // Check database for admin payment credentials
+    const adminUser = await prisma.user.findFirst({
+      where: { isAdmin: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    let hasPayPalDb = false;
+    let hasPaystackDb = false;
+    let hasStripeDb = false;
+
+    if (adminUser) {
+      const adminCredentials = await prisma.paymentCredential.findMany({
+        where: { 
+          userId: adminUser.id,
+          isActive: true,
+        },
+        select: { provider: true },
+      });
+
+      hasPayPalDb = adminCredentials.some(c => c.provider === 'paypal');
+      hasPaystackDb = adminCredentials.some(c => c.provider === 'paystack');
+      hasStripeDb = adminCredentials.some(c => c.provider === 'stripe');
+    }
+
+    const hasPayPal = hasPayPalEnv || hasPayPalDb;
+    const hasPaystack = hasPaystackEnv || hasPaystackDb;
+    const hasStripe = hasStripeEnv || hasStripeDb;
 
     // Also check if any admin has configured payment credentials in the database
     // This is a fallback check for user-specific credentials

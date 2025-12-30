@@ -141,25 +141,28 @@ export async function POST(request: NextRequest) {
       }
 
       // Step 2: Create PayPal order for subscription
+      // Use the same format as invoice payment links (which works correctly)
+      const orderId = `SUB-${userId}-${Date.now()}`;
       const orderResponse = await axios.post(
         `${paypalBaseUrl}/v2/checkout/orders`,
         {
           intent: 'CAPTURE',
           purchase_units: [
             {
-              reference_id: `subscription_${userId}_${Date.now()}`,
+              reference_id: `subscription_${userId}`,
               description: `Premium Subscription - ${plan}`,
               amount: {
                 currency_code: currency.toUpperCase() || 'USD',
                 value: amount.toFixed(2),
               },
+              invoice_id: orderId,
             },
           ],
           application_context: {
             brand_name: 'Invoice Generator.ng',
             landing_page: 'BILLING',
             user_action: 'PAY_NOW',
-            return_url: `${baseUrl}/upgrade?success=true&provider=paypal&token={token}`,
+            return_url: `${baseUrl}/upgrade?success=true&provider=paypal&orderId={token}`,
             cancel_url: `${baseUrl}/upgrade?canceled=true&provider=paypal`,
           },
         },
@@ -167,7 +170,6 @@ export async function POST(request: NextRequest) {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${accessToken}`,
-            'PayPal-Request-Id': `subscription-${userId}-${Date.now()}`,
           },
           timeout: 10000,
         }

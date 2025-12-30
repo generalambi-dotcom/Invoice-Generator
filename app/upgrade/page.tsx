@@ -52,9 +52,12 @@ export default function UpgradePage() {
       const sessionId = urlParams.get('session_id');
       
       if (success === 'true') {
-        if (provider === 'paypal' && token) {
+        if (provider === 'paypal' && (token || urlParams.get('orderId'))) {
           // PayPal payment successful - verify and activate subscription
-          handlePayPalSuccess(token);
+          const orderId = token || urlParams.get('orderId');
+          if (orderId) {
+            handlePayPalSuccess(orderId);
+          }
         } else if (sessionId) {
           // Stripe payment successful - refresh user data
           const updatedUser = getCurrentUser();

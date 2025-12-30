@@ -54,12 +54,24 @@ export async function POST(request: NextRequest) {
         });
 
         if (stripeCredential?.secretKey && stripeCredential.isActive) {
-          // Decrypt the secret key
-          const { decryptPaymentCredential } = require('@/lib/encryption');
-          const decrypted = decryptPaymentCredential({
-            secretKey: stripeCredential.secretKey,
+          try {
+            // Decrypt the secret key
+            const { decryptPaymentCredential } = require('@/lib/encryption');
+            const decrypted = decryptPaymentCredential({
+              secretKey: stripeCredential.secretKey,
+            });
+            stripeSecretKey = decrypted.secretKey || undefined;
+            console.log('Stripe secret key decrypted from database');
+          } catch (decryptError) {
+            console.error('Error decrypting Stripe secret key:', decryptError);
+            // Continue to try environment variable
+          }
+        } else {
+          console.log('Stripe credential not found or inactive:', {
+            found: !!stripeCredential,
+            hasSecretKey: !!stripeCredential?.secretKey,
+            isActive: stripeCredential?.isActive,
           });
-          stripeSecretKey = decrypted.secretKey || undefined;
         }
       }
     }

@@ -36,44 +36,50 @@ export async function GET(request: NextRequest) {
           userId: adminUser.id,
           isActive: true,
         },
-        select: { provider: true },
+        select: { 
+          provider: true,
+          publicKey: true,
+          secretKey: true,
+          clientId: true,
+          clientSecret: true,
+        },
       });
 
-      hasPayPalDb = adminCredentials.some(c => c.provider === 'paypal');
-      hasPaystackDb = adminCredentials.some(c => c.provider === 'paystack');
-      hasStripeDb = adminCredentials.some(c => c.provider === 'stripe');
+      // Check if credentials have actual values (not just existence)
+      hasPayPalDb = adminCredentials.some(c => 
+        c.provider === 'paypal' && c.clientId && c.clientSecret
+      );
+      hasPaystackDb = adminCredentials.some(c => 
+        c.provider === 'paystack' && c.publicKey && c.secretKey
+      );
+      hasStripeDb = adminCredentials.some(c => 
+        c.provider === 'stripe' && c.publicKey && c.secretKey
+      );
+
+      console.log('Admin payment credentials check:', {
+        adminUserId: adminUser.id,
+        credentials: adminCredentials.map(c => ({ provider: c.provider, hasKeys: !!(c.publicKey || c.clientId) })),
+        hasPayPalDb,
+        hasPaystackDb,
+        hasStripeDb,
+      });
     }
 
     const hasPayPal = hasPayPalEnv || hasPayPalDb;
     const hasPaystack = hasPaystackEnv || hasPaystackDb;
     const hasStripe = hasStripeEnv || hasStripeDb;
 
-    // Also check if any admin has configured payment credentials in the database
-    // This is a fallback check for user-specific credentials
-    const paystackCreds = await prisma.paymentCredential.findFirst({
-      where: { provider: 'paystack', isActive: true },
-      select: { id: true },
+    console.log('Available payment providers:', {
+      paypal: { env: hasPayPalEnv, db: hasPayPalDb, final: hasPayPal },
+      paystack: { env: hasPaystackEnv, db: hasPaystackDb, final: hasPaystack },
+      stripe: { env: hasStripeEnv, db: hasStripeDb, final: hasStripe },
     });
 
-    const stripeCreds = await prisma.paymentCredential.findFirst({
-      where: { provider: 'stripe', isActive: true },
-      select: { id: true },
-    });
-
-    const paypalCreds = await prisma.paymentCredential.findFirst({
-      where: { provider: 'paypal', isActive: true },
-      select: { id: true },
-    });
-
-    // A provider is available if:
-    // 1. Environment variables are set (for global/subscription payments), OR
-    // 2. At least one user has configured credentials (for invoice payments)
-    // For subscriptions, we primarily need env vars, but we'll show it if any credentials exist
     return NextResponse.json({
       providers: {
-        paypal: hasPayPal || !!paypalCreds,
-        paystack: hasPaystack || !!paystackCreds,
-        stripe: hasStripe || !!stripeCreds,
+        paypal: hasPayPal,
+        paystack: hasPaystack,
+        stripe: hasStripe,
       },
     });
   } catch (error: any) {

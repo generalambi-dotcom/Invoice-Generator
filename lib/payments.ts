@@ -19,20 +19,36 @@ export async function initiatePayment(params: {
   // For subscription payments, we'll use the API endpoint which handles credentials
   // This function now just redirects to the appropriate API endpoint
   if (params.provider === 'paypal') {
-    // PayPal subscription payments - redirect to API
-    // Note: PayPal subscription flow needs to be implemented via API
-    const paymentId = `paypal_${Date.now()}`;
-    localStorage.setItem(`payment_${paymentId}`, JSON.stringify({
-      userId: params.userId,
-      plan: params.plan,
-      amount: params.amount,
-      currency: params.currency,
-      provider: 'paypal',
-      status: 'pending',
-    }));
-    
-    // Return a placeholder URL - PayPal subscription flow needs API implementation
-    return `/payment/paypal?paymentId=${paymentId}`;
+    // PayPal subscription payments - create checkout via API
+    try {
+      const response = await fetch('/api/subscriptions/paypal-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: params.userId,
+          plan: params.plan,
+          amount: params.amount,
+          currency: params.currency,
+          userEmail: params.userEmail,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to create PayPal checkout' }));
+        throw new Error(error.error || 'Failed to create PayPal checkout');
+      }
+
+      const data = await response.json();
+      if (data.checkoutUrl) {
+        return data.checkoutUrl;
+      }
+
+      throw new Error('No checkout URL returned from PayPal');
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to initiate PayPal payment');
+    }
   } else if (params.provider === 'paystack') {
     // Paystack integration - get config for public key
     const config = getPaymentConfig();

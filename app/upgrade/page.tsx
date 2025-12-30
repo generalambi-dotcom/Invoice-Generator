@@ -42,13 +42,21 @@ export default function UpgradePage() {
     // Load available payment providers
     loadAvailableProviders();
 
-    // Check for Stripe success/cancel redirect
+    // Check for payment success/cancel redirect
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('success') === 'true') {
-        const sessionId = urlParams.get('session_id');
-        if (sessionId) {
-          // Payment successful - refresh user data
+      const success = urlParams.get('success');
+      const canceled = urlParams.get('canceled');
+      const provider = urlParams.get('provider');
+      const token = urlParams.get('token');
+      const sessionId = urlParams.get('session_id');
+      
+      if (success === 'true') {
+        if (provider === 'paypal' && token) {
+          // PayPal payment successful - verify and activate subscription
+          handlePayPalSuccess(token);
+        } else if (sessionId) {
+          // Stripe payment successful - refresh user data
           const updatedUser = getCurrentUser();
           setUser(updatedUser);
           // Show success message
@@ -56,9 +64,13 @@ export default function UpgradePage() {
           // Clean URL
           window.history.replaceState({}, '', '/upgrade');
         }
-      } else if (urlParams.get('canceled') === 'true') {
+      } else if (canceled === 'true') {
         // Payment canceled
-        alert('Payment was canceled. You can try again anytime.');
+        if (provider === 'paypal') {
+          alert('PayPal payment was canceled. You can try again anytime.');
+        } else {
+          alert('Payment was canceled. You can try again anytime.');
+        }
         // Clean URL
         window.history.replaceState({}, '', '/upgrade');
       }
@@ -113,6 +125,44 @@ export default function UpgradePage() {
     } catch (error) {
       console.error('Error loading available providers:', error);
     }
+  };
+
+  const handlePayPalSuccess = async (token: string) => {
+    try {
+      // Verify the payment with PayPal and activate subscription
+      const response = await fetch('/api/subscriptions/paypal-verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          alert('Payment successful! Your premium subscription is now active.');
+          // Refresh user data
+          const updatedUser = getCurrentUser();
+          setUser(updatedUser);
+          // Redirect to dashboard
+          setTimeout(() => {
+            router.push('/dashboard?upgrade=success');
+          }, 1500);
+        } else {
+          alert('Payment verification failed. Please contact support if payment was deducted.');
+        }
+      } else {
+        const error = await response.json().catch(() => ({ error: 'Verification failed' }));
+        alert('Payment verification failed: ' + (error.error || 'Unknown error') + '. Please contact support if payment was deducted.');
+      }
+    } catch (error) {
+      console.error('Error verifying PayPal payment:', error);
+      alert('Payment verification failed. Please contact support if payment was deducted.');
+    }
+    
+    // Clean up URL
+    window.history.replaceState({}, '', '/upgrade');
   };
 
   const handleApplyCoupon = async () => {

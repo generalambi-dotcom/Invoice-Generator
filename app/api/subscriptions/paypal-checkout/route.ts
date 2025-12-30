@@ -57,24 +57,48 @@ export async function POST(request: NextRequest) {
         });
 
         if (paypalCredential?.clientId && paypalCredential?.clientSecret && paypalCredential.isActive) {
-          // Decrypt the credentials
-          const decrypted = decryptPaymentCredential({
-            clientId: paypalCredential.clientId,
-            clientSecret: paypalCredential.clientSecret,
+          try {
+            // Decrypt the credentials
+            const decrypted = decryptPaymentCredential({
+              clientId: paypalCredential.clientId,
+              clientSecret: paypalCredential.clientSecret,
+            });
+            paypalClientId = decrypted.clientId || undefined;
+            paypalClientSecret = decrypted.clientSecret || undefined;
+            isTestMode = paypalCredential.isTestMode;
+            console.log('Successfully decrypted PayPal credentials from database');
+          } catch (decryptError) {
+            console.error('Error decrypting PayPal credentials:', decryptError);
+            // Continue to try environment variables
+          }
+        } else {
+          console.log('PayPal credential not found or inactive:', {
+            hasClientId: !!paypalCredential?.clientId,
+            hasClientSecret: !!paypalCredential?.clientSecret,
+            isActive: paypalCredential?.isActive,
           });
-          paypalClientId = decrypted.clientId || undefined;
-          paypalClientSecret = decrypted.clientSecret || undefined;
-          isTestMode = paypalCredential.isTestMode;
         }
       }
     }
 
     if (!paypalClientId || !paypalClientSecret) {
+      console.error('PayPal credentials not found:', {
+        hasEnvClientId: !!process.env.PAYPAL_CLIENT_ID,
+        hasEnvClientSecret: !!process.env.PAYPAL_CLIENT_SECRET,
+        hasDbClientId: !!paypalClientId,
+        hasDbClientSecret: !!paypalClientSecret,
+      });
       return NextResponse.json(
         { error: 'PayPal is not configured. Please configure PayPal in Admin Dashboard or set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET in environment variables.' },
         { status: 500 }
       );
     }
+
+    console.log('Using PayPal credentials:', {
+      clientIdPrefix: paypalClientId.substring(0, 10) + '...',
+      isTestMode,
+      hasClientSecret: !!paypalClientSecret,
+    });
 
     // Get user details
     const dbUser = await prisma.user.findUnique({
@@ -129,7 +153,6 @@ export async function POST(request: NextRequest) {
                 currency_code: currency.toUpperCase() || 'USD',
                 value: amount.toFixed(2),
               },
-              invoice_id: `SUB-${userId}-${Date.now()}`,
             },
           ],
           application_context: {
@@ -139,23 +162,12 @@ export async function POST(request: NextRequest) {
             return_url: `${baseUrl}/upgrade?success=true&provider=paypal&token={token}`,
             cancel_url: `${baseUrl}/upgrade?canceled=true&provider=paypal`,
           },
-          payment_source: {
-            paypal: {
-              experience_context: {
-                payment_method_preference: 'IMMEDIATE_PAYMENT_REQUIRED',
-                brand_name: 'Invoice Generator.ng',
-                locale: 'en-US',
-                landing_page: 'BILLING',
-                shipping_preference: 'NO_SHIPPING',
-                user_action: 'PAY_NOW',
-              },
-            },
-          },
         },
         {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${accessToken}`,
+            'PayPal-Request-Id': `subscription-${userId}-${Date.now()}`,
           },
           timeout: 10000,
         }
@@ -181,19 +193,21 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
       console.error('Error creating PayPal checkout:', error);
       if (error.response) {
-        console.error('PayPal API error:', error.response.data);
+        console.error('PayPal API error response:', JSON.stringify(error.response.data, null, 2));
+        console.error('PayPal API error status:', error.response.status);
+        const errorMessage = error.response.data?.message || error.response.data?.error_description || 'Unknown PayPal API error';
         return NextResponse.json(
           { 
-            error: 'Failed to create PayPal checkout',
-            details: process.env.NODE_ENV === 'development' ? error.response.data : undefined,
+            error: `Failed to create PayPal checkout: ${errorMessage}`,
+            details: error.response.data,
           },
           { status: 500 }
         );
       }
       return NextResponse.json(
         { 
-          error: 'Failed to create PayPal checkout',
-          details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+          error: `Failed to create PayPal checkout: ${error.message || 'Unknown error'}`,
+          details: error.message,
         },
         { status: 500 }
       );

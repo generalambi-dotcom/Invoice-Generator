@@ -13,11 +13,12 @@ export async function GET(request: NextRequest) {
     // Check environment variables for secret keys (required for backend processing)
     // For PayPal: Check if client ID or secret is configured
     // For Paystack: Check if secret key is configured
-    // For Stripe: Check if secret key is configured
+    // For Stripe: Check if secret key OR publishable key is configured
+    // Note: Publishable key alone indicates Stripe is configured (secret key should be in env vars)
     
     const hasPayPal = !!(process.env.PAYPAL_CLIENT_ID || process.env.PAYPAL_CLIENT_SECRET);
     const hasPaystack = !!process.env.PAYSTACK_SECRET_KEY;
-    const hasStripe = !!process.env.STRIPE_SECRET_KEY;
+    const hasStripe = !!(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_PUBLISHABLE_KEY);
 
     // Also check if any admin has configured payment credentials in the database
     // This is a fallback check for user-specific credentials

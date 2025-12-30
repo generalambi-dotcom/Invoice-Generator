@@ -74,14 +74,41 @@ export default function UpgradePage() {
 
   const loadAvailableProviders = async () => {
     try {
+      // First check server-side API
       const response = await fetch('/api/subscriptions/available-providers');
       if (response.ok) {
         const data = await response.json();
-        setAvailableProviders(data.providers || {
+        let providers = data.providers || {
           paypal: false,
           paystack: false,
           stripe: false,
-        });
+        };
+
+        // Also check client-side admin config (localStorage) as fallback
+        // This is for cases where admin configured keys but they're not in env vars yet
+        if (typeof window !== 'undefined') {
+          try {
+            const adminConfig = localStorage.getItem('admin-payment-config');
+            if (adminConfig) {
+              const config = JSON.parse(adminConfig);
+              // If Stripe keys are in admin config, mark Stripe as available
+              if (config.stripePublicKey || config.stripeSecretKey) {
+                providers.stripe = true;
+              }
+              // Same for other providers
+              if (config.paystackPublicKey || config.paystackSecretKey) {
+                providers.paystack = true;
+              }
+              if (config.paypalClientId) {
+                providers.paypal = true;
+              }
+            }
+          } catch (e) {
+            console.error('Error reading admin config:', e);
+          }
+        }
+
+        setAvailableProviders(providers);
       }
     } catch (error) {
       console.error('Error loading available providers:', error);

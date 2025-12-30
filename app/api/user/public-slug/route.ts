@@ -3,6 +3,37 @@ import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { generateUniquePublicSlug, isPublicSlugAvailable } from '@/lib/public-invoice';
 
+/**
+ * Check if user has premium access (admin or premium subscription)
+ */
+async function checkPremiumAccess(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      isAdmin: true,
+      subscriptionPlan: true,
+      subscriptionStatus: true,
+      subscriptionEndDate: true,
+    },
+  });
+
+  if (!user) return false;
+
+  // Admins have premium access
+  if (user.isAdmin) return true;
+
+  // Check premium subscription
+  if (user.subscriptionPlan === 'premium' && user.subscriptionStatus === 'active') {
+    // Check if subscription hasn't expired
+    if (user.subscriptionEndDate) {
+      return new Date(user.subscriptionEndDate) > new Date();
+    }
+    return true;
+  }
+
+  return false;
+}
+
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +46,18 @@ export async function GET(request: NextRequest) {
     
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check premium access
+    const hasPremium = await checkPremiumAccess(user.userId);
+    if (!hasPremium) {
+      return NextResponse.json(
+        { 
+          error: 'Premium subscription required',
+          requiresPremium: true,
+        },
+        { status: 403 }
+      );
     }
 
     const dbUser = await prisma.user.findUnique({
@@ -54,6 +97,18 @@ export async function POST(request: NextRequest) {
     
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check premium access
+    const hasPremium = await checkPremiumAccess(user.userId);
+    if (!hasPremium) {
+      return NextResponse.json(
+        { 
+          error: 'Premium subscription required to create public invoice links',
+          requiresPremium: true,
+        },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();

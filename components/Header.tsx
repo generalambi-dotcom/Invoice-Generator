@@ -363,13 +363,15 @@ export default function Header() {
                             Payment Methods
                           </Link>
                         )}
-                          <Link
-                            href="/settings/public-link"
-                            onClick={closeMenus}
-                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            Public Invoice Link
-                          </Link>
+                          {isPremium && (
+                            <Link
+                              href="/settings/public-link"
+                              onClick={closeMenus}
+                              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            >
+                              Public Invoice Link
+                            </Link>
+                          )}
                           <Link
                             href="/settings/whatsapp"
                             onClick={closeMenus}
@@ -478,13 +480,15 @@ export default function Header() {
                               Payment Methods
                             </Link>
                           )}
-                          <Link
-                            href="/settings/public-link"
-                            onClick={closeMenus}
-                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            Public Invoice Link
-                          </Link>
+                          {isPremium && (
+                            <Link
+                              href="/settings/public-link"
+                              onClick={closeMenus}
+                              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            >
+                              Public Invoice Link
+                            </Link>
+                          )}
                           <Link
                             href="/settings/whatsapp"
                             onClick={closeMenus}

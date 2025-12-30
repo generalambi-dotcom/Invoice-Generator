@@ -2,12 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth';
+import { isPremiumUser } from '@/lib/payments';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 function PublicLinkSettingsContent() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [isPremium, setIsPremium] = useState(false);
   const [publicSlug, setPublicSlug] = useState<string>('');
   const [customSlug, setCustomSlug] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -22,7 +25,12 @@ function PublicLinkSettingsContent() {
       return;
     }
     setUser(currentUser);
-    loadPublicSlug();
+    setIsPremium(isPremiumUser());
+    if (isPremiumUser()) {
+      loadPublicSlug();
+    } else {
+      setLoading(false);
+    }
   }, [router]);
 
   const loadPublicSlug = async () => {
@@ -100,17 +108,101 @@ function PublicLinkSettingsContent() {
     );
   }
 
+  // Show premium upgrade prompt if not premium
+  if (!isPremium) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gray-50 py-8">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-white rounded-lg shadow p-6 sm:p-8">
+              <div className="text-center py-12">
+                <div className="mb-6">
+                  <div className="mx-auto w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    Premium Feature
+                  </h1>
+                  <p className="text-xl text-gray-600 mb-6">
+                    Public Invoice Link is available for Premium users
+                  </p>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8 max-w-2xl mx-auto">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">What you get with Public Invoice Link:</h2>
+                  <ul className="space-y-3 text-left text-gray-700">
+                    <li className="flex items-start">
+                      <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>Share a custom link with customers to create invoices</span>
+                    </li>
+                    <li className="flex items-start">
+                      <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>No login required for your customers</span>
+                    </li>
+                    <li className="flex items-start">
+                      <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>All invoices automatically saved to your account</span>
+                    </li>
+                    <li className="flex items-start">
+                      <svg className="w-5 h-5 text-green-500 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>Customizable link slug (e.g., /i/your-company)</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link
+                    href="/upgrade"
+                    className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 font-semibold text-lg transition-all shadow-lg hover:shadow-xl"
+                  >
+                    Upgrade to Premium
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    className="px-8 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition-colors"
+                  >
+                    Back to Dashboard
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-lg shadow p-6 sm:p-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-              Public Invoice Link
-            </h1>
-            <p className="text-gray-600 mb-6">
-              Share this link with your customers so they can create invoices themselves. No login required for them!
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                  Public Invoice Link
+                </h1>
+                <p className="text-gray-600">
+                  Share this link with your customers so they can create invoices themselves. No login required for them!
+                </p>
+              </div>
+              <div className="hidden sm:flex items-center px-3 py-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full text-sm font-semibold">
+                <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                Premium
+              </div>
+            </div>
 
             {/* Success Message */}
             {success && (

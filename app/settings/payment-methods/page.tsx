@@ -107,15 +107,19 @@ export default function PaymentMethodsPage() {
       const response = await fetch(`/api/payment-credentials?id=${credentialId}`, {
         method: 'DELETE',
         headers: {
-          'x-user-id': user?.id || '',
+          'Content-Type': 'application/json',
         },
       });
 
       if (response.ok) {
-        alert('Payment credentials removed');
+        alert('Payment credentials removed successfully');
         loadCredentials();
+      } else {
+        const error = await response.json();
+        alert('Failed to remove: ' + (error.error || 'Unknown error'));
       }
     } catch (error: any) {
+      console.error('Error deleting payment credential:', error);
       alert('Error: ' + error.message);
     }
   };

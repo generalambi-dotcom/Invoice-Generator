@@ -157,6 +157,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const user = getAuthenticatedUser(request);
     const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
     const provider = searchParams.get('provider');
 
     if (!user) {
@@ -166,34 +167,72 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    if (!provider) {
-      return NextResponse.json(
-        { error: 'Provider is required' },
-        { status: 400 }
-      );
-    }
+    // Support both id and provider for backward compatibility
+    if (id) {
+      // Delete by ID (preferred method)
+      const credential = await prisma.paymentCredential.findUnique({
+        where: { id },
+        select: { userId: true },
+      });
 
-    if (!['paypal', 'paystack', 'stripe'].includes(provider)) {
-      return NextResponse.json(
-        { error: 'Invalid payment provider' },
-        { status: 400 }
-      );
-    }
+      if (!credential) {
+        return NextResponse.json(
+          { error: 'Payment credential not found' },
+          { status: 404 }
+        );
+      }
 
-    await prisma.paymentCredential.delete({
-      where: {
-        userId_provider: {
-          userId: user.userId,
-          provider,
+      // Verify the credential belongs to the user
+      if (credential.userId !== user.userId) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 403 }
+        );
+      }
+
+      await prisma.paymentCredential.delete({
+        where: { id },
+      });
+
+      return NextResponse.json({ message: 'Payment credentials deleted' });
+    } else if (provider) {
+      // Delete by provider (legacy method)
+      if (!['paypal', 'paystack', 'stripe'].includes(provider)) {
+        return NextResponse.json(
+          { error: 'Invalid payment provider' },
+          { status: 400 }
+        );
+      }
+
+      await prisma.paymentCredential.delete({
+        where: {
+          userId_provider: {
+            userId: user.userId,
+            provider,
+          },
         },
-      },
-    });
+      });
 
-    return NextResponse.json({ message: 'Payment credentials deleted' });
+      return NextResponse.json({ message: 'Payment credentials deleted' });
+    } else {
+      return NextResponse.json(
+        { error: 'Either id or provider is required' },
+        { status: 400 }
+      );
+    }
   } catch (error: any) {
     console.error('Error deleting payment credentials:', error);
+    
+    // Handle Prisma errors
+    if (error.code === 'P2025') {
+      return NextResponse.json(
+        { error: 'Payment credential not found' },
+        { status: 404 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to delete payment credentials' },
+      { error: 'Failed to delete payment credentials', details: process.env.NODE_ENV === 'development' ? error.message : undefined },
       { status: 500 }
     );
   }

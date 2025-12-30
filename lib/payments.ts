@@ -7,7 +7,7 @@ import { getPaymentConfig } from './admin';
 export async function initiatePayment(params: {
   userId: string;
   plan: string;
-  provider: 'paypal' | 'paystack';
+  provider: 'paypal' | 'paystack' | 'stripe';
   amount: number;
   currency: string;
   userEmail: string;
@@ -57,6 +57,33 @@ export async function initiatePayment(params: {
         initializePaystack(params, config.paystackPublicKey!, resolve, reject);
       });
     }
+  } else if (params.provider === 'stripe') {
+    // Stripe integration - create checkout session via API
+    try {
+      const response = await fetch('/api/subscriptions/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: params.userId,
+          plan: params.plan,
+          amount: params.amount,
+          currency: params.currency.toLowerCase(),
+          userEmail: params.userEmail,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create Stripe checkout session');
+      }
+
+      const data = await response.json();
+      return data.checkoutUrl;
+    } catch (error: any) {
+      throw new Error('Failed to initiate Stripe payment: ' + error.message);
+    }
   }
   
   throw new Error('Invalid payment provider');
@@ -101,7 +128,7 @@ function initializePaystack(
 function handlePaymentSuccess(
   userId: string,
   plan: string,
-  provider: 'paypal' | 'paystack',
+  provider: 'paypal' | 'paystack' | 'stripe',
   response: any
 ): void {
   // Update user subscription

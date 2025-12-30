@@ -16,6 +16,8 @@ export default function AdminDashboard() {
     paypalClientId: '',
     paystackPublicKey: '',
     paystackSecretKey: '',
+    stripePublicKey: '',
+    stripeSecretKey: '',
   });
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
@@ -58,6 +60,8 @@ export default function AdminDashboard() {
         paypalClientId: config.paypalClientId || '',
         paystackPublicKey: config.paystackPublicKey || '',
         paystackSecretKey: config.paystackSecretKey || '',
+        stripePublicKey: config.stripePublicKey || '',
+        stripeSecretKey: config.stripeSecretKey || '',
       });
       
       // Load coupons
@@ -229,6 +233,43 @@ export default function AdminDashboard() {
               <p className="text-xs text-gray-500 mt-1">
                 Keep this secret! Never share this key publicly.
               </p>
+            </div>
+
+            <div className="border-t border-gray-200 pt-4 mt-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Stripe Configuration</h3>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Stripe Publishable Key
+                </label>
+                <input
+                  type="text"
+                  value={paymentConfig.stripePublicKey}
+                  onChange={(e) => setPaymentConfig({...paymentConfig, stripePublicKey: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="pk_test_... or pk_live_..."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Get this from your Stripe Dashboard (Developers → API keys). Also set STRIPE_SECRET_KEY in environment variables.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Stripe Secret Key (Optional - for reference only)
+                </label>
+                <input
+                  type="password"
+                  value={paymentConfig.stripeSecretKey}
+                  onChange={(e) => setPaymentConfig({...paymentConfig, stripeSecretKey: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-50"
+                  placeholder="sk_test_... or sk_live_..."
+                  disabled
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  ⚠️ Secret key must be set in environment variable STRIPE_SECRET_KEY for security. This field is for reference only.
+                </p>
+              </div>
             </div>
             
             <button

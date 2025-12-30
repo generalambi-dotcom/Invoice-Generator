@@ -33,6 +33,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Handle subscription payments
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const metadata = session.metadata;
+
+      if (metadata?.type === 'subscription' && metadata?.userId && metadata?.plan) {
+        const userId = metadata.userId;
+        const plan = metadata.plan;
+        const amount = session.amount_total ? session.amount_total / 100 : 0; // Convert from cents
+
+        // Update user subscription
+        const endDate = new Date();
+        endDate.setDate(endDate.getDate() + 30); // 30 days subscription
+
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            subscriptionPlan: plan,
+            subscriptionStatus: 'active',
+            subscriptionStartDate: new Date(),
+            subscriptionEndDate: endDate,
+            subscriptionPaymentMethod: 'stripe',
+          },
+        });
+
+        console.log(`✅ Subscription activated for user ${userId} via Stripe: ${session.id}`);
+
+        // Note: Payment model requires invoiceId, but subscriptions don't have invoices
+        // The subscription status is already updated above, which is the important part
+        // Payment records are primarily for invoice payments, not subscriptions
+        console.log(`💳 Subscription payment: ${amount} ${session.currency?.toUpperCase() || 'USD'} for user ${userId}`);
+      }
+    }
+
+    // Handle invoice payments
     if (event.type === 'payment_intent.succeeded') {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
       const invoiceId = paymentIntent.metadata?.invoiceId;

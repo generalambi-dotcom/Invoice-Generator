@@ -90,6 +90,8 @@ export function savePaymentConfig(config: {
   paypalClientId?: string;
   paystackPublicKey?: string;
   paystackSecretKey?: string;
+  stripePublicKey?: string;
+  stripeSecretKey?: string;
 }): void {
   if (typeof window === 'undefined') return;
   

@@ -12,7 +12,7 @@ export default function UpgradePage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [paymentProvider, setPaymentProvider] = useState<'paypal' | 'paystack' | null>(null);
+  const [paymentProvider, setPaymentProvider] = useState<'paypal' | 'paystack' | 'stripe' | null>(null);
   const [couponCode, setCouponCode] = useState('');
   const [couponError, setCouponError] = useState('');
   const [couponSuccess, setCouponSuccess] = useState(false);
@@ -29,6 +29,28 @@ export default function UpgradePage() {
     
     // Load pricing based on region
     loadPricing();
+
+    // Check for Stripe success/cancel redirect
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('success') === 'true') {
+        const sessionId = urlParams.get('session_id');
+        if (sessionId) {
+          // Payment successful - refresh user data
+          const updatedUser = getCurrentUser();
+          setUser(updatedUser);
+          // Show success message
+          alert('Payment successful! Your premium subscription is now active.');
+          // Clean URL
+          window.history.replaceState({}, '', '/upgrade');
+        }
+      } else if (urlParams.get('canceled') === 'true') {
+        // Payment canceled
+        alert('Payment was canceled. You can try again anytime.');
+        // Clean URL
+        window.history.replaceState({}, '', '/upgrade');
+      }
+    }
   }, [router]);
 
   const loadPricing = async () => {
@@ -70,7 +92,7 @@ export default function UpgradePage() {
     }
   };
 
-  const handleUpgrade = async (provider: 'paypal' | 'paystack') => {
+  const handleUpgrade = async (provider: 'paypal' | 'paystack' | 'stripe') => {
     if (!pricing) return;
     
     // If user is not logged in, redirect to signin with redirect back to upgrade

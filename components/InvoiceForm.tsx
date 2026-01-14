@@ -1580,195 +1580,263 @@ function InvoiceFormContent() {
 
           {/* Right Column - Preview */}
           <div className="lg:sticky lg:top-8 h-fit order-first lg:order-last">
-            <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-semibold mb-4">Invoice Preview</h2>
-              <div className="border-2 border-gray-200 rounded-lg p-4 sm:p-6 bg-white">
-                {/* Company Header */}
-                <div className="mb-4 sm:mb-6">
-                  {invoice.company?.logo && (
-                    <img
-                      src={invoice.company.logo}
-                      alt="Company logo"
-                      className="h-12 mb-4 object-contain"
-                    />
-                  )}
-                  <h3 className="text-lg font-bold text-gray-900">
-                    {invoice.company?.name || 'Company Name'}
-                  </h3>
-                  {invoice.company?.address && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      {invoice.company.address}
-                      {invoice.company.city && `, ${invoice.company.city}`}
-                      {invoice.company.state && `, ${invoice.company.state}`}
-                      {invoice.company.zip && ` ${invoice.company.zip}`}
-                      {invoice.company.country && `, ${invoice.company.country}`}
-                    </p>
+            <div className="bg-gray-100/50 p-4 rounded-xl">
+              <div className="flex justify-between items-center mb-4 px-2">
+                <h2 className="text-lg font-semibold text-gray-700">Preview</h2>
+                <div className="text-xs text-gray-500">Auto-updates as you type</div>
+              </div>
+
+              {/* Invoice Paper */}
+              <div className="bg-white rounded-lg shadow-xl ring-1 ring-black/5 p-8 sm:p-10 min-h-[600px] relative transition-all duration-300">
+                {/* Ribbon/Accent Top (Optional - adds nice touch based on theme) */}
+                <div className="absolute top-0 left-0 w-full h-2 bg-theme-primary rounded-t-lg opacity-80"></div>
+
+                {/* Header Section - Split Layout */}
+                <div className="flex flex-col sm:flex-row justify-between items-start gap-8 mb-12 mt-2">
+                  {/* Left: Company BRAND */}
+                  <div className="flex-1">
+                    {invoice.company?.logo ? (
+                      <img
+                        src={invoice.company.logo}
+                        alt="Company logo"
+                        className="h-16 mb-6 object-contain"
+                      />
+                    ) : (
+                      <div className="h-16 mb-6 flex items-center">
+                        <h3 className="text-2xl font-bold text-gray-900 tracking-tight">
+                          {invoice.company?.name || 'Your Company'}
+                        </h3>
+                      </div>
+                    )}
+
+                    {/* Company Address */}
+                    <div className="text-sm text-gray-500 leading-relaxed">
+                      {invoice.company?.name && <p className="font-medium text-gray-900 mb-1">{invoice.company.name}</p>}
+                      {invoice.company?.address && <p>{invoice.company.address}</p>}
+                      <p>
+                        {[
+                          invoice.company?.city,
+                          invoice.company?.state,
+                          invoice.company?.zip,
+                          invoice.company?.country
+                        ].filter(Boolean).join(', ')}
+                      </p>
+                      {invoice.company?.phone && <p className="mt-2">{invoice.company.phone}</p>}
+                      {invoice.company?.email && <p>{invoice.company.email}</p>}
+                      {invoice.company?.website && <p>{invoice.company.website}</p>}
+                    </div>
+                  </div>
+
+                  {/* Right: Invoice Meta & Title */}
+                  <div className="text-right flex-1">
+                    <h1 className="text-4xl font-light text-gray-300 tracking-widest uppercase mb-6">Invoice</h1>
+                    <div className="space-y-3">
+                      <div className="flex justify-between sm:justify-end gap-8 border-b border-gray-100 pb-2">
+                        <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Number</span>
+                        <span className="text-base font-semibold text-gray-900 font-mono">{invoice.invoiceNumber || '#'}</span>
+                      </div>
+                      <div className="flex justify-between sm:justify-end gap-8 border-b border-gray-100 pb-2">
+                        <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Date</span>
+                        <span className="text-base font-medium text-gray-900">
+                          {invoice.invoiceDate
+                            ? format(new Date(invoice.invoiceDate), 'MMM dd, yyyy')
+                            : '—'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between sm:justify-end gap-8 border-b border-gray-100 pb-2">
+                        <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">Due</span>
+                        <span className="text-base font-medium text-gray-900">
+                          {invoice.dueDate
+                            ? format(new Date(invoice.dueDate), 'MMM dd, yyyy')
+                            : '—'}
+                        </span>
+                      </div>
+                      {invoice.purchaseOrder && (
+                        <div className="flex justify-between sm:justify-end gap-8 border-b border-gray-100 pb-2">
+                          <span className="text-sm font-medium text-gray-500 uppercase tracking-wider">PO #</span>
+                          <span className="text-base font-medium text-gray-900">{invoice.purchaseOrder}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sub-Header: Bill To & Ship To */}
+                <div className="flex flex-col sm:flex-row gap-12 mb-12">
+                  <div className="flex-1">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Bill To</h4>
+                    <div className="text-sm text-gray-600 leading-relaxed">
+                      <p className="text-lg font-semibold text-gray-900 mb-1">{invoice.client?.name || 'Client Name'}</p>
+                      {invoice.client?.address && <p>{invoice.client.address}</p>}
+                      <p>
+                        {[
+                          invoice.client?.city,
+                          invoice.client?.state,
+                          invoice.client?.zip,
+                          invoice.client?.country
+                        ].filter(Boolean).join(', ')}
+                      </p>
+                      {invoice.client?.email && <p className="mt-2 text-theme-primary">{invoice.client.email}</p>}
+                      {invoice.client?.phone && <p>{invoice.client.phone}</p>}
+                    </div>
+                  </div>
+
+                  {invoice.shipTo && (
+                    <div className="flex-1">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Ship To</h4>
+                      <div className="text-sm text-gray-600 leading-relaxed">
+                        <p className="font-semibold text-gray-900 mb-1">{invoice.shipTo.name || invoice.client?.name}</p>
+                        {invoice.shipTo.address && <p>{invoice.shipTo.address}</p>}
+                        <p>
+                          {[
+                            invoice.shipTo.city,
+                            invoice.shipTo.state,
+                            invoice.shipTo.zip,
+                            invoice.shipTo.country
+                          ].filter(Boolean).join(', ')}
+                        </p>
+                      </div>
+                    </div>
                   )}
                 </div>
 
-                {/* Invoice Title */}
-                <div className="mb-4 sm:mb-6">
-                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">INVOICE</h1>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-600">Invoice #:</p>
-                      <p className="font-semibold">{invoice.invoiceNumber || 'INV-001'}</p>
+                {/* Line Items Table */}
+                <div className="mb-10">
+                  <div className="overflow-hidden rounded-lg ring-1 ring-gray-200">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 border-b border-gray-200">
+                          <th className="text-left py-3 px-4 font-semibold text-gray-500 uppercase tracking-wider text-xs">Description</th>
+                          <th className="text-right py-3 px-4 font-semibold text-gray-500 uppercase tracking-wider text-xs w-24">Qty</th>
+                          <th className="text-right py-3 px-4 font-semibold text-gray-500 uppercase tracking-wider text-xs w-32">Rate</th>
+                          <th className="text-right py-3 px-4 font-semibold text-gray-500 uppercase tracking-wider text-xs w-32">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {invoice.lineItems && invoice.lineItems.length > 0 ? (
+                          invoice.lineItems.map((item, index) => (
+                            <tr key={item.id || index} className="group hover:bg-gray-50/50 transition-colors">
+                              <td className="py-4 px-4 text-gray-900 align-top">
+                                <p className="font-medium">{item.description || 'Item description'}</p>
+                              </td>
+                              <td className="text-right py-4 px-4 text-gray-600 align-top">{item.quantity || 0}</td>
+                              <td className="text-right py-4 px-4 text-gray-600 align-top">
+                                {currencySymbol} {formatCurrency(item.rate, invoice.currency || 'USD')}
+                              </td>
+                              <td className="text-right py-4 px-4 font-medium text-gray-900 align-top">
+                                {currencySymbol} {formatCurrency(item.amount, invoice.currency || 'USD')}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={4} className="text-center py-8 text-gray-400 italic">
+                              Use the form to add items
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Totals Section */}
+                <div className="flex justify-end mb-12">
+                  <div className="w-full sm:w-1/2 lg:w-5/12 space-y-3">
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Subtotal</span>
+                      <span className="font-medium text-gray-900">
+                        {currencySymbol} {formatCurrency(invoice.subtotal || 0, invoice.currency || 'USD')}
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-gray-600">Date:</p>
-                      <p className="font-semibold">
-                        {invoice.invoiceDate
-                          ? format(new Date(invoice.invoiceDate), 'MMM dd, yyyy')
-                          : 'N/A'}
-                      </p>
+
+                    {invoice.discountAmount !== undefined && invoice.discountAmount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Discount {invoice.discountRate && invoice.discountRate > 0 && `(${invoice.discountRate}%)`}</span>
+                        <span>
+                          -{currencySymbol} {formatCurrency(invoice.discountAmount || 0, invoice.currency || 'USD')}
+                        </span>
+                      </div>
+                    )}
+
+                    {invoice.taxAmount !== undefined && invoice.taxAmount > 0 && (
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>Tax {invoice.taxRate && invoice.taxRate > 0 && `(${invoice.taxRate}%)`}</span>
+                        <span className="font-medium text-gray-900">
+                          {currencySymbol} {formatCurrency(invoice.taxAmount || 0, invoice.currency || 'USD')}
+                        </span>
+                      </div>
+                    )}
+
+                    {invoice.shipping !== undefined && invoice.shipping > 0 && (
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>Shipping</span>
+                        <span className="font-medium text-gray-900">
+                          {currencySymbol} {formatCurrency(invoice.shipping || 0, invoice.currency || 'USD')}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="border-t-2 border-gray-900 pt-4 mt-4 flex justify-between items-end">
+                      <span className="text-base font-bold text-gray-900 uppercase tracking-wider">Total Due</span>
+                      <span className="text-2xl font-bold text-theme-primary">
+                        {currencySymbol} {formatCurrency(invoice.total || 0, invoice.currency || 'USD')}
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-gray-600">Due Date:</p>
-                      <p className="font-semibold">
-                        {invoice.dueDate
-                          ? format(new Date(invoice.dueDate), 'MMM dd, yyyy')
-                          : 'N/A'}
-                      </p>
-                    </div>
-                    {invoice.purchaseOrder && (
-                      <div>
-                        <p className="text-gray-600">PO #:</p>
-                        <p className="font-semibold">{invoice.purchaseOrder}</p>
+
+                    {/* Payment Status / Paid Amount */}
+                    {invoice.paidAmount !== undefined && invoice.paidAmount > 0 && (
+                      <div className="bg-green-50 rounded-lg p-3 mt-4 border border-green-100">
+                        <div className="flex justify-between text-sm text-green-800 font-medium mb-1">
+                          <span>Amount Paid</span>
+                          <span>{currencySymbol} {formatCurrency(invoice.paidAmount || 0, invoice.currency || 'USD')}</span>
+                        </div>
+                        {invoice.total !== undefined && invoice.paidAmount < invoice.total && (
+                          <div className="flex justify-between text-sm text-red-600 font-bold border-t border-green-200 pt-1 mt-1">
+                            <span>Balance Due</span>
+                            <span>{currencySymbol} {formatCurrency(invoice.total - invoice.paidAmount, invoice.currency || 'USD')}</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Client Info */}
-                <div className="mb-4 sm:mb-6">
-                  <p className="text-sm font-semibold text-gray-700 mb-2">Bill To:</p>
-                  <p className="text-sm text-gray-900">{invoice.client?.name || 'Client Name'}</p>
-                  {invoice.client?.address && (
-                    <p className="text-sm text-gray-600">
-                      {invoice.client.address}
-                      {invoice.client.city && `, ${invoice.client.city}`}
-                      {invoice.client.state && `, ${invoice.client.state}`}
-                      {invoice.client.zip && ` ${invoice.client.zip}`}
-                      {invoice.client.country && `, ${invoice.client.country}`}
-                    </p>
-                  )}
-                </div>
-
-                {/* Line Items Table */}
-                <div className="mb-4 sm:mb-6 overflow-x-auto">
-                  <table className="w-full text-xs sm:text-sm min-w-[500px]">
-                    <thead>
-                      <tr className="border-b-2 border-gray-300">
-                        <th className="text-left py-2">Description</th>
-                        <th className="text-right py-2">Qty</th>
-                        <th className="text-right py-2">Rate</th>
-                        <th className="text-right py-2">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {invoice.lineItems && invoice.lineItems.length > 0 ? (
-                        invoice.lineItems.map((item, index) => (
-                          <tr key={item.id || index} className="border-b border-gray-200">
-                            <td className="py-2">{item.description || 'Item description'}</td>
-                            <td className="text-right py-2">{item.quantity || 0}</td>
-                            <td className="text-right py-2">
-                              {currencySymbol} {formatCurrency(item.rate, invoice.currency || 'USD')}
-                            </td>
-                            <td className="text-right py-2">
-                              {currencySymbol} {formatCurrency(item.amount, invoice.currency || 'USD')}
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={4} className="text-center py-4 text-gray-500">
-                            No line items
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Totals */}
-                <div className="border-t-2 border-gray-300 pt-3 sm:pt-4">
-                  <div className="flex justify-end">
-                    <div className="w-full sm:w-64 space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Subtotal:</span>
-                        <span className="font-semibold">
-                          {currencySymbol}{' '}
-                          {formatCurrency(invoice.subtotal || 0, invoice.currency || 'USD')}
-                        </span>
+                {/* Footer Notes */}
+                {(invoice.notes || invoice.bankDetails || invoice.terms) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 border-t border-gray-100 pt-8">
+                    {invoice.bankDetails && (
+                      <div>
+                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Details</h4>
+                        <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">{invoice.bankDetails}</p>
                       </div>
-                      {invoice.discountAmount && invoice.discountAmount > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">
-                            Discount ({invoice.discountRate}%):
-                          </span>
-                          <span className="font-semibold text-red-600">
-                            -{currencySymbol}{' '}
-                            {formatCurrency(
-                              invoice.discountAmount,
-                              invoice.currency || 'USD'
-                            )}
-                          </span>
-                        </div>
-                      )}
-                      {invoice.taxAmount && invoice.taxAmount > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Tax ({invoice.taxRate}%):</span>
-                          <span className="font-semibold">
-                            {currencySymbol}{' '}
-                            {formatCurrency(invoice.taxAmount, invoice.currency || 'USD')}
-                          </span>
-                        </div>
-                      )}
-                      {invoice.shipping && invoice.shipping > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Shipping:</span>
-                          <span className="font-semibold">
-                            {currencySymbol}{' '}
-                            {formatCurrency(invoice.shipping, invoice.currency || 'USD')}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex justify-between text-base font-bold border-t border-gray-300 pt-2 mt-2">
-                        <span>Total:</span>
-                        <span className="text-theme-primary">
-                          {currencySymbol}{' '}
-                          {formatCurrency(invoice.total || 0, invoice.currency || 'USD')}
-                        </span>
+                    )}
+                    {invoice.notes && (
+                      <div>
+                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Notes</h4>
+                        <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed italic">{invoice.notes}</p>
                       </div>
-                      {invoice.paidAmount && invoice.paidAmount > 0 && (
-                        <>
-                          <div className="flex justify-between text-sm text-green-600 pt-2 border-t border-gray-200">
-                            <span>Paid:</span>
-                            <span className="font-semibold">
-                              {currencySymbol}{' '}
-                              {formatCurrency(invoice.paidAmount, invoice.currency || 'USD')}
-                            </span>
-                          </div>
-                          {invoice.paidAmount && invoice.total && invoice.paidAmount < invoice.total && (
-                            <div className="flex justify-between text-sm text-red-600">
-                              <span>Outstanding:</span>
-                              <span className="font-semibold">
-                                {currencySymbol}{' '}
-                                {formatCurrency(invoice.total - invoice.paidAmount, invoice.currency || 'USD')}
-                              </span>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
+                    )}
+                    {invoice.terms && (
+                      <div className="sm:col-span-2">
+                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Terms & Conditions</h4>
+                        <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed">{invoice.terms}</p>
+                      </div>
+                    )}
                   </div>
+                )}
+
+                {/* Watermark / Brand */}
+                <div className="mt-12 pt-6 border-t border-gray-50 text-center">
+                  <p className="text-xs text-gray-300 font-medium">Powered by InvoiceNaija</p>
                 </div>
+
               </div>
 
-              {/* Payment History Section */}
+              {/* Payment History Section (Outside the paper) */}
               {invoice.id && (
-                <div className="mt-4 sm:mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-3 px-2">
                     <h3 className="text-sm font-semibold text-gray-700">Payment History</h3>
                     <button
                       onClick={async () => {
@@ -1783,14 +1851,14 @@ function InvoiceFormContent() {
                       }}
                       className="text-xs text-blue-600 hover:text-blue-800"
                     >
-                      {showPaymentHistory ? 'Hide' : 'View'} History
+                      {showPaymentHistory ? 'Hide' : 'View'}
                     </button>
                   </div>
                   {showPaymentHistory && (
                     <div className="space-y-2">
                       {paymentHistory.length > 0 ? (
                         paymentHistory.map((payment: any) => (
-                          <div key={payment.id} className="bg-white p-3 rounded border border-gray-200">
+                          <div key={payment.id} className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
                             <div className="flex justify-between items-start">
                               <div>
                                 <div className="text-sm font-medium">
@@ -1818,10 +1886,12 @@ function InvoiceFormContent() {
                           </div>
                         ))
                       ) : (
-                        <div className="text-sm text-gray-500 text-center py-4">
-                          No payment history yet
+                        <div className="text-sm text-gray-500 text-center py-4 bg-white rounded-lg border border-gray-200 border-dashed">
+                          No payment history recorded
                         </div>
                       )}
+
+                      {/* Record Payment Button */}
                       {invoice.paymentStatus !== 'paid' && invoice.id && invoice.total && (
                         <button
                           onClick={async () => {
@@ -1855,9 +1925,9 @@ function InvoiceFormContent() {
                               }
                             }
                           }}
-                          className="w-full mt-2 px-3 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                          className="w-full mt-2 px-3 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-black transition-colors"
                         >
-                          + Record Payment
+                          + Record Manual Payment
                         </button>
                       )}
                     </div>
@@ -1867,343 +1937,318 @@ function InvoiceFormContent() {
 
               {/* Payment Link Section - Premium Only */}
               {isPremium && invoice.total && invoice.total > 0 && (
-                <div className="mt-4 sm:mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Payment Link</h3>
+                <div className="mt-6 p-5 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl border border-blue-100 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="bg-blue-100 text-blue-700 p-1.5 rounded-lg">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                    </span>
+                    <h3 className="text-sm font-bold text-gray-800">Online Payment Link</h3>
+                  </div>
+
                   {invoice.paymentLink ? (
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Payment Provider:</span>
-                        <span className="text-sm font-medium capitalize">{invoice.paymentProvider || 'N/A'}</span>
-                      </div>
                       <div className="flex items-center gap-2">
                         <input
                           type="text"
                           readOnly
                           value={invoice.paymentLink}
-                          className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white font-mono text-xs"
+                          className="flex-1 px-3 py-2 text-xs border border-blue-200 rounded-lg bg-white font-mono text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <button
                           onClick={() => {
                             navigator.clipboard.writeText(invoice.paymentLink || '');
                             alert('Payment link copied to clipboard!');
                           }}
-                          className="px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded-md transition-colors"
+                          className="px-4 py-2 text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
                         >
                           Copy
                         </button>
                       </div>
-                      <div className="pt-2 border-t border-gray-200">
-                        <p className="text-xs text-gray-500 mb-2">Change payment provider:</p>
+                      <div className="flex justify-between items-center pt-2">
+                        <span className="text-xs text-gray-500">Provider: <span className="font-medium text-gray-700 capitalize">{invoice.paymentProvider || 'Default'}</span></span>
                         <div className="flex gap-2">
-                          <button
-                            onClick={async () => {
-                              if (!user || !invoice.id) return;
-
-                              try {
-                                const link = await generatePaymentLinkAPI(invoice.id, 'paypal');
-                                setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paypal' }));
-                                alert('PayPal payment link updated!');
-                              } catch (error: any) {
-                                alert('Failed to update payment link: ' + error.message);
-                              }
-                            }}
-                            className="flex-1 px-3 py-2 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                          >
-                            Update PayPal
-                          </button>
-                          <button
-                            onClick={async () => {
-                              if (!user || !invoice.id) return;
-
-                              try {
-                                const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
-                                setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paystack' }));
-                                alert('Paystack payment link updated!');
-                              } catch (error: any) {
-                                alert('Failed to update payment link: ' + error.message);
-                              }
-                            }}
-                            className="flex-1 px-3 py-2 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                          >
-                            Update Paystack
-                          </button>
+                          <button onClick={async () => {
+                            if (!user || !invoice.id) return;
+                            try {
+                              const link = await generatePaymentLinkAPI(invoice.id, 'paypal');
+                              setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paypal' }));
+                              alert('PayPal payment link updated!');
+                            } catch (error: any) { alert(error.message); }
+                          }} className="text-xs text-blue-600 hover:underline">Use PayPal</button>
+                          <span className="text-gray-300">|</span>
+                          <button onClick={async () => {
+                            if (!user || !invoice.id) return;
+                            try {
+                              const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
+                              setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paystack' }));
+                              alert('Paystack payment link updated!');
+                            } catch (error: any) { alert(error.message); }
+                          }} className="text-xs text-green-600 hover:underline">Use Paystack</button>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-500 italic">
-                        💡 Payment links are automatically generated when you save invoices if payment methods are configured.
-                      </p>
                     </div>
                   ) : (
-                    <div className="space-y-3">
-                      <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-                        <p className="text-sm text-blue-800 mb-2">
-                          <strong>Payment links are automatically generated</strong> when you save this invoice if you have payment methods configured.
-                        </p>
-                        <p className="text-xs text-blue-600">
-                          If no link appears after saving, you may need to connect a payment method in Settings.
-                        </p>
-                      </div>
-                      <div className="pt-2 border-t border-gray-200">
-                        <p className="text-xs text-gray-600 mb-2">Or create a payment link now:</p>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={async () => {
-                              if (!user || !invoice.total || !invoice.id) {
-                                alert('Please save the invoice first');
-                                return;
-                              }
-
-                              try {
-                                const link = await generatePaymentLinkAPI(invoice.id, 'paypal');
-                                setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paypal' }));
-                                alert('PayPal payment link created!');
-                              } catch (error: any) {
-                                if (error.message?.includes('not configured')) {
-                                  alert('PayPal credentials not configured. Please connect PayPal in Settings → Payment Methods');
-                                } else {
-                                  alert('Failed to create payment link: ' + error.message);
-                                }
-                              }
-                            }}
-                            className="flex-1 px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                          >
-                            Create PayPal Link
-                          </button>
-                          <button
-                            onClick={async () => {
-                              if (!user || !invoice.total || !invoice.id) {
-                                alert('Please save the invoice first');
-                                return;
-                              }
-
-                              try {
-                                const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
-                                setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paystack' }));
-                                alert('Paystack payment link created!');
-                              } catch (error: any) {
-                                if (error.message?.includes('not configured')) {
-                                  alert('Paystack credentials not configured. Please connect Paystack in Settings → Payment Methods');
-                                } else {
-                                  alert('Failed to create payment link: ' + error.message);
-                                }
-                              }
-                            }}
-                            className="flex-1 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                          >
-                            Create Paystack Link
-                          </button>
-                        </div>
+                    <div>
+                      <p className="text-xs text-gray-600 mb-3">
+                        Create a secure payment link for your client to pay online instantly.
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={async () => {
+                            if (!user || !invoice.total || !invoice.id) { alert('Please save the invoice first'); return; }
+                            try {
+                              const link = await generatePaymentLinkAPI(invoice.id, 'paypal');
+                              setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paypal' }));
+                            } catch (error: any) { alert(error.message); }
+                          }}
+                          className="flex-1 px-3 py-2 text-xs font-medium bg-white border border-gray-200 text-gray-700 rounded-lg hover:border-blue-300 hover:text-blue-600 transition-colors"
+                        >
+                          Create PayPal Link
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!user || !invoice.total || !invoice.id) { alert('Please save the invoice first'); return; }
+                            try {
+                              const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
+                              setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paystack' }));
+                            } catch (error: any) { alert(error.message); }
+                          }}
+                          className="flex-1 px-3 py-2 text-xs font-medium bg-white border border-gray-200 text-gray-700 rounded-lg hover:border-green-300 hover:text-green-600 transition-colors"
+                        >
+                          Create Paystack Link
+                        </button>
                       </div>
                     </div>
                   )}
                 </div>
               )}
-
-              {/* Payment Methods Not Configured Message */}
-              {isPremium && invoice.total && invoice.total > 0 && !invoice.paymentLink && (
-                <div className="mt-4 sm:mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0">
-                      <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-sm font-semibold text-amber-900 mb-1">Connect Payment Methods</h4>
-                      <p className="text-xs text-amber-700 mb-2">
-                        To automatically generate payment links for your invoices, connect your payment gateway in Settings.
-                      </p>
-                      <Link
-                        href="/settings/payment-methods"
-                        className="inline-block text-xs font-medium text-amber-800 hover:text-amber-900 underline"
-                      >
-                        Go to Payment Methods Settings →
-                      </Link>
-                    </div>
+            </div>   {/* Payment Methods Not Configured Message */}
+            {isPremium && invoice.total && invoice.total > 0 && !invoice.paymentLink && (
+              <div className="mt-4 sm:mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-amber-900 mb-1">Connect Payment Methods</h4>
+                    <p className="text-xs text-amber-700 mb-2">
+                      To automatically generate payment links for your invoices, connect your payment gateway in Settings.
+                    </p>
+                    <Link
+                      href="/settings/payment-methods"
+                      className="inline-block text-xs font-medium text-amber-800 hover:text-amber-900 underline"
+                    >
+                      Go to Payment Methods Settings →
+                    </Link>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="mt-4 sm:mt-6 space-y-3">
+              {/* Save Invoice Button */}
+              <button
+                onClick={handleSaveInvoice}
+                disabled={savingInvoice || isGeneratingPDF}
+                className="w-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingInvoice ? 'Saving...' : '💾 Save Invoice'}
+              </button>
+
+              {/* Send Invoice Button - Premium Only */}
+              {isPremium && user && invoice.id && invoice.client?.email && (
+                <button
+                  onClick={async () => {
+                    if (!invoice.client?.email || !invoice.id) {
+                      alert('Please enter client email address and save the invoice first');
+                      return;
+                    }
+
+                    setSendingEmail(true);
+                    try {
+                      await sendInvoiceEmailAPI(
+                        invoice.id,
+                        invoice.client.email,
+                        `Please find your invoice ${invoice.invoiceNumber || 'N/A'} attached.${invoice.paymentLink ? `\n\nPay online: ${invoice.paymentLink}` : ''}`
+                      );
+                      alert('Invoice sent successfully!');
+                    } catch (error: any) {
+                      alert('Failed to send invoice: ' + error.message);
+                    } finally {
+                      setSendingEmail(false);
+                    }
+                  }}
+                  disabled={sendingEmail || !invoice.client?.email || !invoice.id}
+                  className="w-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {sendingEmail ? 'Sending...' : '📧 Send Invoice via Email'}
+                </button>
               )}
 
-              {/* Action Buttons */}
-              <div className="mt-4 sm:mt-6 space-y-3">
-                {/* Save Invoice Button */}
-                <button
-                  onClick={handleSaveInvoice}
-                  disabled={savingInvoice || isGeneratingPDF}
-                  className="w-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {savingInvoice ? 'Saving...' : '💾 Save Invoice'}
-                </button>
-
-                {/* Send Invoice Button - Premium Only */}
-                {isPremium && user && invoice.id && invoice.client?.email && (
-                  <button
-                    onClick={async () => {
-                      if (!invoice.client?.email || !invoice.id) {
-                        alert('Please enter client email address and save the invoice first');
-                        return;
-                      }
-
-                      setSendingEmail(true);
-                      try {
-                        await sendInvoiceEmailAPI(
-                          invoice.id,
-                          invoice.client.email,
-                          `Please find your invoice ${invoice.invoiceNumber || 'N/A'} attached.${invoice.paymentLink ? `\n\nPay online: ${invoice.paymentLink}` : ''}`
-                        );
-                        alert('Invoice sent successfully!');
-                      } catch (error: any) {
-                        alert('Failed to send invoice: ' + error.message);
-                      } finally {
-                        setSendingEmail(false);
-                      }
-                    }}
-                    disabled={sendingEmail || !invoice.client?.email || !invoice.id}
-                    className="w-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {sendingEmail ? 'Sending...' : '📧 Send Invoice via Email'}
-                  </button>
-                )}
-
-                {/* Download PDF Button */}
-                <button
-                  onClick={handleDownloadPDF}
-                  disabled={isGeneratingPDF || savingInvoice}
-                  className="w-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-theme-primary text-white rounded-lg hover:bg-theme-primary-dark transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
-                </button>
-              </div>
+              {/* Download PDF Button */}
+              <button
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPDF || savingInvoice}
+                className="w-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-theme-primary text-white rounded-lg hover:bg-theme-primary-dark transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGeneratingPDF ? 'Generating PDF...' : 'Download PDF'}
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Client Modal */}
-      {showClientModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-900">Add New Client</h3>
-            </div>
-            <div className="overflow-y-auto p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  value={newClient.name}
-                  onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                  required
-                />
+      {
+        showClientModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col">
+              <div className="p-6 border-b border-gray-200">
+                <h3 className="text-xl font-semibold text-gray-900">Add New Client</h3>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="overflow-y-auto p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={newClient.email}
-                    onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone
-                  </label>
-                  <input
-                    type="tel"
-                    value={newClient.phone}
-                    onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  value={newClient.address}
-                  onChange={(e) => setNewClient({ ...newClient, address: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-transparent"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    City
+                    Name *
                   </label>
                   <input
                     type="text"
-                    value={newClient.city}
-                    onChange={(e) => setNewClient({ ...newClient, city: e.target.value })}
+                    value={newClient.name}
+                    onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                    required
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={newClient.email}
+                      onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone
+                    </label>
+                    <input
+                      type="tel"
+                      value={newClient.phone}
+                      onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    State
+                    Address
                   </label>
                   <input
                     type="text"
-                    value={newClient.state}
-                    onChange={(e) => setNewClient({ ...newClient, state: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                    value={newClient.address}
+                    onChange={(e) => setNewClient({ ...newClient, address: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-transparent"
                   />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      value={newClient.city}
+                      onChange={(e) => setNewClient({ ...newClient, city: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      State
+                    </label>
+                    <input
+                      type="text"
+                      value={newClient.state}
+                      onChange={(e) => setNewClient({ ...newClient, state: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      ZIP
+                    </label>
+                    <input
+                      type="text"
+                      value={newClient.zip}
+                      onChange={(e) => setNewClient({ ...newClient, zip: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    ZIP
+                    Country
                   </label>
                   <input
                     type="text"
-                    value={newClient.zip}
-                    onChange={(e) => setNewClient({ ...newClient, zip: e.target.value })}
+                    value={newClient.country}
+                    onChange={(e) => setNewClient({ ...newClient, country: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Country
-                </label>
-                <input
-                  type="text"
-                  value={newClient.country}
-                  onChange={(e) => setNewClient({ ...newClient, country: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
-                />
-              </div>
-            </div>
-            <div className="p-6 border-t border-gray-200 bg-gray-50 flex gap-3">
-              <button
-                onClick={async () => {
-                  if (!newClient.name) {
-                    alert('Client name is required');
-                    return;
-                  }
-                  try {
-                    const created = await createClientAPI(newClient);
-                    setClients([...clients, created]);
-                    setInvoice((prev) => ({
-                      ...prev,
-                      client: {
-                        name: created.name,
-                        email: created.email || '',
-                        phone: created.phone || '',
-                        address: created.address || '',
-                        city: created.city || '',
-                        state: created.state || '',
-                        zip: created.zip || '',
-                        country: created.country || '',
-                      },
-                    }));
+              <div className="p-6 border-t border-gray-200 bg-gray-50 flex gap-3">
+                <button
+                  onClick={async () => {
+                    if (!newClient.name) {
+                      alert('Client name is required');
+                      return;
+                    }
+                    try {
+                      const created = await createClientAPI(newClient);
+                      setClients([...clients, created]);
+                      setInvoice((prev) => ({
+                        ...prev,
+                        client: {
+                          name: created.name,
+                          email: created.email || '',
+                          phone: created.phone || '',
+                          address: created.address || '',
+                          city: created.city || '',
+                          state: created.state || '',
+                          zip: created.zip || '',
+                          country: created.country || '',
+                        },
+                      }));
+                      setNewClient({
+                        name: '',
+                        email: '',
+                        phone: '',
+                        address: '',
+                        city: '',
+                        state: '',
+                        zip: '',
+                        country: '',
+                      });
+                      setShowClientModal(false);
+                    } catch (error: any) {
+                      alert('Failed to create client: ' + (error.message || 'Unknown error. Please try again.'));
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
+                >
+                  Save Client
+                </button>
+                <button
+                  onClick={() => {
+                    setShowClientModal(false);
                     setNewClient({
                       name: '',
                       email: '',
@@ -2214,38 +2259,17 @@ function InvoiceFormContent() {
                       zip: '',
                       country: '',
                     });
-                    setShowClientModal(false);
-                  } catch (error: any) {
-                    alert('Failed to create client: ' + (error.message || 'Unknown error. Please try again.'));
-                  }
-                }}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium"
-              >
-                Save Client
-              </button>
-              <button
-                onClick={() => {
-                  setShowClientModal(false);
-                  setNewClient({
-                    name: '',
-                    email: '',
-                    phone: '',
-                    address: '',
-                    city: '',
-                    state: '',
-                    zip: '',
-                    country: '',
-                  });
-                }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors font-medium"
-              >
-                Cancel
-              </button>
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }
 

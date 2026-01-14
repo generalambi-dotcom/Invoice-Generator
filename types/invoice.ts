@@ -1,6 +1,6 @@
 export type Theme = 'slate' | 'blue' | 'green' | 'purple' | 'red';
 
-export type Currency = 'GBP' | 'USD' | 'EUR' | 'JPY' | 'CAD' | 'AUD' | 'NGN';
+export type Currency = 'GBP' | 'USD' | 'EUR' | 'JPY' | 'CAD' | 'AUD' | 'NGN' | 'ZAR' | 'KES' | 'GHS' | 'AED' | 'CNY' | 'INR' | 'BRL';
 
 export interface LineItem {
   id: string;
@@ -92,6 +92,13 @@ export const currencySymbols: Record<Currency, string> = {
   CAD: 'C$',
   AUD: 'A$',
   NGN: '₦',
+  ZAR: 'R',
+  KES: 'KSh',
+  GHS: '₵',
+  AED: 'د.إ',
+  CNY: '¥',
+  INR: '₹',
+  BRL: 'R$',
 };
 
 export const themeColors: Record<Theme, { primary: string; primaryDark: string; primaryLight: string }> = {

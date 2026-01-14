@@ -46,7 +46,7 @@ import { isPremiumUser } from '@/lib/payments';
 function InvoiceFormContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+
   // Form state
   const [invoice, setInvoice] = useState<Partial<Invoice>>({
     invoiceNumber: '',
@@ -92,7 +92,7 @@ function InvoiceFormContent() {
     discountAmount: 0,
     shipping: 0,
     total: 0,
-    currency: 'USD',
+    currency: 'NGN',
     theme: 'slate',
     notes: '',
     bankDetails: '',
@@ -133,10 +133,10 @@ function InvoiceFormContent() {
     setUser(currentUser);
     if (currentUser) {
       // Admins automatically have premium access
-      const isPremiumUser = 
+      const isPremiumUser =
         currentUser.isAdmin === true ||
-        (currentUser.subscription?.plan === 'premium' && 
-         currentUser.subscription?.status === 'active');
+        (currentUser.subscription?.plan === 'premium' &&
+          currentUser.subscription?.status === 'active');
       setIsPremium(isPremiumUser);
     }
   }, []);
@@ -168,7 +168,7 @@ function InvoiceFormContent() {
             terms: defaults.defaultTerms || '',
           }));
         }
-        
+
         // Auto-generate invoice number
         try {
           const numberResult = await getNextInvoiceNumberAPI();
@@ -288,7 +288,7 @@ function InvoiceFormContent() {
               createdAt: loaded.createdAt,
               updatedAt: loaded.updatedAt,
             });
-            
+
             // Update simple address formats
             if (loaded.companyInfo && typeof loaded.companyInfo === 'object') {
               const company = loaded.companyInfo as any;
@@ -302,7 +302,7 @@ function InvoiceFormContent() {
                 setSimpleClientAddress(client.address);
               }
             }
-            
+
             // Remove invoiceId from URL
             router.replace('/', { scroll: false });
           }
@@ -311,7 +311,7 @@ function InvoiceFormContent() {
         }
         return; // Don't check sessionStorage if invoiceId was in URL
       }
-      
+
       // Fallback to sessionStorage
       if (typeof window !== 'undefined') {
         const loadInvoiceData = sessionStorage.getItem('loadInvoice');
@@ -326,7 +326,7 @@ function InvoiceFormContent() {
         }
       }
     };
-    
+
     loadInvoiceById();
   }, [searchParams, router]);
 
@@ -403,7 +403,7 @@ function InvoiceFormContent() {
     } else {
       setSimpleClientAddress(address);
     }
-    
+
     // Parse and update fields based on comma-separated parts
     const parts = address.split(',').map((p) => p.trim());
     updateField(`${type}.address`, parts[0] || '');
@@ -458,7 +458,7 @@ function InvoiceFormContent() {
       if (result.invoice) {
         setInvoice(prev => ({ ...prev, id: result.invoice.id }));
       }
-      
+
       // Reload history
       const invoices = await loadInvoicesAPI();
       // Convert database format to Invoice format
@@ -493,7 +493,7 @@ function InvoiceFormContent() {
         updatedAt: inv.updatedAt,
       }));
       setInvoiceHistory(formattedInvoices);
-      
+
       alert('Invoice saved successfully!');
     } catch (error: any) {
       console.error('Error saving invoice:', error);
@@ -668,7 +668,7 @@ function InvoiceFormContent() {
           paidAmount: loaded.paidAmount,
         });
         setShowHistory(false);
-        
+
         // Load payment history
         if (loaded.id) {
           try {
@@ -752,7 +752,7 @@ function InvoiceFormContent() {
         discountAmount: 0,
         shipping: 0,
         total: 0,
-        currency: (defaults?.defaultCurrency as Currency) || 'USD',
+        currency: (defaults?.defaultCurrency as Currency) || 'NGN',
         theme: (defaults?.defaultTheme as Theme) || 'slate',
         notes: defaults?.defaultNotes || '',
         bankDetails: defaults?.defaultBankDetails || '',
@@ -771,7 +771,7 @@ function InvoiceFormContent() {
     document.documentElement.style.setProperty('--theme-primary-light', colors.primaryLight);
   }, [invoice.theme]);
 
-  const currencySymbol = currencySymbols[invoice.currency || 'USD'];
+  const currencySymbol = currencySymbols[invoice.currency || 'NGN'];
 
   return (
     <div className="bg-gray-50 py-4 sm:py-8">
@@ -878,13 +878,20 @@ function InvoiceFormContent() {
                     onChange={(e) => updateField('currency', e.target.value as Currency)}
                     className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
                   >
-                    <option value="GBP">GBP (£)</option>
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
                     <option value="NGN">NGN (₦)</option>
-                    <option value="JPY">JPY (¥)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="EUR">EUR (€)</option>
                     <option value="CAD">CAD (C$)</option>
                     <option value="AUD">AUD (A$)</option>
+                    <option value="JPY">JPY (¥)</option>
+                    <option value="ZAR">ZAR (R)</option>
+                    <option value="KES">KES (KSh)</option>
+                    <option value="GHS">GHS (₵)</option>
+                    <option value="AED">AED (د.إ)</option>
+                    <option value="CNY">CNY (¥)</option>
+                    <option value="INR">INR (₹)</option>
+                    <option value="BRL">BRL (R$)</option>
                   </select>
                 </div>
               </div>
@@ -902,11 +909,10 @@ function InvoiceFormContent() {
                         setCompanyAddressFormat('simple');
                         setSimpleCompanyAddress(getSimpleAddress(invoice.company));
                       }}
-                      className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${
-                        companyAddressFormat === 'simple'
-                          ? 'bg-white text-theme-primary shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                      className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${companyAddressFormat === 'simple'
+                        ? 'bg-white text-theme-primary shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                        }`}
                     >
                       Simple
                     </button>
@@ -915,11 +921,10 @@ function InvoiceFormContent() {
                         setCompanyAddressFormat('detailed');
                         setSimpleCompanyAddress('');
                       }}
-                      className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${
-                        companyAddressFormat === 'detailed'
-                          ? 'bg-white text-theme-primary shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                      className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${companyAddressFormat === 'detailed'
+                        ? 'bg-white text-theme-primary shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                        }`}
                     >
                       Detailed
                     </button>
@@ -974,7 +979,7 @@ function InvoiceFormContent() {
                     />
                   )}
                 </div>
-                
+
                 {/* Address Section - Simple or Detailed */}
                 {companyAddressFormat === 'simple' ? (
                   <div>
@@ -1098,11 +1103,10 @@ function InvoiceFormContent() {
                       setClientAddressFormat('simple');
                       setSimpleClientAddress(getSimpleAddress(invoice.client));
                     }}
-                    className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${
-                      clientAddressFormat === 'simple'
-                        ? 'bg-white text-theme-primary shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
+                    className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${clientAddressFormat === 'simple'
+                      ? 'bg-white text-theme-primary shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                      }`}
                   >
                     Simple
                   </button>
@@ -1111,11 +1115,10 @@ function InvoiceFormContent() {
                       setClientAddressFormat('detailed');
                       setSimpleClientAddress('');
                     }}
-                    className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${
-                      clientAddressFormat === 'detailed'
-                        ? 'bg-white text-theme-primary shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
+                    className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${clientAddressFormat === 'detailed'
+                      ? 'bg-white text-theme-primary shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                      }`}
                   >
                     Detailed
                   </button>
@@ -1175,7 +1178,7 @@ function InvoiceFormContent() {
                     />
                   </div>
                 </div>
-                
+
                 {/* Address Section - Simple or Detailed */}
                 {clientAddressFormat === 'simple' ? (
                   <div>
@@ -1286,12 +1289,12 @@ function InvoiceFormContent() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Invoice Number *
                     </label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 min-w-0">
                       <input
                         type="text"
                         value={invoice.invoiceNumber || ''}
                         onChange={(e) => updateField('invoiceNumber', e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
+                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
                         required
                       />
                       <button
@@ -1307,10 +1310,10 @@ function InvoiceFormContent() {
                             alert('Failed to generate invoice number: ' + error.message);
                           }
                         }}
-                        className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm whitespace-nowrap"
+                        className="shrink-0 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm whitespace-nowrap"
                         title="Generate next invoice number"
                       >
-                        🔄 Auto
+                        🔄 <span className="hidden xl:inline">Auto</span>
                       </button>
                     </div>
                   </div>
@@ -1803,13 +1806,12 @@ function InvoiceFormContent() {
                                   </div>
                                 )}
                               </div>
-                              <span className={`px-2 py-1 text-xs font-semibold rounded ${
-                                payment.status === 'completed'
-                                  ? 'bg-green-100 text-green-800'
-                                  : payment.status === 'pending'
+                              <span className={`px-2 py-1 text-xs font-semibold rounded ${payment.status === 'completed'
+                                ? 'bg-green-100 text-green-800'
+                                : payment.status === 'pending'
                                   ? 'bg-yellow-100 text-yellow-800'
                                   : 'bg-red-100 text-red-800'
-                              }`}>
+                                }`}>
                                 {payment.status}
                               </span>
                             </div>
@@ -1896,7 +1898,7 @@ function InvoiceFormContent() {
                           <button
                             onClick={async () => {
                               if (!user || !invoice.id) return;
-                              
+
                               try {
                                 const link = await generatePaymentLinkAPI(invoice.id, 'paypal');
                                 setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paypal' }));
@@ -1912,7 +1914,7 @@ function InvoiceFormContent() {
                           <button
                             onClick={async () => {
                               if (!user || !invoice.id) return;
-                              
+
                               try {
                                 const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
                                 setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paystack' }));
@@ -1950,7 +1952,7 @@ function InvoiceFormContent() {
                                 alert('Please save the invoice first');
                                 return;
                               }
-                              
+
                               try {
                                 const link = await generatePaymentLinkAPI(invoice.id, 'paypal');
                                 setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paypal' }));
@@ -1973,7 +1975,7 @@ function InvoiceFormContent() {
                                 alert('Please save the invoice first');
                                 return;
                               }
-                              
+
                               try {
                                 const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
                                 setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paystack' }));
@@ -1996,7 +1998,7 @@ function InvoiceFormContent() {
                   )}
                 </div>
               )}
-              
+
               {/* Payment Methods Not Configured Message */}
               {isPremium && invoice.total && invoice.total > 0 && !invoice.paymentLink && (
                 <div className="mt-4 sm:mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
@@ -2041,7 +2043,7 @@ function InvoiceFormContent() {
                         alert('Please enter client email address and save the invoice first');
                         return;
                       }
-                      
+
                       setSendingEmail(true);
                       try {
                         await sendInvoiceEmailAPI(
@@ -2062,7 +2064,7 @@ function InvoiceFormContent() {
                     {sendingEmail ? 'Sending...' : '📧 Send Invoice via Email'}
                   </button>
                 )}
-                
+
                 {/* Download PDF Button */}
                 <button
                   onClick={handleDownloadPDF}

@@ -201,7 +201,7 @@ export async function sendInvoiceViaWhatsApp(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Get invoice
-    const invoice = await prisma.invoice.findUnique({
+    let invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId },
       include: { user: true },
     });
@@ -210,17 +210,53 @@ export async function sendInvoiceViaWhatsApp(
       return { success: false, error: 'Invoice not found' };
     }
 
-    // Generate PDF URL (you'll need to implement PDF generation and storage)
-    // For now, we'll use a placeholder approach
-    const pdfUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://invoicegenerator.ng'}/api/invoices/${invoiceId}/pdf`;
+    // Attempt to generate payment link if not present
+    if (!invoice.paymentLink && invoice.total > 0) {
+      try {
+        const { autoGeneratePaymentLink } = await import('./auto-payment-link');
+        const paymentResult = await autoGeneratePaymentLink(invoiceId, userId, invoice.total);
+        if (paymentResult) {
+          // Refresh invoice data
+          invoice = await prisma.invoice.findUnique({
+            where: { id: invoiceId },
+            include: { user: true },
+          }) as any;
+        }
+      } catch (err) {
+        console.error('Error auto-generating payment link for WhatsApp:', err);
+      }
+    }
+
+    // Generate PDF URL
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://invoicegenerator.ng';
+    const pdfUrl = `${baseUrl}/api/invoices/${invoiceId}/pdf`;
 
     // Format message
-    const message = `📄 Invoice ${invoice.invoiceNumber}\n\n` +
-      `Client: ${(invoice.clientInfo as any)?.name || 'N/A'}\n` +
-      `Total: ${invoice.currency} ${invoice.total.toFixed(2)}\n` +
-      `Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}\n\n` +
-      `View invoice: ${process.env.NEXT_PUBLIC_BASE_URL || 'https://invoicegenerator.ng'}/invoice/${invoiceId}\n\n` +
-      (invoice.paymentLink ? `Pay online: ${invoice.paymentLink}` : '');
+    let message = `*📄 Invoice ${invoice?.invoiceNumber}*\n\n` +
+      `Hello${(invoice?.clientInfo as any)?.name ? ' ' + (invoice?.clientInfo as any).name : ''},\n\n` +
+      `Here is your invoice for *${invoice?.currency} ${invoice?.total.toFixed(2)}* due on ${new Date(invoice?.dueDate || '').toLocaleDateString()}.\n\n`;
+
+    // Add items summary (first 3 items)
+    if (Array.isArray(invoice?.lineItems) && invoice.lineItems.length > 0) {
+      message += `*Summary:*\n`;
+      invoice.lineItems.slice(0, 3).forEach((item: any) => {
+        message += `• ${item.description}: ${invoice?.currency} ${item.amount.toFixed(2)}\n`;
+      });
+      if (invoice.lineItems.length > 3) {
+        message += `...and ${invoice.lineItems.length - 3} more items\n`;
+      }
+      message += `\n`;
+    }
+
+    // Add Payment Link (Quick Pay)
+    if (invoice?.paymentLink) {
+      message += `--------------------------------\n`;
+      message += `*💳 PAY SECURELY NOW:*\n`;
+      message += `${invoice.paymentLink}\n`;
+      message += `--------------------------------\n\n`;
+    }
+
+    message += `View full invoice or download PDF:\n${baseUrl}/invoice/${invoiceId}`;
 
     // Send message with PDF
     const result = await sendWhatsAppMessage(recipientPhone, message, pdfUrl);

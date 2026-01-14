@@ -52,24 +52,29 @@ export function calculateTotal(
  * Format currency value based on currency type
  */
 export function formatCurrency(amount: number, currency: string): string {
-  if (isNaN(amount)) {
+  if (isNaN(amount) || amount === null || amount === undefined) {
     return '0.00';
   }
 
-  const formatted = Math.abs(amount).toFixed(2);
+  try {
+    // Special handling for JPY (no decimals)
+    if (currency === 'JPY') {
+      return new Intl.NumberFormat('en-US', {
+        style: 'decimal',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    }
 
-  switch (currency) {
-    case 'JPY':
-      // Japanese Yen doesn't use decimal places
-      return Math.round(amount).toString();
-    case 'GBP':
-    case 'USD':
-    case 'EUR':
-    case 'CAD':
-    case 'AUD':
-    case 'NGN':
-    default:
-      return formatted;
+    // Standard formatting for other currencies (2 decimal places with thousands separators)
+    return new Intl.NumberFormat('en-US', {
+      style: 'decimal',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch (error) {
+    // Fallback if Intl fails
+    return Math.abs(amount).toFixed(2);
   }
 }
 

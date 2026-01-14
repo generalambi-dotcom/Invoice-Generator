@@ -32,10 +32,10 @@ export default function UpgradePage() {
   useEffect(() => {
     const currentUser = getCurrentUser();
     setUser(currentUser);
-    
+
     // If already premium or admin, allow them to view but show a message
     // No redirect - let them view pricing even if premium
-    
+
     // Load pricing based on region
     loadPricing();
 
@@ -50,7 +50,7 @@ export default function UpgradePage() {
       const provider = urlParams.get('provider');
       const token = urlParams.get('token');
       const sessionId = urlParams.get('session_id');
-      
+
       if (success === 'true') {
         if (provider === 'paypal' && (token || urlParams.get('orderId'))) {
           // PayPal payment successful - verify and activate subscription
@@ -131,7 +131,7 @@ export default function UpgradePage() {
         },
         body: JSON.stringify({ token }),
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -154,7 +154,7 @@ export default function UpgradePage() {
       console.error('Error verifying PayPal payment:', error);
       alert('Payment verification failed. Please contact support if payment was deducted.');
     }
-    
+
     // Clean up URL
     window.history.replaceState({}, '', '/upgrade');
   };
@@ -193,16 +193,16 @@ export default function UpgradePage() {
 
   const handleUpgrade = async (provider: 'paypal' | 'paystack' | 'stripe') => {
     if (!pricing) return;
-    
+
     // If user is not logged in, redirect to signin with redirect back to upgrade
     if (!user) {
       router.push(`/signin?redirect=/upgrade`);
       return;
     }
-    
+
     setLoading(true);
     setPaymentProvider(provider);
-    
+
     try {
       const paymentLink = await initiatePayment({
         userId: user.id,
@@ -212,7 +212,7 @@ export default function UpgradePage() {
         currency: pricing.currency,
         userEmail: user.email,
       });
-      
+
       if (paymentLink) {
         // Redirect to payment page or external payment URL
         if (paymentLink.startsWith('http')) {
@@ -248,8 +248,8 @@ export default function UpgradePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               <div>
-                <span className="font-semibold text-gray-900">Ad-Free Experience:</span>
-                <span className="text-gray-600 ml-2">No ads, ever. Focus on your work without distractions.</span>
+                <span className="font-semibold text-gray-900">WhatsApp Integration:</span>
+                <span className="text-gray-600 ml-2">Create & send invoices directly from WhatsApp. Includes &quot;Quick-Pay&quot; links for faster payments.</span>
               </div>
             </li>
             <li className="flex items-start">
@@ -257,8 +257,8 @@ export default function UpgradePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               <div>
-                <span className="font-semibold text-gray-900">Payment Links:</span>
-                <span className="text-gray-600 ml-2">Accept payments via PayPal and Paystack directly from your invoices.</span>
+                <span className="font-semibold text-gray-900">Smart Reports Dashboard:</span>
+                <span className="text-gray-600 ml-2">Visualize monthly income, track top clients, and see payment trends instantly.</span>
               </div>
             </li>
             <li className="flex items-start">
@@ -266,8 +266,8 @@ export default function UpgradePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               <div>
-                <span className="font-semibold text-gray-900">Advanced Dashboard:</span>
-                <span className="text-gray-600 ml-2">Track invoices sent, amounts, paid/unpaid status with detailed analytics.</span>
+                <span className="font-semibold text-gray-900">Magic Receipt Scanning:</span>
+                <span className="text-gray-600 ml-2">Snap a photo of any receipt and let AI automatically extract the details.</span>
               </div>
             </li>
             <li className="flex items-start">
@@ -275,8 +275,8 @@ export default function UpgradePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               <div>
-                <span className="font-semibold text-gray-900">Priority Support:</span>
-                <span className="text-gray-600 ml-2">Get help when you need it with priority customer support.</span>
+                <span className="font-semibold text-gray-900">Accept Payments Online:</span>
+                <span className="text-gray-600 ml-2">Connect PayPal, Stripe, or Paystack to get paid faster.</span>
               </div>
             </li>
             <li className="flex items-start">
@@ -284,8 +284,8 @@ export default function UpgradePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               <div>
-                <span className="font-semibold text-gray-900">Unlimited Invoices:</span>
-                <span className="text-gray-600 ml-2">Create and manage unlimited invoices without any restrictions.</span>
+                <span className="font-semibold text-gray-900">Unlimited Everything:</span>
+                <span className="text-gray-600 ml-2">Unlimited invoices, unlimited clients, and ad-free experience.</span>
               </div>
             </li>
           </ul>
@@ -395,14 +395,14 @@ export default function UpgradePage() {
                     ) : (
                       <>
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.174 1.346 1.416 3.14 1.416 4.502 0 2.153-.789 4.014-2.23 5.186-1.318 1.08-3.032 1.561-5.13 1.561H9.577l-1.017 6.638c-.076.499-.558.86-1.05.86zm-.193-2.025l.774-5.043h6.88c1.4 0 2.503-.33 3.245-.98.65-.58.978-1.39.978-2.38 0-1.01-.336-1.89-1.01-2.52-.68-.64-1.74-.97-3.18-.97H6.67l-.79 5.15z"/>
+                          <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.174 1.346 1.416 3.14 1.416 4.502 0 2.153-.789 4.014-2.23 5.186-1.318 1.08-3.032 1.561-5.13 1.561H9.577l-1.017 6.638c-.076.499-.558.86-1.05.86zm-.193-2.025l.774-5.043h6.88c1.4 0 2.503-.33 3.245-.98.65-.58.978-1.39.978-2.38 0-1.01-.336-1.89-1.01-2.52-.68-.64-1.74-.97-3.18-.97H6.67l-.79 5.15z" />
                         </svg>
                         Upgrade with PayPal
                       </>
                     )}
                   </button>
                 )}
-                
+
                 {availableProviders.paystack && (
                   <button
                     onClick={() => handleUpgrade('paystack')}
@@ -420,7 +420,7 @@ export default function UpgradePage() {
                     ) : (
                       <>
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                         </svg>
                         Upgrade with Paystack
                       </>
@@ -445,7 +445,7 @@ export default function UpgradePage() {
                     ) : (
                       <>
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l-2.541 4.083c-.48-.202-1.08-.42-1.94-.42v-.58zm6.777 2.944c.602-.604 1.376-1.015 1.376-1.81 0-1.21-1.044-2.21-2.9-2.21-2.115 0-4.592.92-6.584 2.067l-2.545-4.097c2.194-1.333 5.23-2.18 7.66-2.18 3.74 0 6.662 1.88 6.662 5.14 0 2.353-1.735 4.1-3.99 4.843l-2.679-4.753zM14.471 15.108c-2.29.861-4.691 1.413-6.74 1.413-3.701 0-5.78-1.838-5.78-4.8 0-3.24 2.82-5.5 7.27-5.5 2.366 0 4.94.69 7.27 1.856l-2.58 4.16c-.49-.175-1.03-.35-1.9-.35v-.58c0-1.28.65-1.95 1.84-1.95 1.84 0 3.26.45 4.77 1.11l-2.64 4.24c-.38.15-1.02.33-1.51.44v.37z"/>
+                          <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l-2.541 4.083c-.48-.202-1.08-.42-1.94-.42v-.58zm6.777 2.944c.602-.604 1.376-1.015 1.376-1.81 0-1.21-1.044-2.21-2.9-2.21-2.115 0-4.592.92-6.584 2.067l-2.545-4.097c2.194-1.333 5.23-2.18 7.66-2.18 3.74 0 6.662 1.88 6.662 5.14 0 2.353-1.735 4.1-3.99 4.843l-2.679-4.753zM14.471 15.108c-2.29.861-4.691 1.413-6.74 1.413-3.701 0-5.78-1.838-5.78-4.8 0-3.24 2.82-5.5 7.27-5.5 2.366 0 4.94.69 7.27 1.856l-2.58 4.16c-.49-.175-1.03-.35-1.9-.35v-.58c0-1.28.65-1.95 1.84-1.95 1.84 0 3.26.45 4.77 1.11l-2.64 4.24c-.38.15-1.02.33-1.51.44v.37z" />
                         </svg>
                         Upgrade with Stripe
                       </>

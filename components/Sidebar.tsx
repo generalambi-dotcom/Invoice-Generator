@@ -12,6 +12,34 @@ export default function Sidebar() {
         return pathname === path ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50';
     };
 
+    const [user, setUser] = useState<any>(null);
+    const [isPremium, setIsPremium] = useState(false);
+
+    React.useEffect(() => {
+        // Only run in browser
+        if (typeof window === 'undefined') return;
+
+        // Dynamically import to avoid circular dependencies if any, 
+        // though we could likely just use the storage directly or move logic
+        const loadUser = async () => {
+            // We can check localStorage directly for speed as we do in other components
+            try {
+                const savedUser = localStorage.getItem('invoice-generator-current-user');
+                if (savedUser) {
+                    const parsed = JSON.parse(savedUser);
+                    setUser(parsed);
+                    const premium = parsed.isAdmin === true ||
+                        (parsed.subscription?.plan === 'premium' &&
+                            parsed.subscription?.status === 'active');
+                    setIsPremium(premium);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        };
+        loadUser();
+    }, []);
+
     const menuItems = [
         {
             name: 'Dashboard',
@@ -48,16 +76,38 @@ export default function Sidebar() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
             )
-        },
+        }
+    ];
+
+    const premiumItems = [
         {
-            name: 'Upgrade',
-            path: '/upgrade',
+            name: 'Payment Methods',
+            path: '/settings/payment-methods',
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
-            ),
-            highlight: true
+            )
+        },
+        {
+            name: 'WhatsApp Settings',
+            path: '/settings/whatsapp',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    {/* Simple placeholder icon, usually whatsapp is custom svg */}
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                </svg>
+            )
+        },
+        {
+            name: 'Public Link',
+            path: '/settings/public-link',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+            )
         }
     ];
 
@@ -89,22 +139,82 @@ export default function Sidebar() {
 
                 {/* Navigation */}
                 <nav className="p-4 space-y-1">
+                    {/* Standard Items */}
                     {menuItems.map((item) => (
                         <Link
                             key={item.path}
                             href={item.path}
                             onClick={() => setIsOpen(false)}
-                            className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${item.highlight
-                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 shadow-sm'
-                                    : isActive(item.path)
-                                }`}
+                            className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${isActive(item.path)}`}
                         >
-                            <div className={`${item.highlight ? 'text-white' : 'group-hover:text-blue-600'} transition-colors`}>
+                            <div className="group-hover:text-blue-600 transition-colors">
                                 {item.icon}
                             </div>
                             <span className="ml-3">{item.name}</span>
                         </Link>
                     ))}
+
+                    {/* Premium Features Section */}
+                    <div className="pt-4 mt-4 border-t border-gray-100">
+                        <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Premium</p>
+                        {premiumItems.map((item) => {
+                            if (isPremium) {
+                                // Active Link for Premium Users
+                                return (
+                                    <Link
+                                        key={item.path}
+                                        href={item.path}
+                                        onClick={() => setIsOpen(false)}
+                                        className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${isActive(item.path)}`}
+                                    >
+                                        <div className="group-hover:text-blue-600 transition-colors text-purple-600">
+                                            {item.icon}
+                                        </div>
+                                        <span className="ml-3">{item.name}</span>
+                                    </Link>
+                                );
+                            } else {
+                                // Locked Link for Free Users
+                                return (
+                                    <div
+                                        key={item.path}
+                                        className="flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-400 hover:bg-gray-50 group cursor-pointer relative"
+                                        onClick={() => {
+                                            setIsOpen(false);
+                                            window.location.href = '/upgrade';
+                                        }}
+                                        title="Upgrade to access"
+                                    >
+                                        <div className="text-gray-400">
+                                            {item.icon}
+                                        </div>
+                                        <div className="ml-3 flex-1 flex items-center justify-between">
+                                            <span>{item.name}</span>
+                                            <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                        })}
+                    </div>
+
+                    {/* Upgrade Button - Only for Free Users */}
+                    {!isPremium && (
+                        <div className="pt-4 mt-auto">
+                            <Link
+                                href="/upgrade"
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center justify-center px-4 py-3 text-sm font-medium rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 shadow-sm transition-all"
+                            >
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Upgrade Plan
+                            </Link>
+                        </div>
+                    )}
                 </nav>
 
                 {/* User Profile Mini - Bottom */}

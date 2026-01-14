@@ -26,7 +26,7 @@ export async function generateInvoicePDFBuffer(invoice: any): Promise<Buffer | n
   try {
     // Render the PDF to a buffer
     // Note: React-PDF requires a valid React element
-    const buffer = await renderToBuffer(InvoicePDF({ invoice }));
+    const buffer = await renderToBuffer(<InvoicePDF invoice={invoice} />);
     return buffer;
   } catch (error: any) {
     console.error('Error generating PDF buffer:', error);

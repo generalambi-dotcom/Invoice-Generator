@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export interface User {
   id: string;
   email: string;
@@ -13,96 +15,109 @@ export interface User {
   };
 }
 
-const USERS_KEY = 'invoice-generator-users';
 const CURRENT_USER_KEY = 'invoice-generator-current-user';
 
 /**
  * Register a new user
  */
-export function registerUser(email: string, password: string, name: string): User {
-  const users = getUsers();
-  
-  // Check if user already exists
-  if (users.find(u => u.email === email)) {
-    throw new Error('User with this email already exists');
+export async function registerUser(email: string, password: string, name: string): Promise<User> {
+  try {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password, name }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Registration failed');
+    }
+
+    const data = await response.json();
+
+    // Store user data in localStorage for basic frontend state
+    // The actual auth is handled via httpOnly cookies or token
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(data.user));
+    }
+
+    return data.user;
+  } catch (error: any) {
+    console.error('Registration error:', error);
+    throw error;
   }
-
-  const newUser: User = {
-    id: Date.now().toString(),
-    email,
-    name,
-    createdAt: new Date().toISOString(),
-  };
-
-  // Store user with password (in production, hash the password)
-  const userData = {
-    ...newUser,
-    password, // In production, this should be hashed
-  };
-
-  users.push(userData);
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-  // Auto-login after registration
-  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
-
-  return newUser;
 }
 
 /**
  * Sign in a user
  */
-export function signIn(email: string, password: string): User {
-  // Only run in browser
-  if (typeof window === 'undefined') {
-    throw new Error('Sign in is only available in the browser');
+export async function signIn(email: string, password: string): Promise<User> {
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Login failed');
+    }
+
+    const data = await response.json();
+
+    // Store user data in localStorage for basic frontend state
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(data.user));
+      // Also store token if provided for API calls (though cookies are better)
+      if (data.token) {
+        localStorage.setItem('auth_token', data.token);
+      }
+    }
+
+    return data.user;
+  } catch (error: any) {
+    console.error('Login error:', error);
+    throw error;
   }
-  
-  const users = getUsers();
-  const user = users.find(u => u.email === email && (u as any).password === password);
-
-  if (!user) {
-    throw new Error('Invalid email or password');
-  }
-
-  const { password: _, ...userWithoutPassword } = user as any;
-  const currentUser: User = userWithoutPassword;
-
-  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
-  return currentUser;
 }
 
 /**
  * Sign out the current user
  */
 export async function signOut(): Promise<void> {
-  // Only run in browser
-  if (typeof window === 'undefined') {
-    return;
-  }
-  
-  // Use session management for proper cleanup
   try {
-    const { clearSession } = await import('./session');
-    await clearSession();
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+    });
   } catch (error) {
-    // Fallback to manual cleanup if import fails
-    localStorage.removeItem(CURRENT_USER_KEY);
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('refresh_token');
+    console.error('Logout error:', error);
+  } finally {
+    // Always clear local state
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(CURRENT_USER_KEY);
+      localStorage.removeItem('auth_token');
+    }
   }
 }
 
 /**
- * Get the current signed-in user
+ * Get the current signed-in user (from local state)
+ * For sensitive operations, always verify with backend
  */
 export function getCurrentUser(): User | null {
-  // Only run in browser
   if (typeof window === 'undefined') {
     return null;
   }
-  
+
   try {
+    // First check if we have a token (if using token-based auth)
+    // If using cookies only, we might check an 'isAuthenticated' cookie or similar
+
     const data = localStorage.getItem(CURRENT_USER_KEY);
     if (!data) {
       return null;
@@ -115,30 +130,37 @@ export function getCurrentUser(): User | null {
 }
 
 /**
- * Get all users (for internal use)
+ * Refresh current user data from backend
  */
-function getUsers(): any[] {
-  // Only run in browser
-  if (typeof window === 'undefined') {
-    return [];
-  }
-  
+export async function refreshUser(): Promise<User | null> {
   try {
-    const data = localStorage.getItem(USERS_KEY);
-    if (!data) {
-      return [];
+    const response = await fetch('/api/auth/me', {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+      }
+    });
+
+    if (!response.ok) {
+      return null;
     }
-    return JSON.parse(data);
+
+    const data = await response.json();
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(data.user));
+    }
+    return data.user;
   } catch (error) {
-    console.error('Error loading users:', error);
-    return [];
+    console.error('Error refreshing user:', error);
+    return null;
   }
 }
 
 /**
- * Check if user is authenticated
+ * Check if user is authenticated (client-side check only)
  */
 export function isAuthenticated(): boolean {
   return getCurrentUser() !== null;
 }
+
+// End of file
 

@@ -454,7 +454,11 @@ function InvoiceFormContent() {
       };
 
       // Save invoice to database
-      const result = await saveInvoiceAPI(completeInvoice);
+      const payload = { ...completeInvoice };
+      if (!invoice.id) {
+        delete (payload as any).id;
+      }
+      const result = await saveInvoiceAPI(payload);
       // Update invoice with database ID
       if (result.invoice) {
         setInvoice(prev => ({ ...prev, id: result.invoice.id }));
@@ -555,7 +559,11 @@ function InvoiceFormContent() {
       // Save invoice to database
       try {
         setSavingInvoice(true);
-        const result = await saveInvoiceAPI(completeInvoice);
+        const payload = { ...completeInvoice };
+        if (!invoice.id) {
+          delete (payload as any).id;
+        }
+        const result = await saveInvoiceAPI(payload);
         // Update invoice with database ID
         if (result.invoice) {
           setInvoice(prev => ({ ...prev, id: result.invoice.id }));

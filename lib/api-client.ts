@@ -62,7 +62,7 @@ export async function saveInvoiceAPI(invoice: any): Promise<any> {
     };
 
     // If invoice has an ID, update it; otherwise create new
-    const url = invoice.id 
+    const url = invoice.id
       ? `${API_BASE}/api/invoices/${invoice.id}`
       : `${API_BASE}/api/invoices`;
     const method = invoice.id ? 'PATCH' : 'POST';
@@ -465,7 +465,7 @@ export async function createClientAPI(client: any): Promise<any> {
         // If response is not JSON, use status text
         errorMessage = response.statusText || errorMessage;
       }
-      
+
       if (response.status === 401) {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth_token');
@@ -804,6 +804,28 @@ export async function getAvailablePaymentProvidersAPI(): Promise<{ providers: an
     return await response.json();
   } catch (error: any) {
     console.error('Error loading payment providers:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a payment
+ */
+export async function deletePaymentAPI(paymentId: string): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/payments/${paymentId}`, {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete payment');
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error('Error deleting payment:', error);
     throw error;
   }
 }

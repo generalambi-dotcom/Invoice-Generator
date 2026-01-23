@@ -37,6 +37,7 @@ import {
   getInvoicePaymentHistoryAPI,
   recordPaymentAPI,
   generateInvoiceEditTokenAPI,
+  deletePaymentAPI,
 } from '@/lib/api-client';
 import LineItems from './LineItems';
 import { format } from 'date-fns';
@@ -607,6 +608,72 @@ function InvoiceFormContent() {
     }
   };
 
+  // Duplicate Invoice
+  const handleDuplicateInvoice = async (invoiceToDuplicate: Invoice) => {
+    if (confirm('Duplicate this invoice? This will create a new invoice with the same details but clear payment history.')) {
+      try {
+        // Generate new invoice number
+        let newInvoiceNumber = '';
+        try {
+          const numberResult = await getNextInvoiceNumberAPI();
+          newInvoiceNumber = numberResult.invoiceNumber;
+        } catch (e) {
+          console.error('Failed to generate number for duplicate', e);
+          newInvoiceNumber = `${invoiceToDuplicate.invoiceNumber}-COPY`;
+        }
+
+        setInvoice({
+          ...invoiceToDuplicate,
+          id: undefined, // Clear ID to treat as new
+          invoiceNumber: newInvoiceNumber,
+          invoiceDate: format(new Date(), 'yyyy-MM-dd'),
+          dueDate: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
+          paymentStatus: 'pending',
+          paidAmount: 0,
+          paymentDate: undefined,
+          paymentLink: undefined, // Clear payment link
+          paymentProvider: undefined,
+          createdAt: undefined,
+          updatedAt: undefined,
+        });
+
+        // Close history view and scroll to top
+        setShowHistory(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        alert('Invoice duplicated! Review and save to create the new invoice.');
+      } catch (error) {
+        console.error('Error duplicating invoice:', error);
+        alert('Failed to duplicate invoice');
+      }
+    }
+  };
+
+  // Delete Payment
+  const handleDeletePayment = async (paymentId: string) => {
+    if (!confirm('Are you sure you want to delete this payment?')) return;
+
+    try {
+      const result = await deletePaymentAPI(paymentId);
+
+      // Update payment history list
+      setPaymentHistory(prev => prev.filter(p => p.id !== paymentId));
+
+      // Update invoice totals if returned
+      if (result.invoice && invoice.id === result.invoice.id) {
+        setInvoice(prev => ({
+          ...prev,
+          paidAmount: result.invoice.paidAmount,
+          paymentStatus: result.invoice.paymentStatus,
+          paymentDate: result.invoice.paymentDate,
+        }));
+      }
+
+      alert('Payment deleted successfully');
+    } catch (error: any) {
+      alert('Failed to delete payment: ' + error.message);
+    }
+  };
+
   // Save company defaults
   const handleSaveDefaults = async () => {
     if (!invoice.company?.name) {
@@ -830,12 +897,21 @@ function InvoiceFormContent() {
                             <button
                               onClick={() => loadInvoiceFromHistory(inv.id)}
                               className="text-blue-600 hover:text-blue-800"
+                              title="Load"
                             >
                               Load
                             </button>
                             <button
+                              onClick={() => handleDuplicateInvoice(inv)}
+                              className="text-green-600 hover:text-green-800"
+                              title="Duplicate"
+                            >
+                              Duplicate
+                            </button>
+                            <button
                               onClick={() => handleDeleteInvoice(inv.id)}
                               className="text-red-600 hover:text-red-800"
+                              title="Delete"
                             >
                               Delete
                             </button>
@@ -909,10 +985,10 @@ function InvoiceFormContent() {
                         setCompanyAddressFormat('simple');
                         setSimpleCompanyAddress(getSimpleAddress(invoice.company));
                       }}
-                      className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${companyAddressFormat === 'simple'
+                      className={`px - 3 py - 1 text - xs sm: text - sm rounded transition - colors ${companyAddressFormat === 'simple'
                         ? 'bg-white text-theme-primary shadow-sm'
                         : 'text-gray-600 hover:text-gray-900'
-                        }`}
+                        } `}
                     >
                       Simple
                     </button>
@@ -921,10 +997,10 @@ function InvoiceFormContent() {
                         setCompanyAddressFormat('detailed');
                         setSimpleCompanyAddress('');
                       }}
-                      className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${companyAddressFormat === 'detailed'
+                      className={`px - 3 py - 1 text - xs sm: text - sm rounded transition - colors ${companyAddressFormat === 'detailed'
                         ? 'bg-white text-theme-primary shadow-sm'
                         : 'text-gray-600 hover:text-gray-900'
-                        }`}
+                        } `}
                     >
                       Detailed
                     </button>
@@ -1103,10 +1179,10 @@ function InvoiceFormContent() {
                       setClientAddressFormat('simple');
                       setSimpleClientAddress(getSimpleAddress(invoice.client));
                     }}
-                    className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${clientAddressFormat === 'simple'
+                    className={`px - 3 py - 1 text - xs sm: text - sm rounded transition - colors ${clientAddressFormat === 'simple'
                       ? 'bg-white text-theme-primary shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                      } `}
                   >
                     Simple
                   </button>
@@ -1115,10 +1191,10 @@ function InvoiceFormContent() {
                       setClientAddressFormat('detailed');
                       setSimpleClientAddress('');
                     }}
-                    className={`px-3 py-1 text-xs sm:text-sm rounded transition-colors ${clientAddressFormat === 'detailed'
+                    className={`px - 3 py - 1 text - xs sm: text - sm rounded transition - colors ${clientAddressFormat === 'detailed'
                       ? 'bg-white text-theme-primary shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
-                      }`}
+                      } `}
                   >
                     Detailed
                   </button>
@@ -1752,7 +1828,7 @@ function InvoiceFormContent() {
 
                     {invoice.discountAmount !== undefined && invoice.discountAmount > 0 && (
                       <div className="flex justify-between text-sm text-green-600">
-                        <span>Discount {invoice.discountRate && invoice.discountRate > 0 && `(${invoice.discountRate}%)`}</span>
+                        <span>Discount {invoice.discountRate && invoice.discountRate > 0 && `(${invoice.discountRate} %)`}</span>
                         <span>
                           -{currencySymbol} {formatCurrency(invoice.discountAmount || 0, invoice.currency || 'USD')}
                         </span>
@@ -1761,7 +1837,7 @@ function InvoiceFormContent() {
 
                     {invoice.taxAmount !== undefined && invoice.taxAmount > 0 && (
                       <div className="flex justify-between text-sm text-gray-600">
-                        <span>Tax {invoice.taxRate && invoice.taxRate > 0 && `(${invoice.taxRate}%)`}</span>
+                        <span>Tax {invoice.taxRate && invoice.taxRate > 0 && `(${invoice.taxRate} %)`}</span>
                         <span className="font-medium text-gray-900">
                           {currencySymbol} {formatCurrency(invoice.taxAmount || 0, invoice.currency || 'USD')}
                         </span>
@@ -1874,14 +1950,20 @@ function InvoiceFormContent() {
                                   </div>
                                 )}
                               </div>
-                              <span className={`px-2 py-1 text-xs font-semibold rounded ${payment.status === 'completed'
-                                ? 'bg-green-100 text-green-800'
-                                : payment.status === 'pending'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-red-100 text-red-800'
-                                }`}>
-                                {payment.status}
-                              </span>
+                              <div className="flex flex-col items-end gap-2">
+                                <span className={`px-2 py-1 text-xs font-semibold rounded ${payment.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                  payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
+                                  }`}>
+                                  {payment.status}
+                                </span>
+                                <button
+                                  onClick={() => handleDeletePayment(payment.id)}
+                                  className="text-red-600 hover:text-red-800 text-xs flex items-center gap-1"
+                                >
+                                  Delete
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))
@@ -1899,7 +1981,8 @@ function InvoiceFormContent() {
                             const paid = invoice.paidAmount || 0;
                             const outstanding = total - paid;
                             const amount = prompt(
-                              `Enter payment amount (Outstanding: ${currencySymbol}${formatCurrency(outstanding, invoice.currency || 'USD')}):`
+                              `Enter payment amount(Outstanding: ${currencySymbol}${formatCurrency(outstanding, invoice.currency || 'USD')
+                              }): `
                             );
                             if (amount && !isNaN(parseFloat(amount)) && invoice.id) {
                               try {
@@ -2072,7 +2155,7 @@ function InvoiceFormContent() {
                       await sendInvoiceEmailAPI(
                         invoice.id,
                         invoice.client.email,
-                        `Please find your invoice ${invoice.invoiceNumber || 'N/A'} attached.${invoice.paymentLink ? `\n\nPay online: ${invoice.paymentLink}` : ''}`
+                        `Please find your invoice ${invoice.invoiceNumber || 'N/A'} attached.${invoice.paymentLink ? `\n\nPay online: ${invoice.paymentLink}` : ''} `
                       );
                       alert('Invoice sent successfully!');
                     } catch (error: any) {

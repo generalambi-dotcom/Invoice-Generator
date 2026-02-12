@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: [],
+    domains: ['techcrunch.com', 'secure.gravatar.com', 'files.stripe.com', 'qilqsaqccplzqnlfrzab.supabase.co', 'images.unsplash.com'],
   },
   // Exclude Invoice-Generator directory from build
   webpack: (config) => {

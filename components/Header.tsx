@@ -19,27 +19,27 @@ export default function Header() {
   useEffect(() => {
     // Only run in browser
     if (typeof window === 'undefined') return;
-    
+
     try {
       const savedDarkMode = localStorage.getItem('darkMode');
       if (savedDarkMode === 'true') {
         setIsDarkMode(true);
         document.documentElement.classList.add('dark');
       }
-      
+
       const savedLanguage = localStorage.getItem('language');
       if (savedLanguage) {
         setLanguage(savedLanguage);
       }
-      
+
       const currentUser = getCurrentUser();
       setUser(currentUser);
       if (currentUser) {
         // Admins automatically have premium access
         setIsPremium(
           currentUser.isAdmin === true ||
-          (currentUser.subscription?.plan === 'premium' && 
-           currentUser.subscription?.status === 'active')
+          (currentUser.subscription?.plan === 'premium' &&
+            currentUser.subscription?.status === 'active')
         );
       }
     } catch (error) {
@@ -50,10 +50,10 @@ export default function Header() {
   const toggleDarkMode = () => {
     // Only run in browser
     if (typeof window === 'undefined') return;
-    
+
     const newDarkMode = !isDarkMode;
     setIsDarkMode(newDarkMode);
-    
+
     try {
       // Apply or remove dark class from html element
       if (newDarkMode) {
@@ -71,7 +71,7 @@ export default function Header() {
   const handleLanguageChange = (lang: string) => {
     // Only run in browser
     if (typeof window === 'undefined') return;
-    
+
     setLanguage(lang);
     try {
       localStorage.setItem('language', lang);
@@ -129,6 +129,12 @@ export default function Header() {
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center space-x-6">
             <Link
+              href="/blog"
+              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              Resources
+            </Link>
+            <Link
               href="/help"
               className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
@@ -181,11 +187,10 @@ export default function Header() {
                 <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-200 dark:border-gray-700">
                   <button
                     onClick={() => handleLanguageChange('en')}
-                    className={`block w-full text-left px-4 py-2 text-sm ${
-                      language === 'en'
+                    className={`block w-full text-left px-4 py-2 text-sm ${language === 'en'
                         ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                    }`}
+                      }`}
                   >
                     🇬🇧 English
                   </button>
@@ -261,7 +266,7 @@ export default function Header() {
                     ⭐ Upgrade
                   </Link>
                 )}
-                
+
                 {/* Account Dropdown */}
                 <div className="hidden md:block relative">
                   <button
@@ -363,29 +368,29 @@ export default function Header() {
                             Payment Methods
                           </Link>
                         )}
-                          {isPremium && (
-                            <Link
-                              href="/settings/public-link"
-                              onClick={closeMenus}
-                              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                            >
-                              Public Invoice Link
-                            </Link>
-                          )}
+                        {isPremium && (
                           <Link
-                            href="/settings/whatsapp"
+                            href="/settings/public-link"
                             onClick={closeMenus}
-                            className="block px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                           >
-                            WhatsApp Connection
+                            Public Invoice Link
                           </Link>
-                          <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
-                          <button
-                            onClick={handleSignOut}
-                            className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          >
-                            Sign Out
-                          </button>
+                        )}
+                        <Link
+                          href="/settings/whatsapp"
+                          onClick={closeMenus}
+                          className="block px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
+                        >
+                          WhatsApp Connection
+                        </Link>
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+                        <button
+                          onClick={handleSignOut}
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          Sign Out
+                        </button>
                       </div>
                     </>
                   )}
@@ -507,7 +512,7 @@ export default function Header() {
                       </>
                     )}
                   </div>
-                  
+
                   {/* Hamburger Menu Button */}
                   <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -603,7 +608,7 @@ export default function Header() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Hamburger Menu Button */}
                   <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -651,6 +656,13 @@ export default function Header() {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 relative z-50">
             <nav className="px-4 py-4 space-y-3">
+              <Link
+                href="/blog"
+                onClick={closeMenus}
+                className="block text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors py-2"
+              >
+                Resources
+              </Link>
               <Link
                 href="/help"
                 onClick={closeMenus}
@@ -758,11 +770,10 @@ export default function Header() {
                     <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-200 dark:border-gray-700">
                       <button
                         onClick={() => handleLanguageChange('en')}
-                        className={`block w-full text-left px-4 py-2 text-sm ${
-                          language === 'en'
+                        className={`block w-full text-left px-4 py-2 text-sm ${language === 'en'
                             ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                             : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                        }`}
+                          }`}
                       >
                         🇬🇧 English
                       </button>

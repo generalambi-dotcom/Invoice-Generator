@@ -981,7 +981,7 @@ function InvoiceFormContent() {
 
           <div className="flex flex-col xl:flex-row gap-8 items-start justify-center">
             {/* Right Sidebar - Tools & Settings */}
-            <div className="w-full xl:w-80 shrink-0 space-y-6 xl:sticky xl:top-8 order-1 xl:order-2 h-fit">
+            <div className="w-full xl:w-80 shrink-0 space-y-6 xl:sticky xl:top-8 order-2 xl:order-2 h-fit">
               {/* Action Buttons */}
               <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-3">
 
@@ -1158,7 +1158,7 @@ function InvoiceFormContent() {
             </div>
 
 
-            <div className="flex-1 w-full max-w-[120rem] order-2 xl:order-1">
+            <div className="flex-1 w-full max-w-[120rem] order-1 xl:order-1">
               <div className="bg-white p-4 rounded-xl">
                 <div className="flex justify-between items-center mb-4 px-2">
                   <h2 className="text-lg font-semibold text-gray-700">Preview</h2>
@@ -1280,46 +1280,46 @@ function InvoiceFormContent() {
                     </div>
 
                     {/* Right: Invoice Meta & Title */}
-                    <div className="text-right flex-1">
+                    <div className="text-right flex-1 w-full">
                       <h1 className="text-4xl font-light text-gray-300 tracking-widest uppercase mb-6">Invoice</h1>
                       <div className="space-y-1">
-                        <div className="flex justify-end items-center gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
+                        <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
                           <label className="text-sm font-medium text-gray-500 uppercase tracking-wider">Number</label>
-                          <div className="flex flex-col items-end">
+                          <div className="flex flex-col items-end w-full sm:w-auto">
                             <input
                               type="text"
                               value={invoice.invoiceNumber || ''}
                               onChange={(e) => updateField('invoiceNumber', e.target.value)}
-                              className="text-right font-semibold text-gray-900 font-mono bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-32 placeholder:text-gray-300"
+                              className="text-right font-semibold text-gray-900 font-mono bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-32 placeholder:text-gray-300"
                               placeholder="#"
                             />
                           </div>
                         </div>
-                        <div className="flex justify-end items-center gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
+                        <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
                           <label className="text-sm font-medium text-gray-500 uppercase tracking-wider">Date</label>
                           <input
                             type="date"
                             value={invoice.invoiceDate || ''}
                             onChange={(e) => updateField('invoiceDate', e.target.value)}
-                            className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-36"
+                            className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-36"
                           />
                         </div>
-                        <div className="flex justify-end items-center gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
+                        <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
                           <label className="text-sm font-medium text-gray-500 uppercase tracking-wider">Due</label>
                           <input
                             type="date"
                             value={invoice.dueDate || ''}
                             onChange={(e) => updateField('dueDate', e.target.value)}
-                            className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-36"
+                            className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-36"
                           />
                         </div>
-                        <div className="flex justify-end items-center gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
+                        <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
                           <label className="text-sm font-medium text-gray-500 uppercase tracking-wider">PO #</label>
                           <input
                             type="text"
                             value={invoice.purchaseOrder || ''}
                             onChange={(e) => updateField('purchaseOrder', e.target.value)}
-                            className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-32 placeholder:text-gray-300"
+                            className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-32 placeholder:text-gray-300"
                             placeholder="Optional"
                           />
                         </div>

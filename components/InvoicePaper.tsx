@@ -266,7 +266,7 @@ export default function InvoicePaper({
                                                 />
                                             </div>
                                         ) : (
-                                            <div className="py-2">{currencySymbol} {formatCurrency(item.rate || 0, invoice.currency)}</div>
+                                            <div className="py-2">{currencySymbol} {formatCurrency(item.rate || 0, invoice.currency || 'NGN')}</div>
                                         )}
                                     </td>
                                     <td className="text-right py-4 px-4 font-medium text-gray-900 align-top">
@@ -395,7 +395,7 @@ export default function InvoicePaper({
                                     />
                                 </>
                             ) : (
-                                <span className="font-medium text-gray-900">{currencySymbol} {formatCurrency(invoice.shipping || 0, invoice.currency)}</span>
+                                <span className="font-medium text-gray-900">{currencySymbol} {formatCurrency(invoice.shipping || 0, invoice.currency || 'NGN')}</span>
                             )}
                         </div>
                     </div>

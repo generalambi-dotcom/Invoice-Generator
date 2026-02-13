@@ -1104,7 +1104,7 @@ function InvoiceFormContent() {
                         {(invoice.lineItems || []).slice(0, 3).map((item, i) => (
                           <div key={i} className="flex justify-between py-0.5 border-b border-gray-50">
                             <div className="w-1/2 text-[4px] text-gray-700 truncate">{item.description || 'Item'}</div>
-                            <div className="w-1/4 text-[4px] text-gray-700 text-right">{formatCurrency((item.quantity || 0) * (item.rate || 0), invoice.currency)}</div>
+                            <div className="w-1/4 text-[4px] text-gray-700 text-right">{formatCurrency((item.quantity || 0) * (item.rate || 0), invoice.currency || 'NGN')}</div>
                           </div>
                         ))}
                       </div>
@@ -1115,16 +1115,16 @@ function InvoiceFormContent() {
                       <div className="w-2/3 space-y-0.5">
                         <div className="flex justify-between text-[5px] text-gray-600">
                           <span>Subtotal</span>
-                          <span>{formatCurrency(invoice.subtotal || 0, invoice.currency)}</span>
+                          <span>{formatCurrency(invoice.subtotal || 0, invoice.currency || 'NGN')}</span>
                         </div>
                         <div className="flex justify-between text-[5px] text-gray-600">
                           <span>Tax</span>
-                          <span>{formatCurrency(invoice.taxAmount || 0, invoice.currency)}</span>
+                          <span>{formatCurrency(invoice.taxAmount || 0, invoice.currency || 'NGN')}</span>
                         </div>
                         <div className="h-px bg-gray-200 my-0.5"></div>
                         <div className="flex justify-between text-[6px] font-bold text-gray-900">
                           <span>Total</span>
-                          <span>{formatCurrency(invoice.total || 0, invoice.currency)}</span>
+                          <span>{formatCurrency(invoice.total || 0, invoice.currency || 'NGN')}</span>
                         </div>
                       </div>
                     </div>

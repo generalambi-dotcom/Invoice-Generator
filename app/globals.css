@@ -25,9 +25,8 @@
   body {
     @apply bg-white;
   }
-  
+
   .no-print {
     display: none !important;
   }
 }
-

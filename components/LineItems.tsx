@@ -52,24 +52,22 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
   return (
     <div>
       {/* Desktop Table View */}
-      <div className="hidden md:block overflow-x-auto">
+      <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-200/50 shadow-sm">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="bg-gray-50 border-b-2 border-gray-200">
-              <th className="text-left p-3 text-sm font-semibold text-gray-700">Description</th>
-              <th className="text-right p-3 text-sm font-semibold text-gray-700 w-24">Quantity</th>
-              <th className="text-right p-3 text-sm font-semibold text-gray-700 w-32">Rate</th>
-              <th className="text-right p-3 text-sm font-semibold text-gray-700 w-32">Amount</th>
-              <th className="w-16"></th>
+            <tr className="bg-gray-50/80 border-b border-gray-200">
+              <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Description</th>
+              <th className="text-right p-4 text-xs font-bold text-gray-500 uppercase tracking-wider w-24">Quantity</th>
+              <th className="text-right p-4 text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Rate</th>
+              <th className="text-right p-4 text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Amount</th>
+              <th className="w-16 p-4"></th>
             </tr>
           </thead>
-          <tbody>
-            {lineItems.map((item, index) => (
+          <tbody className="bg-white divide-y divide-gray-100">
+            {lineItems.map((item) => (
               <tr
                 key={item.id}
-                className={`border-b border-gray-200 hover:bg-gray-50 ${
-                  index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                }`}
+                className="group hover:bg-gray-50/50 transition-colors"
               >
                 <td className="p-3">
                   <input
@@ -77,7 +75,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
                     value={item.description}
                     onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                     placeholder="Item description"
-                    className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-transparent"
+                    className="w-full px-3 py-2 bg-gray-50 border border-transparent hover:border-gray-200 rounded-lg text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
                   />
                 </td>
                 <td className="p-3">
@@ -89,12 +87,12 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
                     }
                     min="0"
                     step="0.01"
-                    className="w-full px-2 py-1 border border-gray-300 rounded text-right focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-transparent"
+                    className="w-full px-3 py-2 bg-gray-50 border border-transparent hover:border-gray-200 rounded-lg text-sm text-right text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
                   />
                 </td>
                 <td className="p-3">
-                  <div className="flex items-center justify-end">
-                    <span className="mr-1 text-gray-600">{currencySymbol}</span>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">{currencySymbol}</span>
                     <input
                       type="number"
                       value={item.rate || ''}
@@ -103,123 +101,111 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
                       }
                       min="0"
                       step="0.01"
-                      className="w-full px-2 py-1 border border-gray-300 rounded text-right focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-transparent"
+                      className="w-full pl-6 pr-3 py-2 bg-gray-50 border border-transparent hover:border-gray-200 rounded-lg text-sm text-right text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
                     />
                   </div>
                 </td>
-                <td className="p-3">
-                  <div className="flex items-center justify-end">
-                    <span className="mr-1 text-gray-600">{currencySymbol}</span>
-                    <span className="text-gray-900 font-medium">
-                      {formatCurrency(item.amount)}
-                    </span>
-                  </div>
+                <td className="p-3 text-right">
+                  <span className="text-sm font-semibold text-gray-900 block py-2 px-3">
+                    {currencySymbol} {formatCurrency(item.amount)}
+                  </span>
                 </td>
                 <td className="p-3 text-center">
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="text-red-600 hover:text-red-800 font-bold text-lg leading-none px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                     title="Remove item"
                   >
-                    ×
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        {lineItems.length === 0 && (
+          <div className="p-8 text-center text-gray-400 bg-gray-50/50">
+            <p className="text-sm">No items added yet. Click "Add Line Item" below.</p>
+          </div>
+        )}
       </div>
 
       {/* Mobile Card View */}
-      <div className="md:hidden space-y-3">
-        {lineItems.map((item, index) => (
+      <div className="md:hidden space-y-4">
+        {lineItems.map((item) => (
           <div
             key={item.id}
-            className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+            className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm"
           >
             {/* Description Row */}
-            <div className="mb-3">
+            <div className="mb-4">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description</label>
               <input
                 type="text"
                 value={item.description}
                 onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                 placeholder="Description of item/service..."
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-50 border border-transparent focus:bg-white rounded-xl text-sm outline-none ring-1 ring-transparent focus:ring-theme-primary transition-all"
               />
             </div>
-            
+
             {/* Quantity, Rate, Amount Row */}
-            <div className="flex items-center gap-2">
-              {/* Rate */}
-              <div className="w-28">
-                <div className="flex items-center border border-gray-300 rounded">
-                  <span className="px-1.5 text-gray-600 text-sm">{currencySymbol}</span>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Rate</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
                   <input
                     type="number"
                     value={item.rate || ''}
-                    onChange={(e) =>
-                      updateItem(item.id, 'rate', parseFloat(e.target.value) || 0)
-                    }
-                    min="0"
-                    step="0.01"
-                    placeholder="0"
-                    className="flex-1 px-1.5 py-2 border-0 rounded-r focus:outline-none focus:ring-2 focus:ring-theme-primary text-sm"
+                    onChange={(e) => updateItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
+                    className="w-full pl-8 pr-4 py-3 bg-gray-50 border border-transparent focus:bg-white rounded-xl text-sm outline-none ring-1 ring-transparent focus:ring-theme-primary transition-all"
                   />
                 </div>
               </div>
-              
-              {/* Multiplier */}
-              <span className="text-gray-400 text-xl">×</span>
-              
-              {/* Quantity */}
-              <div className="w-24">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Qty</label>
                 <input
                   type="number"
                   value={item.quantity || ''}
-                  onChange={(e) =>
-                    updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)
-                  }
-                  min="0"
-                  step="0.01"
-                  className="w-full px-2 py-2 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-transparent text-sm"
+                  onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                  className="w-full px-4 py-3 bg-gray-50 border border-transparent focus:bg-white rounded-xl text-sm outline-none ring-1 ring-transparent focus:ring-theme-primary transition-all"
                 />
               </div>
-              
-              {/* Amount Display */}
-              <div className="flex-1 text-right">
-                <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded">
-                  <span className="text-gray-600 mr-1">{currencySymbol}</span>
-                  <span className="text-gray-900 font-medium">
-                    {formatCurrency(item.amount)}
-                  </span>
+            </div>
+
+            <div className="mt-4 flex items-center justify-between pt-4 border-t border-gray-100">
+              <div>
+                <span className="text-xs text-gray-500 uppercase font-bold">Amount</span>
+                <div className="text-lg font-bold text-gray-900 mt-1">
+                  {currencySymbol} {formatCurrency(item.amount)}
                 </div>
               </div>
-              
-              {/* Remove Button */}
               <button
                 onClick={() => removeItem(item.id)}
-                className="text-red-600 hover:text-red-800 font-bold text-xl leading-none px-3 py-2 rounded hover:bg-red-50 transition-colors"
+                className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
                 title="Remove item"
               >
-                ×
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
               </button>
             </div>
           </div>
         ))}
+        {lineItems.length === 0 && (
+          <div className="p-8 text-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+            <p className="text-sm">No items added yet.</p>
+          </div>
+        )}
       </div>
       <div className="mt-4">
         <button
           onClick={addItem}
-          className="px-4 py-2 bg-theme-primary text-white rounded hover:bg-theme-primary-dark transition-colors text-sm font-medium"
+          className="w-full md:w-auto px-6 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-black transition-all shadow-sm flex items-center justify-center gap-2 text-sm font-semibold"
         >
-          + Add Line Item
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+          Add Line Item
         </button>
       </div>
-      {lineItems.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          <p>No line items yet. Click "Add Line Item" to get started.</p>
-        </div>
-      )}
     </div>
   );
 }

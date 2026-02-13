@@ -4,6 +4,8 @@ import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { startOfMonth, subMonths, format, endOfMonth } from 'date-fns';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
     try {
         const user = getAuthenticatedUser(request);

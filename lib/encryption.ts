@@ -40,3 +40,30 @@ export function decrypt(encryptedText: string): string {
     return '';
   }
 }
+
+/**
+ * Encrypt payment credential fields
+ */
+export function encryptPaymentCredential(data: any): any {
+  const result: any = { ...data };
+
+  // Encrypt sensitive fields if they exist
+  if (result.secretKey) result.secretKey = encrypt(result.secretKey);
+  if (result.clientSecret) result.clientSecret = encrypt(result.clientSecret);
+  if (result.twilioAuthToken) result.twilioAuthToken = encrypt(result.twilioAuthToken);
+
+  return result;
+}
+
+/**
+ * Decrypt payment credential fields
+ */
+export function decryptPaymentCredential(data: any): any {
+  const result: any = { ...data };
+
+  if (result.secretKey) result.secretKey = decrypt(result.secretKey);
+  if (result.clientSecret) result.clientSecret = decrypt(result.clientSecret);
+  if (result.twilioAuthToken) result.twilioAuthToken = decrypt(result.twilioAuthToken);
+
+  return result;
+}

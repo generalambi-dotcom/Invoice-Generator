@@ -2,7 +2,7 @@ import { LLMConfig, LLMResponse, VerificationResult } from './types';
 import { ParsedInvoiceData } from '../whatsapp-nlp';
 
 const SYSTEM_PROMPT = `
-You are an expert invoice parsing assistant for 'Invoice Naija'.
+You are an expert invoice parsing assistant for 'Invoice Generator'.
 Your task is to either extract invoice details into JSON OR answer user questions about the system.
 
 OUTPUT FORMAT:

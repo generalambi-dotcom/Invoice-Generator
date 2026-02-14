@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
+import { getAuthenticatedUser } from '@/lib/api-auth';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -8,8 +8,17 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
     try {
         // Auth check
-        const user = await getCurrentUser(request);
-        if (!user || null || !user.isAdmin) {
+        const user = getAuthenticatedUser(request);
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const dbUser = await prisma.user.findUnique({
+            where: { id: user.userId },
+            select: { isAdmin: true },
+        });
+
+        if (!dbUser?.isAdmin) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

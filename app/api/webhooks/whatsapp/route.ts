@@ -234,6 +234,23 @@ async function handleMetaWebhook(body: any) {
 
   console.log(`✅ Found credential for ${credential.phoneNumber} (user: ${credential.userId})`);
 
+  // Mark as verified if not already
+  if (!credential.isVerified) {
+    await prisma.whatsAppCredential.update({
+      where: { id: credential.id },
+      data: {
+        isVerified: true,
+        verifiedAt: new Date(),
+        lastMessageAt: new Date(),
+      },
+    });
+  } else {
+    await prisma.whatsAppCredential.update({
+      where: { id: credential.id },
+      data: { lastMessageAt: new Date() },
+    });
+  }
+
   // Similar handling as Twilio
   const lowerMessage = text.toLowerCase().trim();
   const isInvoiceCommand =

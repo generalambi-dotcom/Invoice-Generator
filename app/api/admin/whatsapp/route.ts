@@ -36,7 +36,7 @@ function decrypt(encryptedText: string): string {
 export async function GET(request: NextRequest) {
   try {
     const user = getAuthenticatedUser(request);
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -51,12 +51,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    // Get WhatsApp settings
-    let settings = await prisma.whatsAppSettings.findUnique({
-      where: { provider: 'twilio' },
+    // Get WhatsApp settings - prioritize enabled one
+    let settings = await prisma.whatsAppSettings.findFirst({
+      where: { isEnabled: true },
     });
 
-    // If no settings exist, create default
+    // If no enabled settings, verify if any exist (e.g. Meta disabled)
+    if (!settings) {
+      settings = await prisma.whatsAppSettings.findFirst();
+    }
+
+    // If absolutely no settings exist, create default Twilio
     if (!settings) {
       settings = await prisma.whatsAppSettings.create({
         data: {
@@ -94,7 +99,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const user = getAuthenticatedUser(request);
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -132,8 +137,8 @@ export async function PUT(request: NextRequest) {
     const updateData: any = {
       provider: provider || 'twilio',
       twilioAccountSid: twilioAccountSid || undefined,
-      twilioAuthToken: twilioAuthToken && twilioAuthToken !== '***encrypted***' 
-        ? encrypt(twilioAuthToken) 
+      twilioAuthToken: twilioAuthToken && twilioAuthToken !== '***encrypted***'
+        ? encrypt(twilioAuthToken)
         : undefined,
       twilioWhatsAppNumber: twilioWhatsAppNumber || undefined,
       metaAppId: metaAppId || undefined,
@@ -163,6 +168,16 @@ export async function PUT(request: NextRequest) {
       }
     });
 
+    // If enabling this provider, disable others to prevent conflicts
+    if (isEnabled) {
+      await prisma.whatsAppSettings.updateMany({
+        where: {
+          provider: { not: provider || 'twilio' }
+        },
+        data: { isEnabled: false }
+      });
+    }
+
     // Upsert settings
     const settings = await prisma.whatsAppSettings.upsert({
       where: { provider: provider || 'twilio' },
@@ -188,7 +203,7 @@ export async function PUT(request: NextRequest) {
   } catch (error: any) {
     console.error('Error updating WhatsApp settings:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to update WhatsApp settings',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       },

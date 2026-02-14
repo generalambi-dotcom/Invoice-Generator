@@ -171,9 +171,16 @@ async function handleTwilioWebhook(body: any) {
 /**
  * Handle Meta webhook
  */
+import { logInfo, logError, logWarn } from '@/lib/system-logger';
+
+// ... (existing imports)
+
+/**
+ * Handle Meta webhook
+ */
 async function handleMetaWebhook(body: any) {
-  // Log full webhook payload for debugging
-  console.log('🔍 Meta webhook received:', JSON.stringify(body, null, 2));
+  // Log full webhook payload
+  await logInfo('whatsapp', 'Meta webhook received', body);
 
   const entry = body.entry[0];
   const change = entry.changes[0];
@@ -188,7 +195,7 @@ async function handleMetaWebhook(body: any) {
   const from = normalizePhoneNumber(`+${fromRaw}`);
   const text = message.text?.body || '';
 
-  console.log(`📱 WhatsApp message from ${fromRaw} (normalized: ${from}): ${text}`);
+  await logInfo('whatsapp', `Message from ${from}`, { text, raw: fromRaw });
 
   // Find user by phone number (try exact match first)
   let credential = await prisma.whatsAppCredential.findFirst({
@@ -363,7 +370,10 @@ async function handleInvoiceCreation(userId: string, message: string, from: stri
       },
     });
 
-    console.log(`✅ Invoice created via WhatsApp: ${invoice.id} for user ${userId}`);
+    await logInfo('whatsapp', `Invoice created: ${invoice.invoiceNumber}`, {
+      invoiceId: invoice.id,
+      total: invoice.total
+    });
 
     // Send confirmation message
     const confirmationMessage = `✅ Invoice Created!\n\n` +
@@ -383,7 +393,7 @@ async function handleInvoiceCreation(userId: string, message: string, from: stri
 
     return NextResponse.json({ message: 'Invoice created' }, { status: 200 });
   } catch (error: any) {
-    console.error('Error creating invoice from WhatsApp:', error);
+    await logError('whatsapp', 'Error creating invoice', error);
     await sendWhatsAppMessage(
       from,
       '❌ Sorry, there was an error creating your invoice. Please try again or use the web dashboard.'

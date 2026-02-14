@@ -506,3 +506,18 @@ model BlogPost {
   @@index([published])
   @@index([authorId])
 }
+
+model SystemLog {
+  id        String   @id @default(cuid())
+  level     String   @default("info") // 'info' | 'warn' | 'error'
+  category  String   // 'whatsapp' | 'system' | 'auth' | 'payment'
+  message   String
+  metadata  Json?    // Store additional data like webhook payload
+  
+  createdAt DateTime @default(now())
+
+  @@index([level])
+  @@index([category])
+  @@index([createdAt])
+}
+

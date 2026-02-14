@@ -1,165 +1,95 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
-import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit';
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic';
-
-/**
- * GET - Get single client
- */
+// GET: Fetch single client with invoices
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const user = getAuthenticatedUser(request);
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const client = await prisma.client.findFirst({
+    const client = await prisma.client.findUnique({
       where: {
         id: params.id,
-        userId: user.userId,
+        userId: user.userId
       },
       include: {
-        _count: {
-          select: { invoices: true },
-        },
-      },
+        invoices: {
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            invoiceNumber: true,
+            invoiceDate: true,
+            total: true,
+            currency: true,
+            paymentStatus: true
+          }
+        }
+      }
     });
 
-    if (!client) {
-      return NextResponse.json(
-        { error: 'Client not found' },
-        { status: 404 }
-      );
-    }
+    if (!client) return NextResponse.json({ error: 'Client not found' }, { status: 404 });
 
     return NextResponse.json({ client });
-  } catch (error: any) {
-    console.error('Error loading client:', error);
-    return NextResponse.json(
-      { error: 'Failed to load client' },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error('Error fetching client:', error);
+    return NextResponse.json({ error: 'Failed to fetch client' }, { status: 500 });
   }
 }
 
-/**
- * PATCH - Update client
- */
-export async function PATCH(
+// PUT: Update client
+export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const user = getAuthenticatedUser(request);
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Verify ownership
-    const existing = await prisma.client.findFirst({
-      where: {
-        id: params.id,
-        userId: user.userId,
-      },
-    });
-
-    if (!existing) {
-      return NextResponse.json(
-        { error: 'Client not found' },
-        { status: 404 }
-      );
-    }
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await request.json();
-    const {
-      name,
-      email,
-      phone,
-      address,
-      city,
-      state,
-      zip,
-      country,
-      website,
-      notes,
-      tags,
-    } = body;
+    // remove id and userid from body to prevent tampering
+    const { id, userId, invoices, createdAt, updatedAt, _count, ...data } = body;
 
     const client = await prisma.client.update({
-      where: { id: params.id },
-      data: {
-        ...(name && { name }),
-        ...(email !== undefined && { email: email || null }),
-        ...(phone !== undefined && { phone: phone || null }),
-        ...(address !== undefined && { address: address || null }),
-        ...(city !== undefined && { city: city || null }),
-        ...(state !== undefined && { state: state || null }),
-        ...(zip !== undefined && { zip: zip || null }),
-        ...(country !== undefined && { country: country || null }),
-        ...(website !== undefined && { website: website || null }),
-        ...(notes !== undefined && { notes: notes || null }),
-        ...(tags !== undefined && { tags: tags || [] }),
+      where: {
+        id: params.id,
+        userId: user.userId
       },
+      data: {
+        ...data,
+        updatedAt: undefined // Let prisma handle updatedAt
+      }
     });
 
     return NextResponse.json({ client });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error updating client:', error);
-    return NextResponse.json(
-      { error: 'Failed to update client' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update client' }, { status: 500 });
   }
 }
 
-/**
- * DELETE - Delete client
- */
+// DELETE: Delete client
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const user = getAuthenticatedUser(request);
-    
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Verify ownership
-    const existing = await prisma.client.findFirst({
-      where: {
-        id: params.id,
-        userId: user.userId,
-      },
-    });
-
-    if (!existing) {
-      return NextResponse.json(
-        { error: 'Client not found' },
-        { status: 404 }
-      );
-    }
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     await prisma.client.delete({
-      where: { id: params.id },
+      where: {
+        id: params.id,
+        userId: user.userId
+      }
     });
 
-    return NextResponse.json({ message: 'Client deleted successfully' });
-  } catch (error: any) {
+    return NextResponse.json({ success: true });
+  } catch (error) {
     console.error('Error deleting client:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete client' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to delete client' }, { status: 500 });
   }
 }
-

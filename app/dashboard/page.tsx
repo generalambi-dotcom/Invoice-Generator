@@ -8,6 +8,12 @@ import { loadInvoicesAPI, deleteInvoiceAPI, updateOverdueInvoicesAPI, getPayment
 import { Invoice, currencySymbols } from '@/types/invoice';
 import { formatCurrency } from '@/lib/calculations';
 import { format } from 'date-fns';
+import DashboardGreeting from '@/components/DashboardGreeting';
+import DashboardCharts from '@/components/DashboardCharts';
+import {
+  Plus, BarChart3, FileText, Eye, CreditCard,
+  Trash2, RefreshCcw, MoreHorizontal
+} from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -300,17 +306,23 @@ export default function DashboardPage() {
   const invoices = showDeleted ? deletedInvoices : activeInvoices;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-gray-50/50">
+      {/* Header - Simplified */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <h1 className="text-2xl font-bold text-gray-900">My Invoices</h1>
+            <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <span className="w-2 h-6 bg-emerald-600 rounded-full"></span>
+              Dashboard
+            </h1>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">Welcome, {user?.name}</span>
+              <div className="text-right hidden md:block">
+                <div className="text-sm font-medium text-gray-900">{user?.name}</div>
+                <div className="text-xs text-gray-500">{user?.email}</div>
+              </div>
               <button
                 onClick={handleSignOut}
-                className="text-sm text-gray-600 hover:text-gray-900"
+                className="text-sm text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors font-medium"
               >
                 Sign Out
               </button>
@@ -320,261 +332,226 @@ export default function DashboardPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
+
+        {/* New Greeting Component */}
+        <DashboardGreeting
+          userName={user?.name}
+          totalStats={{ paid: stats.paidCount, unpaid: stats.unpaidCount }}
+        />
+
+        {/* Stats Cards - Premium Redesign */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-1">Total Invoices</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalInvoices}</p>
-            <p className="text-sm text-gray-500 mt-1">All time</p>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex items-center gap-4 hover:shadow-md transition-shadow">
+            <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 3.666V19.124a.5.5 0 01-.258.438l-2.003.896-.612.2a.5.5 0 01-.456-.118l-2.833-2.738a.5.5 0 01-.157-.348V7.5M8.5 7v10h2.755M1.5 7h1.666a.5.5 0 01.354.146l2.167 2.167h.578a.5.5 0 01.354.146l2.167 2.166H10.5a.5.5 0 01.354.146l.77.771M22.5 7h-1.666a.5.5 0 00-.354.146l-2.167 2.167h-.578a.5.5 0 00-.354.146l-2.167 2.166H13.5a.5.5 0 00-.354.146l-.771.771" /></svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
+              <p className="text-2xl font-bold text-gray-900">
+                {currencySymbols[activeInvoices[0]?.currency || 'USD']} {formatCurrency(stats.totalAmount, activeInvoices[0]?.currency || 'USD')}
+              </p>
+            </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-1">Total Amount</h3>
-            <p className="text-3xl font-bold text-gray-900 mt-2">
-              {currencySymbols[activeInvoices[0]?.currency || 'USD']} {formatCurrency(stats.totalAmount, activeInvoices[0]?.currency || 'USD')}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">All invoices</p>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex items-center gap-4 hover:shadow-md transition-shadow">
+            <div className="p-3 bg-green-50 rounded-xl text-green-600">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Paid Invoices</h3>
+              <p className="text-2xl font-bold text-gray-900">
+                {currencySymbols[activeInvoices[0]?.currency || 'USD']} {formatCurrency(stats.paidAmount, activeInvoices[0]?.currency || 'USD')}
+              </p>
+            </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-1">Paid</h3>
-            <p className="text-3xl font-bold text-green-600 mt-2">
-              {currencySymbols[activeInvoices[0]?.currency || 'USD']} {formatCurrency(stats.paidAmount, activeInvoices[0]?.currency || 'USD')}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">{stats.paidCount} invoices</p>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex items-center gap-4 hover:shadow-md transition-shadow">
+            <div className="p-3 bg-orange-50 rounded-xl text-orange-600">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Pending</h3>
+              <p className="text-2xl font-bold text-gray-900">
+                {currencySymbols[activeInvoices[0]?.currency || 'USD']} {formatCurrency(stats.unpaidAmount - stats.overdueAmount, activeInvoices[0]?.currency || 'USD')}
+              </p>
+            </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-sm font-medium text-gray-500 mb-1">Unpaid</h3>
-            <p className="text-3xl font-bold text-red-600 mt-2">
-              {currencySymbols[activeInvoices[0]?.currency || 'USD']} {formatCurrency(stats.unpaidAmount, activeInvoices[0]?.currency || 'USD')}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">{stats.unpaidCount} invoices</p>
-            {stats.overdueCount > 0 && (
-              <p className="text-xs text-red-600 mt-1">({stats.overdueCount} overdue)</p>
-            )}
+
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex items-center gap-4 hover:shadow-md transition-shadow">
+            <div className="p-3 bg-red-50 rounded-xl text-red-600">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Overdue</h3>
+              <p className="text-2xl font-bold text-gray-900">
+                {currencySymbols[activeInvoices[0]?.currency || 'USD']} {formatCurrency(stats.overdueAmount, activeInvoices[0]?.currency || 'USD')}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex gap-3">
-            {!showDeleted && (
-              <>
-                <Link
-                  href="/"
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+        {/* Charts Section */}
+        <DashboardCharts invoices={activeInvoices} />
+
+        {/* Action Bar & List Header */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+          <h2 className="text-xl font-bold text-gray-900">Recent Invoices</h2>
+          <div className="flex gap-3 w-full md:w-auto">
+            <div className="flex bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setShowDeleted(false)}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${!showDeleted ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Active
+              </button>
+              <button
+                onClick={() => setShowDeleted(true)}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${showDeleted ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Deleted
+              </button>
+            </div>
+
+            <div className="flex gap-2 ml-auto">
+              {!showDeleted && (
+                <>
+                  <Link
+                    href="/"
+                    id="new-invoice-btn"
+                    className="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-2 font-medium shadow-emerald-200 shadow-lg"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  New Invoice
-                </Link>
-                <Link
-                  href="/reports"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  Reports
-                </Link>
-              </>
-            )}
-            <button
-              onClick={() => setShowDeleted(!showDeleted)}
-              className="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              {showDeleted ? 'View Active Invoices' : 'View Deleted Invoices'}
-            </button>
+                    <Plus className="w-5 h-5" />
+                    New Invoice
+                  </Link>
+                  <Link
+                    href="/reports"
+                    className="px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2 font-medium"
+                  >
+                    <BarChart3 className="w-5 h-5" />
+                    Reports
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Invoice List */}
         {invoices.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <h3 className="mt-4 text-lg font-medium text-gray-900">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-16 text-center">
+            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FileText className="h-10 w-10 text-gray-300" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
               {showDeleted ? 'No Deleted Invoices' : 'No Invoices Found'}
             </h3>
-            <p className="mt-2 text-gray-500">
+            <p className="text-gray-500 max-w-sm mx-auto mb-8">
               {showDeleted
-                ? 'You haven\'t deleted any invoices yet.'
-                : 'Create your first invoice to get started.'}
+                ? 'You haven\'t deleted any invoices yet. Your trash is empty.'
+                : 'Create your first invoice to get started and see it appear here.'}
             </p>
             {!showDeleted && (
               <Link
                 href="/"
-                className="mt-4 inline-block px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="inline-flex px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-medium shadow-lg shadow-emerald-200 items-center gap-2"
               >
+                <Plus className="w-5 h-5" />
                 Create Invoice
               </Link>
             )}
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-100">
+                <thead className="bg-gray-50/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Customer
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Reference
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Due Date
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Total
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Payment Status
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                      Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Approval Status
-                    </th>
-                    {showDeleted && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Deleted
-                      </th>
-                    )}
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white divide-y divide-gray-100">
                   {invoices.map((invoice) => (
-                    <tr key={invoice.id} className="hover:bg-gray-50">
+                    <tr key={invoice.id} className="hover:bg-gray-50/80 transition-colors group">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {invoice.client.name}
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-700 font-bold text-xs mr-3">
+                            {invoice.client.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="text-sm font-semibold text-gray-900">
+                            {invoice.client.name}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{invoice.invoiceNumber}</div>
+                        <div className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded inline-block">{invoice.invoiceNumber}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-500">
                           {format(new Date(invoice.invoiceDate), 'MMM dd, yyyy')}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-500">
                           {format(new Date(invoice.dueDate), 'MMM dd, yyyy')}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-bold text-gray-900">
                           {currencySymbols[invoice.currency]} {formatCurrency(invoice.total, invoice.currency)}
                         </div>
                         {invoice.paidAmount && invoice.paidAmount > 0 && invoice.paidAmount < invoice.total && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Paid: {currencySymbols[invoice.currency]} {formatCurrency(invoice.paidAmount, invoice.currency)}
+                          <div className="text-[10px] text-green-600 font-medium mt-0.5">
+                            Paid: {currencySymbols[invoice.currency]}{formatCurrency(invoice.paidAmount, invoice.currency)}
                           </div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${invoice.paymentStatus === 'paid'
-                            ? 'bg-green-100 text-green-800'
-                            : invoice.paymentStatus === 'overdue'
-                              ? 'bg-red-100 text-red-800'
-                              : invoice.paymentStatus === 'cancelled'
-                                ? 'bg-gray-100 text-gray-800'
-                                : 'bg-yellow-100 text-yellow-800'
+                        <span className={`px-3 py-1 text-xs font-bold rounded-full border ${invoice.paymentStatus === 'paid'
+                          ? 'bg-green-50 text-green-700 border-green-200'
+                          : invoice.paymentStatus === 'overdue'
+                            ? 'bg-red-50 text-red-700 border-red-200'
+                            : invoice.paymentStatus === 'cancelled'
+                              ? 'bg-gray-50 text-gray-600 border-gray-200 line-through'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
                           }`}>
                           {invoice.paymentStatus || 'pending'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getApprovalStatusBadge((invoice as any).approvalStatus || 'draft')}
-                      </td>
-                      {showDeleted && (
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">
-                            {(invoice as any).deletedAt
-                              ? format(new Date((invoice as any).deletedAt), 'MMM dd, yyyy')
-                              : 'N/A'}
-                          </div>
-                        </td>
-                      )}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-col gap-2">
-                          <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => handleView(invoice)}
-                              className="text-blue-600 hover:text-blue-800 font-medium text-sm"
-                            >
-                              View
-                            </button>
-                          </div>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        {/* Simplified Actions for cleaner look */}
+                        <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => handleView(invoice)}
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="View"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+
                           {!showDeleted && (
-                            <div className="flex items-center justify-center gap-1 flex-wrap">
-                              {(invoice as any).approvalStatus === 'draft' && (
-                                <button
-                                  onClick={() => handleRequestApproval(invoice.id!)}
-                                  disabled={processingApproval === invoice.id}
-                                  className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200 disabled:opacity-50"
-                                  title="Request Approval"
-                                >
-                                  {processingApproval === invoice.id ? '...' : 'Request Approval'}
-                                </button>
-                              )}
-                              {(invoice as any).approvalStatus === 'pending_approval' && user?.isAdmin && (
-                                <>
-                                  <button
-                                    onClick={() => handleApproveInvoice(invoice.id!)}
-                                    disabled={processingApproval === invoice.id}
-                                    className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200 disabled:opacity-50"
-                                    title="Approve"
-                                  >
-                                    {processingApproval === invoice.id ? '...' : 'Approve'}
-                                  </button>
-                                  <button
-                                    onClick={() => handleRejectInvoice(invoice.id!)}
-                                    disabled={processingApproval === invoice.id}
-                                    className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded hover:bg-red-200 disabled:opacity-50"
-                                    title="Reject"
-                                  >
-                                    {processingApproval === invoice.id ? '...' : 'Reject'}
-                                  </button>
-                                </>
-                              )}
-                              {(invoice as any).approvalStatus === 'approved' && (
-                                <button
-                                  onClick={() => handleMarkAsSent(invoice.id!)}
-                                  disabled={processingApproval === invoice.id}
-                                  className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded hover:bg-blue-200 disabled:opacity-50"
-                                  title="Mark as Sent"
-                                >
-                                  {processingApproval === invoice.id ? '...' : 'Mark as Sent'}
-                                </button>
-                              )}
-                              {!showDeleted && (invoice.paymentStatus === 'pending' || invoice.paymentStatus === 'overdue') && (
+                            <>
+                              {/* Quick Actions based on status */}
+                              {(invoice.paymentStatus === 'pending' || invoice.paymentStatus === 'overdue') && (
                                 <button
                                   onClick={async () => {
                                     const amount = prompt(
@@ -603,54 +580,47 @@ export default function DashboardPage() {
                                       }
                                     }
                                   }}
-                                  className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200"
+                                  className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                  title="Record Payment"
                                 >
-                                  Record Payment
+                                  <CreditCard className="w-4 h-4" />
                                 </button>
                               )}
-                              {showDeleted ? (
-                                <>
-                                  <button
-                                    onClick={() => handleRestore(invoice.id!)}
-                                    className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200"
-                                  >
-                                    Restore
-                                  </button>
-                                  <button
-                                    onClick={() => handlePermanentDelete(invoice.id!)}
-                                    className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded hover:bg-red-200"
-                                    aria-label="Permanently delete"
-                                  >
-                                    Delete
-                                  </button>
-                                </>
-                              ) : (
-                                <button
-                                  onClick={async () => {
-                                    if (confirm('Delete this invoice? It will be moved to deleted invoices.')) {
-                                      try {
-                                        await fetch(`/api/invoices/${invoice.id}`, {
-                                          method: 'PATCH',
-                                          headers: {
-                                            'Content-Type': 'application/json',
-                                            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-                                          },
-                                          body: JSON.stringify({ paymentStatus: 'cancelled' }),
-                                        });
-                                        loadInvoiceData();
-                                      } catch (error) {
-                                        console.error('Error deleting invoice:', error);
-                                        alert('Failed to delete invoice. Please try again.');
-                                      }
+
+                              <button
+                                onClick={async () => {
+                                  if (confirm('Delete this invoice?')) {
+                                    try {
+                                      await fetch(`/api/invoices/${invoice.id}`, {
+                                        method: 'PATCH',
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+                                        },
+                                        body: JSON.stringify({ paymentStatus: 'cancelled' }),
+                                      });
+                                      loadInvoiceData();
+                                    } catch (error) {
+                                      console.error(error);
                                     }
-                                  }}
-                                  className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded hover:bg-red-200"
-                                  aria-label="Delete invoice"
-                                >
-                                  Delete
-                                </button>
-                              )}
-                            </div>
+                                  }
+                                }}
+                                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+
+                          {showDeleted && (
+                            <button
+                              onClick={() => handleRestore(invoice.id!)}
+                              className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              title="Restore"
+                            >
+                              <RefreshCcw className="w-4 h-4" />
+                            </button>
                           )}
                         </div>
                       </td>

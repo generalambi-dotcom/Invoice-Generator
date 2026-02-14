@@ -1,3 +1,8 @@
+import { prisma } from '@/lib/db';
+import { decrypt } from '@/lib/encryption';
+import { parseInvoiceWithLLM } from './llm/providers';
+import { LLMConfig, LLMProvider } from './llm/types';
+
 /**
  * Natural Language Processing for WhatsApp Invoice Creation
  * Parses user messages to extract invoice information
@@ -22,8 +27,49 @@ export interface ParsedInvoiceData {
 
 /**
  * Parse invoice creation command from WhatsApp message
+ * Tries LLM first if enabled, falls back to Regex
  */
-export function parseInvoiceCommand(message: string): ParsedInvoiceData {
+export async function parseInvoiceCommand(message: string): Promise<ParsedInvoiceData> {
+  try {
+    // 1. Check if LLM is enabled
+    const settings = await prisma.lLMSettings.findFirst({
+      where: { isEnabled: true }
+    });
+
+    if (settings && settings.apiKey) {
+      console.log(`🤖 Using AI Model: ${settings.provider} (${settings.model})`);
+
+      const config: LLMConfig = {
+        provider: settings.provider as LLMProvider,
+        apiKey: decrypt(settings.apiKey),
+        model: settings.model || 'gpt-4o'
+      };
+
+      const result = await parseInvoiceWithLLM(config, message);
+
+      if (result.success && result.data) {
+        // Basic validation to ensure we got something useful
+        if (result.data.items && result.data.items.length > 0) {
+          return result.data;
+        }
+        console.log('⚠️ AI returned empty items, falling back to Regex');
+      } else {
+        console.error('❌ AI Parsing failed:', result.error);
+      }
+    }
+  } catch (error) {
+    console.error('❌ Error in AI parsing:', error);
+  }
+
+  // 2. Fallback to Regex
+  console.log('⚡ Using Regex Parser');
+  return parseInvoiceCommandRegex(message);
+}
+
+/**
+ * Regex-based parser (Fallback)
+ */
+export function parseInvoiceCommandRegex(message: string): ParsedInvoiceData {
   const data: ParsedInvoiceData = {};
   const lowerMessage = message.toLowerCase().trim();
 
@@ -108,11 +154,11 @@ export function parseInvoiceCommand(message: string): ParsedInvoiceData {
       const daysMatch = dateStr.match(/(\d+)\s+days?/i);
       const weeksMatch = dateStr.match(/(\d+)\s+weeks?/i);
       const monthsMatch = dateStr.match(/(\d+)\s+months?/i);
-      
-      const days = daysMatch ? parseInt(daysMatch[1]) : 
-                   weeksMatch ? parseInt(weeksMatch[1]) * 7 :
-                   monthsMatch ? parseInt(monthsMatch[1]) * 30 : 30;
-      
+
+      const days = daysMatch ? parseInt(daysMatch[1]) :
+        weeksMatch ? parseInt(weeksMatch[1]) * 7 :
+          monthsMatch ? parseInt(monthsMatch[1]) * 30 : 30;
+
       data.dueDate = new Date();
       data.dueDate.setDate(data.dueDate.getDate() + days);
     } else {

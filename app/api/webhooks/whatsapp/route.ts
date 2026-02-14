@@ -286,7 +286,7 @@ async function handleMetaWebhook(body: any) {
 async function handleInvoiceCreation(userId: string, message: string, from: string) {
   try {
     // Parse invoice data from message
-    const parsedData = parseInvoiceCommand(message);
+    const parsedData = await parseInvoiceCommand(message);
     const validation = validateParsedInvoice(parsedData);
 
     if (!validation.valid) {

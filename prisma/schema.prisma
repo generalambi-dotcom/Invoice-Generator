@@ -521,3 +521,14 @@ model SystemLog {
   @@index([createdAt])
 }
 
+model LLMSettings {
+  id        String   @id @default(cuid())
+  provider  String   @unique // 'openai' | 'anthropic' | 'gemini' | 'deepseek'
+  apiKey    String?  // Encrypted
+  model     String?  // e.g. 'gpt-4o', 'claude-3-5-sonnet'
+  isEnabled Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+

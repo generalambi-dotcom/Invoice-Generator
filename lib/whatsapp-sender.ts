@@ -136,6 +136,15 @@ async function sendViaMeta(
 
     if (!response.ok) {
       console.error('Meta API error:', data);
+
+      // Handle "Recipient not in allowed list" error (Common in Dev mode)
+      if (data.error?.code === 131030) {
+        return {
+          success: false,
+          error: 'Test Mode Limitation: This number is not in your Meta "Allowed List". Go to developers.facebook.com > WhatsApp > API Setup to add it.'
+        };
+      }
+
       return { success: false, error: data.error?.message || 'Failed to send message' };
     }
 

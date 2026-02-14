@@ -87,10 +87,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Save settings
-        const { provider, apiKey, model, isEnabled } = body;
+        const { provider, apiKey, model, isEnabled, useSmartContext } = body;
 
         // Retrieve existing to handle key update logic
-        const existing = await prisma.lLMSettings.findFirst();
+        const existing = await prisma.lLMSettings.findFirst({
+            where: { provider }
+        });
 
         let finalApiKey = existing?.apiKey;
 
@@ -98,21 +100,6 @@ export async function POST(request: NextRequest) {
         if (apiKey && !apiKey.includes('...')) {
             finalApiKey = encrypt(apiKey);
         }
-
-        // If simplified mode where we only have one row
-        // We use upsert on a fixed ID or similar, but since we didn't enforce single row constraints well in schema (just unique provider),
-        // let's just delete all and create one, OR update the existing one if it matches provider.
-        // Actually, schema has `provider` as @unique.
-        // If user switches provider, we might want to keep the old provider's checking? 
-        // The requirement implies a single active provider configuration for the app.
-
-        // Let's assume we store ONE active configuration in the DB for simplicity, 
-        // OR we store multiple and have an 'isActive' flag.
-        // The schema I wrote: `provider` is unique. `isEnabled` is boolean.
-        // If I want to switch providers, I should probably upsert the provider row.
-        // But then how do I know which one is THE active one?
-        // Maybe `isEnabled` handles that. We should ensure only one is enabled?
-        // Let's implement logic: when enabling one, disable others.
 
         if (isEnabled) {
             await prisma.lLMSettings.updateMany({
@@ -128,11 +115,13 @@ export async function POST(request: NextRequest) {
                 apiKey: finalApiKey,
                 model,
                 isEnabled,
+                useSmartContext,
             },
             update: {
                 apiKey: finalApiKey,
                 model,
                 isEnabled,
+                useSmartContext,
             },
         });
 

@@ -6,6 +6,7 @@ export interface LLMConfig {
     provider: LLMProvider;
     apiKey: string;
     model: string;
+    useSmartContext?: boolean;
 }
 
 export interface LLMResponse {

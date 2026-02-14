@@ -53,6 +53,9 @@ model User {
   estimates              Estimate[]
   whatsappCredential     WhatsAppCredential?
   posts                  BlogPost[]
+  notes                  Note[]
+  tasks                  Task[]
+  timeLogs               TimeLog[]
 }
 
 model PaymentCredential {
@@ -148,6 +151,7 @@ model Invoice {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   client        Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
   payments      Payment[]
+  timeLogs      TimeLog[]
 
   @@index([userId])
   @@index([invoiceNumber])
@@ -261,6 +265,7 @@ model Client {
 
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   invoices      Invoice[]
+  timeLogs      TimeLog[]
 
   @@index([userId])
   @@index([email])
@@ -527,8 +532,68 @@ model LLMSettings {
   apiKey    String?  // Encrypted
   model     String?  // e.g. 'gpt-4o', 'claude-3-5-sonnet'
   isEnabled Boolean  @default(false)
+  useSmartContext Boolean @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  content   String   @db.Text
+  category  String   @default("General") // 'General', 'Work', 'Personal', etc.
+  color     String   @default("blue")    // 'blue', 'green', 'yellow', 'red', 'purple'
+  isPinned  Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  isCompleted Boolean  @default(false)
+  dueDate     DateTime?
+  priority    String   @default("medium") // 'low', 'medium', 'high'
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isCompleted])
+}
+
+model TimeLog {
+  id          String    @id @default(cuid())
+  userId      String
+  clientId    String?
+  description String
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int       @default(0) // In minutes
+  rate        Float     @default(0)
+  currency    String    @default("USD") // 'USD' | 'NGN'
+  status      String    @default("pending") // 'pending' | 'billed'
+  invoiceId   String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client      Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  invoice     Invoice?  @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([clientId])
+  @@index([status])
 }
 
 

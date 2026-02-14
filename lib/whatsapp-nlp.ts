@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db';
 import { decrypt } from '@/lib/encryption';
 import { parseInvoiceWithLLM } from './llm/providers';
 import { LLMConfig, LLMProvider } from './llm/types';
+import { getSmartContext } from './llm/context';
 
 /**
  * Natural Language Processing for WhatsApp Invoice Creation
@@ -23,13 +24,14 @@ export interface ParsedInvoiceData {
   discountRate?: number;
   notes?: string;
   currency?: string;
+  assistantMessage?: string;
 }
 
 /**
  * Parse invoice creation command from WhatsApp message
  * Tries LLM first if enabled, falls back to Regex
  */
-export async function parseInvoiceCommand(message: string): Promise<ParsedInvoiceData> {
+export async function parseInvoiceCommand(message: string, userId?: string): Promise<ParsedInvoiceData> {
   try {
     // 1. Check if LLM is enabled
     const settings = await prisma.lLMSettings.findFirst({
@@ -42,17 +44,26 @@ export async function parseInvoiceCommand(message: string): Promise<ParsedInvoic
       const config: LLMConfig = {
         provider: settings.provider as LLMProvider,
         apiKey: decrypt(settings.apiKey),
-        model: settings.model || 'gpt-4o'
+        model: settings.model || 'gpt-4o',
+        useSmartContext: settings.useSmartContext
       };
 
-      const result = await parseInvoiceWithLLM(config, message);
+      // Fetch context if enabled and userId is provided
+      let context = '';
+      if (config.useSmartContext && userId) {
+        console.log('🧠 Fetching Smart Context...');
+        context = await getSmartContext(userId);
+      }
+
+      const fullMessage = context ? `${context}\n\nUSER REQUEST: ${message}` : message;
+      const result = await parseInvoiceWithLLM(config, fullMessage);
 
       if (result.success && result.data) {
-        // Basic validation to ensure we got something useful
-        if (result.data.items && result.data.items.length > 0) {
+        // Return if we have items OR an assistant message (AI answered a question)
+        if ((result.data.items && result.data.items.length > 0) || result.data.assistantMessage) {
           return result.data;
         }
-        console.log('⚠️ AI returned empty items, falling back to Regex');
+        console.log('⚠️ AI returned empty items and no message, falling back to Regex');
       } else {
         console.error('❌ AI Parsing failed:', result.error);
       }

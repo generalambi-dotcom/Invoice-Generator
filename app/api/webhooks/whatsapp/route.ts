@@ -286,7 +286,15 @@ async function handleMetaWebhook(body: any) {
 async function handleInvoiceCreation(userId: string, message: string, from: string) {
   try {
     // Parse invoice data from message
-    const parsedData = await parseInvoiceCommand(message);
+    const parsedData = await parseInvoiceCommand(message, userId);
+
+    // 1. Handle AI Conversational Response
+    if (parsedData.assistantMessage) {
+      await sendWhatsAppMessage(from, parsedData.assistantMessage);
+      return NextResponse.json({ message: 'AI response sent' }, { status: 200 });
+    }
+
+    // 2. Validate Invoice Data
     const validation = validateParsedInvoice(parsedData);
 
     if (!validation.valid) {

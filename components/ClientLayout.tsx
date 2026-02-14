@@ -6,6 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { getCurrentUser } from '@/lib/auth';
+import { Toaster } from 'react-hot-toast';
 
 export default function ClientLayout({
     children,
@@ -52,6 +53,7 @@ export default function ClientLayout({
                     <Footer />
                 </div>
             </main>
+            <Toaster position="top-right" />
         </>
     );
 }

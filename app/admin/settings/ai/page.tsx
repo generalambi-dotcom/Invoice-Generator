@@ -22,6 +22,7 @@ export default function AISettingsPage() {
         apiKey: '',
         model: 'gpt-4o',
         isEnabled: false,
+        useSmartContext: true,
     });
 
     useEffect(() => {
@@ -38,6 +39,7 @@ export default function AISettingsPage() {
                     apiKey: data.settings.apiKey || '', // It comes back masked
                     model: data.settings.model || 'gpt-4o',
                     isEnabled: data.settings.isEnabled,
+                    useSmartContext: data.settings.useSmartContext ?? true,
                 });
             }
         } catch (err) {
@@ -126,20 +128,38 @@ export default function AISettingsPage() {
 
                 <div className="space-y-6">
                     {/* Enabled Toggle */}
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div>
-                            <h3 className="font-semibold text-gray-900">Enable AI Parsing</h3>
-                            <p className="text-sm text-gray-500">Use this LLM to parse incoming WhatsApp messages</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <h3 className="font-semibold text-gray-900">Enable AI Parsing</h3>
+                                <p className="text-sm text-gray-500">Use this LLM to parse incoming messages</p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={settings.isEnabled}
+                                    onChange={(e) => setSettings({ ...settings, isEnabled: e.target.checked })}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={settings.isEnabled}
-                                onChange={(e) => setSettings({ ...settings, isEnabled: e.target.checked })}
-                                className="sr-only peer"
-                            />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </label>
+
+                        <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-100">
+                            <div>
+                                <h3 className="font-semibold text-blue-900">Smart Context (RAG)</h3>
+                                <p className="text-sm text-blue-700">Inject client & item history into AI prompt</p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={settings.useSmartContext}
+                                    onChange={(e) => setSettings({ ...settings, useSmartContext: e.target.checked })}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-blue-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

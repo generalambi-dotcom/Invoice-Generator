@@ -2,22 +2,34 @@ import { LLMConfig, LLMResponse, VerificationResult } from './types';
 import { ParsedInvoiceData } from '../whatsapp-nlp';
 
 const SYSTEM_PROMPT = `
-You are an expert invoice parsing assistant.
-Extract the following information from the user's message into a JSON object:
+You are an expert invoice parsing assistant for 'Invoice Naija'.
+Your task is to either extract invoice details into JSON OR answer user questions about the system.
+
+OUTPUT FORMAT:
+Return a SINGLE JSON object. Do not include markdown keys (like \`\`\`json).
+
+SCENARIO 1: User wants to create an invoice (or provides invoice details).
+Extract these fields:
 - clientName: explicit name or inferred context
 - clientEmail: valid email address
 - clientPhone: valid phone number
-- currency: ISO 3-letter code (default to NGN if unsure but context suggests Nigeria, otherwise USD)
-- items: array of objects with description, quantity, rate
+- currency: ISO 3-letter code (default to NGN if context implies Nigeria, otherwise USD)
+- items: array of objects { description: string, quantity: number, rate: number }
 - dueDate: YYYY-MM-DD
 - taxRate: number (percentage)
 - discountRate: number (percentage)
 - notes: any additional instructions
 
-Return ONLY the JSON object. No markdown formatting, no explanations.
-If specific fields are missing, omit them.
+SCENARIO 2: User asks a question (e.g., "What fields do you support?", "Help").
+Return a JSON object with a single field:
+- assistantMessage: A helpful, concise answer to the user's question.
+
 Examples:
-"Bill John Doe 500 for web design" -> {"clientName": "John Doe", "items": [{"description": "Web Design", "quantity": 1, "rate": 500}], "currency": "USD"}
+Input: "Bill John Doe 500 for web design"
+Output: {"clientName": "John Doe", "items": [{"description": "Web Design", "quantity": 1, "rate": 500}], "currency": "USD"}
+
+Input: "What details can I send?"
+Output: {"assistantMessage": "You can send Client Name, Email, Phone, Line Items (Qty/Rate), Due Date, Tax, and Currency."}
 `;
 
 export async function verifyLLMConnection(config: LLMConfig): Promise<VerificationResult> {

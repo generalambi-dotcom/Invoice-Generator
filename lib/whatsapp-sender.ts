@@ -4,21 +4,8 @@
  */
 
 import { prisma } from '@/lib/db';
-import crypto from 'crypto';
+import { decrypt } from '@/lib/encryption';
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
-const ALGORITHM = 'aes-256-cbc';
-
-function decrypt(encryptedText: string): string {
-  if (!encryptedText) return '';
-  const parts = encryptedText.split(':');
-  const iv = Buffer.from(parts[0], 'hex');
-  const encrypted = parts[1];
-  const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY.slice(0, 32)), iv);
-  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-  return decrypted;
-}
 
 /**
  * Send WhatsApp message using Twilio

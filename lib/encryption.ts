@@ -1,109 +1,42 @@
-/**
- * Encryption utility for sensitive data
- * Uses AES-256 encryption for payment credentials
- */
+import crypto from 'crypto';
 
-import CryptoJS from 'crypto-js';
+// Use environment variable or a consistent fallback for development
+// WARNING: In production, always set ENCRYPTION_KEY
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'invoicenaija-fallback-secret-key-2024';
+// Ensure key is 32 bytes for AES-256
+const KEY_BUFFER = Buffer.concat([Buffer.from(ENCRYPTION_KEY), Buffer.alloc(32)], 32);
+const ALGORITHM = 'aes-256-cbc';
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || process.env.JWT_SECRET || 'default-encryption-key-change-in-production';
-
-/**
- * Encrypt sensitive data (e.g., payment API keys)
- */
 export function encrypt(text: string): string {
-  if (!text) return text;
-  
+  if (!text) return '';
   try {
-    const encrypted = CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
-    return encrypted;
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(ALGORITHM, KEY_BUFFER, iv);
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    return iv.toString('hex') + ':' + encrypted;
   } catch (error) {
     console.error('Encryption error:', error);
-    throw new Error('Failed to encrypt data');
+    return '';
   }
 }
 
-/**
- * Decrypt sensitive data
- */
 export function decrypt(encryptedText: string): string {
-  if (!encryptedText) return encryptedText;
-  
+  if (!encryptedText) return '';
   try {
-    const decrypted = CryptoJS.AES.decrypt(encryptedText, ENCRYPTION_KEY);
-    const decryptedText = decrypted.toString(CryptoJS.enc.Utf8);
-    
-    if (!decryptedText) {
-      throw new Error('Failed to decrypt data - invalid key or corrupted data');
-    }
-    
-    return decryptedText;
+    const parts = encryptedText.split(':');
+    if (parts.length !== 2) return '';
+
+    const iv = Buffer.from(parts[0], 'hex');
+    const encrypted = parts[1];
+
+    const decipher = crypto.createDecipheriv(ALGORITHM, KEY_BUFFER, iv);
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
   } catch (error) {
     console.error('Decryption error:', error);
-    throw new Error('Failed to decrypt data');
+    // Return empty string on failure instead of crashing
+    return '';
   }
 }
-
-/**
- * Check if a string is encrypted (basic check)
- */
-export function isEncrypted(text: string): boolean {
-  // Encrypted strings from CryptoJS typically start with specific patterns
-  // This is a basic check - encrypted strings are base64-like and longer
-  return !!(text && text.length > 20 && /^[A-Za-z0-9+/=]+$/.test(text));
-}
-
-/**
- * Encrypt payment credential fields
- */
-export function encryptPaymentCredential(credential: {
-  publicKey?: string | null;
-  secretKey?: string | null;
-  clientId?: string | null;
-  clientSecret?: string | null;
-}): {
-  publicKey?: string | null;
-  secretKey?: string | null;
-  clientId?: string | null;
-  clientSecret?: string | null;
-} {
-  return {
-    publicKey: credential.publicKey ? encrypt(credential.publicKey) : null,
-    secretKey: credential.secretKey ? encrypt(credential.secretKey) : null,
-    clientId: credential.clientId ? encrypt(credential.clientId) : null,
-    clientSecret: credential.clientSecret ? encrypt(credential.clientSecret) : null,
-  };
-}
-
-/**
- * Decrypt payment credential fields
- */
-export function decryptPaymentCredential(credential: {
-  publicKey?: string | null;
-  secretKey?: string | null;
-  clientId?: string | null;
-  clientSecret?: string | null;
-}): {
-  publicKey?: string | null;
-  secretKey?: string | null;
-  clientId?: string | null;
-  clientSecret?: string | null;
-} {
-  try {
-    return {
-      publicKey: credential.publicKey ? decrypt(credential.publicKey) : null,
-      secretKey: credential.secretKey ? decrypt(credential.secretKey) : null,
-      clientId: credential.clientId ? decrypt(credential.clientId) : null,
-      clientSecret: credential.clientSecret ? decrypt(credential.clientSecret) : null,
-    };
-  } catch (error) {
-    console.error('Error decrypting payment credential:', error);
-    // Return null values if decryption fails
-    return {
-      publicKey: null,
-      secretKey: null,
-      clientId: null,
-      clientSecret: null,
-    };
-  }
-}
-

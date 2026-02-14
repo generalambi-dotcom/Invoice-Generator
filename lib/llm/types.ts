@@ -1,6 +1,6 @@
 import { ParsedInvoiceData } from '../whatsapp-nlp';
 
-export type LLMProvider = 'openai' | 'anthropic' | 'gemini' | 'deepseek';
+export type LLMProvider = 'openai' | 'anthropic' | 'gemini' | 'deepseek' | 'qwen';
 
 export interface LLMConfig {
     provider: LLMProvider;
@@ -31,6 +31,7 @@ export const SUPPORTED_MODELS: Record<LLMProvider, string[]> = {
     anthropic: ['claude-3-5-sonnet-20240620', 'claude-3-opus-20240229', 'claude-3-haiku-20240307'],
     gemini: ['gemini-1.5-pro', 'gemini-1.5-flash'],
     deepseek: ['deepseek-chat', 'deepseek-coder'],
+    qwen: ['qwen-turbo', 'qwen-plus', 'qwen-max'],
 };
 
 export const PROVIDER_LABELS: Record<LLMProvider, string> = {
@@ -38,4 +39,5 @@ export const PROVIDER_LABELS: Record<LLMProvider, string> = {
     anthropic: 'Anthropic (Claude)',
     gemini: 'Google Gemini',
     deepseek: 'DeepSeek',
+    qwen: 'Alibaba Qwen',
 };

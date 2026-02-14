@@ -46,6 +46,8 @@ async function generateCompletion(config: LLMConfig, prompt: string, isVerificat
             return callGemini(config, prompt, isVerification);
         case 'deepseek':
             return callDeepSeek(config, prompt, isVerification);
+        case 'qwen':
+            return callQwen(config, prompt, isVerification);
         default:
             return { success: false, error: 'Unsupported provider' };
     }
@@ -134,6 +136,51 @@ async function callDeepSeek(config: LLMConfig, prompt: string, isVerification: b
             return { success: true, data: parsed, rawResponse: content };
         } catch {
             return { success: false, error: 'Failed to parse JSON response from DeepSeek', rawResponse: content };
+        }
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+// Qwen Implementation (OpenAI Compatible via DashScope)
+async function callQwen(config: LLMConfig, prompt: string, isVerification: boolean): Promise<LLMResponse> {
+    try {
+        const messages = isVerification
+            ? [{ role: 'user', content: prompt }]
+            : [
+                { role: 'system', content: SYSTEM_PROMPT },
+                { role: 'user', content: prompt }
+            ];
+
+        // DashScope compatible-mode endpoint
+        const response = await fetch('https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${config.apiKey}`,
+            },
+            body: JSON.stringify({
+                model: config.model || 'qwen-turbo',
+                messages,
+                temperature: 0,
+            }),
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error?.message || err.message || 'Qwen API error');
+        }
+
+        const data = await response.json();
+        const content = data.choices[0].message.content;
+
+        if (isVerification) return { success: true, rawResponse: content };
+
+        try {
+            const parsed = JSON.parse(content.replace(/```json/g, '').replace(/```/g, ''));
+            return { success: true, data: parsed, rawResponse: content };
+        } catch {
+            return { success: false, error: 'Failed to parse JSON response from Qwen', rawResponse: content };
         }
     } catch (error: any) {
         return { success: false, error: error.message };

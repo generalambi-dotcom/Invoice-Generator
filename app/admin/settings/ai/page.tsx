@@ -49,6 +49,43 @@ export default function AISettingsPage() {
         }
     };
 
+    const fetchProviderSettings = async (providerId: string) => {
+        setLoading(true);
+        setMessage(null);
+        try {
+            const res = await fetch(`/api/admin/ai?provider=${providerId}`);
+            const data = await res.json();
+
+            const defaultModel = PROVIDERS.find(p => p.id === providerId)?.models[0] || '';
+
+            if (data.settings) {
+                setSettings(prev => ({
+                    ...prev,
+                    provider: providerId,
+                    apiKey: data.settings.apiKey || '',
+                    model: data.settings.model || defaultModel,
+                    isEnabled: data.settings.isEnabled,
+                    useSmartContext: data.settings.useSmartContext ?? true,
+                }));
+            } else {
+                setSettings(prev => ({
+                    ...prev,
+                    provider: providerId,
+                    apiKey: '',
+                    model: defaultModel,
+                    isEnabled: false,
+                    useSmartContext: true,
+                }));
+            }
+        } catch (err) {
+            console.error('Failed to load settings', err);
+            // Fallback
+            setSettings(prev => ({ ...prev, provider: providerId, apiKey: '' }));
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleTestConnection = async () => {
         setTesting(true);
         setMessage(null);
@@ -168,7 +205,7 @@ export default function AISettingsPage() {
                             <label className="block text-sm font-medium text-gray-700 mb-2">AI Provider</label>
                             <select
                                 value={settings.provider}
-                                onChange={(e) => setSettings({ ...settings, provider: e.target.value, model: PROVIDERS.find(p => p.id === e.target.value)?.models[0] || '' })}
+                                onChange={(e) => fetchProviderSettings(e.target.value)}
                                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                             >
                                 {PROVIDERS.map(p => (

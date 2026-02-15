@@ -20,7 +20,25 @@ export async function GET(request: NextRequest) {
 
         if (!dbUser?.isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
 
-        const settings = await prisma.lLMSettings.findFirst();
+        const { searchParams } = new URL(request.url);
+        const provider = searchParams.get('provider');
+
+        let settings = null;
+
+        if (provider) {
+            settings = await prisma.lLMSettings.findFirst({
+                where: { provider }
+            });
+        } else {
+            // Default to enabled one, or just the first one
+            settings = await prisma.lLMSettings.findFirst({
+                where: { isEnabled: true }
+            });
+
+            if (!settings) {
+                settings = await prisma.lLMSettings.findFirst();
+            }
+        }
 
         if (!settings) {
             return NextResponse.json({ settings: null });
@@ -28,10 +46,6 @@ export async function GET(request: NextRequest) {
 
         // Decrypt key for internal use? No, never send full key to client if possible.
         // We send a masked version or just empty string to indicate it's set.
-        // For now, let's send it back decrypted so the user can see/edit it (classic simple admin behavior),
-        // OR better, send specific field "isKeySet: true" and empty apiKey.
-
-        // Let's send decrypted for now for simplicity in this MVP, but arguably we should mask it.
         let decryptedKey = '';
         if (settings.apiKey) {
             decryptedKey = decrypt(settings.apiKey);

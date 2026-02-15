@@ -225,6 +225,12 @@ export async function sendInvoiceViaWhatsApp(
 
     // Generate PDF URL
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://invoicegenerator.ng';
+
+    // Check for localhost and warn about attachment failure
+    if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
+      console.warn('⚠️ WARNING: NEXT_PUBLIC_BASE_URL is set to localhost. WhatsApp/Meta servers cannot access local files, so the PDF attachment WILL FAIL. Use Ngrok or deploy to a public URL to test attachments.');
+    }
+
     const pdfUrl = `${baseUrl}/api/invoices/${invoiceId}/pdf`;
 
     // Format message

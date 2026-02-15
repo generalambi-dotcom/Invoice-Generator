@@ -113,6 +113,11 @@ async function callOpenAI(config: LLMConfig, prompt: string, isVerification: boo
 // DeepSeek Implementation (OpenAI Compatible)
 async function callDeepSeek(config: LLMConfig, prompt: string, isVerification: boolean): Promise<LLMResponse> {
     try {
+        console.log('DeepSeek Request:', {
+            model: config.model || 'deepseek-chat',
+            isVerification
+        });
+
         const messages = isVerification
             ? [{ role: 'user', content: prompt }]
             : [
@@ -120,22 +125,44 @@ async function callDeepSeek(config: LLMConfig, prompt: string, isVerification: b
                 { role: 'user', content: prompt }
             ];
 
+        // Ensure we are using the correct endpoint
+        // DeepSeek Reasoner specific adjustments
+        const isReasoner = (config.model || '').includes('reasoner');
+
+        const payload: any = {
+            model: config.model || 'deepseek-chat',
+            messages,
+            temperature: 0,
+        };
+
+        if (isReasoner) {
+            // DeepSeek Reasoner (R1) fully supports system role.
+            // No special payload modification needed at this time.
+        }
+
         const response = await fetch('https://api.deepseek.com/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${config.apiKey}`,
             },
-            body: JSON.stringify({
-                model: config.model || 'deepseek-chat',
-                messages,
-                temperature: 0,
-            }),
+            body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error?.message || 'DeepSeek API error');
+            const errorText = await response.text();
+            console.error('DeepSeek API Error:', {
+                status: response.status,
+                statusText: response.statusText,
+                body: errorText
+            });
+
+            try {
+                const err = JSON.parse(errorText);
+                throw new Error(err.error?.message || `DeepSeek API error: ${response.status} ${response.statusText}`);
+            } catch (e) {
+                throw new Error(`DeepSeek API error: ${errorText || response.statusText}`);
+            }
         }
 
         const data = await response.json();
@@ -150,6 +177,7 @@ async function callDeepSeek(config: LLMConfig, prompt: string, isVerification: b
             return { success: false, error: 'Failed to parse JSON response from DeepSeek', rawResponse: content };
         }
     } catch (error: any) {
+        console.error('DeepSeek Call Failed:', error);
         return { success: false, error: error.message };
     }
 }

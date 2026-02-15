@@ -7,7 +7,7 @@ const PROVIDERS = [
     { id: 'openai', name: 'OpenAI (ChatGPT)', models: ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'] },
     { id: 'anthropic', name: 'Anthropic (Claude)', models: ['claude-3-5-sonnet-20240620', 'claude-3-opus-20240229', 'claude-3-haiku-20240307'] },
     { id: 'gemini', name: 'Google Gemini', models: ['gemini-1.5-pro', 'gemini-1.5-flash'] },
-    { id: 'deepseek', name: 'DeepSeek', models: ['deepseek-chat', 'deepseek-coder'] },
+    { id: 'deepseek', name: 'DeepSeek', models: ['deepseek-chat', 'deepseek-reasoner'] },
     { id: 'qwen', name: 'Alibaba Qwen', models: ['qwen-turbo', 'qwen-plus', 'qwen-max'] },
 ];
 

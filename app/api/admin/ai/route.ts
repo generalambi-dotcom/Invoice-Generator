@@ -87,8 +87,7 @@ export async function POST(request: NextRequest) {
             const { provider, apiKey, model } = body;
 
             // If no API key provided in body, try to fetch from DB if we're testing saved settings
-            // If no API key provided in body, try to fetch from DB if we're testing saved settings
-            let keyToUse = apiKey;
+            let keyToUse = apiKey ? apiKey.trim() : apiKey;
             console.log(`[AI Test] Received request for provider: ${provider}, Model: ${model}`);
             console.log(`[AI Test] Input key masked? ${keyToUse?.includes('...')}`);
 
@@ -116,6 +115,9 @@ export async function POST(request: NextRequest) {
         // Save settings
         const { provider, apiKey, model, isEnabled, useSmartContext } = body;
 
+        // Trim whitespace from input key
+        const safeApiKey = apiKey ? apiKey.trim() : apiKey;
+
         // Retrieve existing to handle key update logic
         const existing = await prisma.lLMSettings.findFirst({
             where: { provider }
@@ -124,8 +126,8 @@ export async function POST(request: NextRequest) {
         let finalApiKey = existing?.apiKey;
 
         // If a new key is provided (and it's not the masked version), encrypt and update it
-        if (apiKey && !apiKey.includes('...')) {
-            finalApiKey = encrypt(apiKey);
+        if (safeApiKey && !safeApiKey.includes('...')) {
+            finalApiKey = encrypt(safeApiKey);
         }
 
         if (isEnabled) {

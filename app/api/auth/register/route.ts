@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sendVerificationEmail } from '@/lib/email';
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
       return NextResponse.json(
-        { 
+        {
           error: 'Password does not meet requirements',
           errors: passwordValidation.errors,
         },
@@ -58,6 +59,24 @@ export async function POST(request: NextRequest) {
     const verificationExpiry = new Date();
     verificationExpiry.setHours(verificationExpiry.getHours() + 24); // Token expires in 24 hours
 
+    // Check system settings for email verification requirement
+    const setting = await prisma.systemSetting.findUnique({
+      where: { key: 'auth_settings' }
+    });
+
+    // Default to true if not set or if setting value is invalid
+    let emailVerificationRequired = true;
+    if (setting) {
+      try {
+        const authSettings = JSON.parse(setting.value);
+        if (typeof authSettings.emailVerificationRequired === 'boolean') {
+          emailVerificationRequired = authSettings.emailVerificationRequired;
+        }
+      } catch (e) {
+        console.error("Error parsing auth_settings system setting:", e);
+      }
+    }
+
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -65,45 +84,50 @@ export async function POST(request: NextRequest) {
         name,
         password: hashedPassword,
         isAdmin: false,
-        emailVerified: false,
+        emailVerified: !emailVerificationRequired, // Auto-verify if required is false
         emailVerificationToken: verificationToken,
         emailVerificationExpiry: verificationExpiry,
       },
     });
 
-    // Send verification email
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng';
-    const verificationUrl = `${appUrl}/api/auth/verify-email?token=${verificationToken}`;
+    // Send verification email only if required
+    if (emailVerificationRequired) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng';
+      const verificationUrl = `${appUrl}/api/auth/verify-email?token=${verificationToken}`;
 
-    try {
-      const emailResult = await sendVerificationEmail({
-        to: user.email,
-        name: user.name,
-        verificationUrl,
-      });
+      try {
+        const emailResult = await sendVerificationEmail({
+          to: user.email,
+          name: user.name,
+          verificationUrl,
+        });
 
-      if (!emailResult.success) {
-        console.error('❌ Failed to send verification email:', {
-          email: user.email,
-          error: emailResult.error,
-        });
-        // Still return success - user can request resend
-      } else {
-        console.log('✅ Verification email sent successfully:', {
-          email: user.email,
-          emailId: emailResult.emailId,
-        });
+        if (!emailResult.success) {
+          console.error('❌ Failed to send verification email:', {
+            email: user.email,
+            error: emailResult.error,
+          });
+          // Still return success - user can request resend
+        } else {
+          console.log('✅ Verification email sent successfully:', {
+            email: user.email,
+            emailId: emailResult.emailId,
+          });
+        }
+      } catch (emailError: any) {
+        console.error('❌ Exception sending verification email:', emailError);
+        // Don't fail registration if email fails
       }
-    } catch (emailError: any) {
-      console.error('❌ Exception sending verification email:', emailError);
-      // Don't fail registration if email fails
     }
 
-    // Return success message (don't return token - user needs to verify email first)
+    // Return success message
     return NextResponse.json({
-      message: 'Registration successful! Please check your email to verify your account.',
-      requiresVerification: true,
+      message: emailVerificationRequired
+        ? 'Registration successful! Please check your email to verify your account.'
+        : 'Registration successful! You can now log in.',
+      requiresVerification: emailVerificationRequired,
     }, { status: 201 });
+
   } catch (error: any) {
     console.error('Error during registration:', error);
     return NextResponse.json(
@@ -112,4 +136,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

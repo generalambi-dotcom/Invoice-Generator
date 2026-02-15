@@ -39,12 +39,12 @@ export default function AdminDashboard() {
       router.push('/signin');
       return;
     }
-    
+
     if (!currentUser.isAdmin) {
       router.push('/');
       return;
     }
-    
+
     setUser(currentUser);
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -54,7 +54,7 @@ export default function AdminDashboard() {
     try {
       const allUsers = getUsers();
       setUsers(allUsers);
-      
+
       // Load payment config from database (new unified system)
       try {
         const response = await fetch('/api/admin/payment-config');
@@ -88,7 +88,7 @@ export default function AdminDashboard() {
           stripeSecretKey: config.stripeSecretKey || '',
         });
       }
-      
+
       // Load coupons
       const allCoupons = getCoupons();
       setCoupons(allCoupons);
@@ -104,18 +104,18 @@ export default function AdminDashboard() {
     try {
       // Save each provider separately to database
       const providers = [
-        { 
-          provider: 'paypal', 
+        {
+          provider: 'paypal',
           clientId: paymentConfig.paypalClientId,
           clientSecret: '', // Will be set separately if needed
         },
-        { 
-          provider: 'paystack', 
+        {
+          provider: 'paystack',
           publicKey: paymentConfig.paystackPublicKey,
           secretKey: paymentConfig.paystackSecretKey,
         },
-        { 
-          provider: 'stripe', 
+        {
+          provider: 'stripe',
           publicKey: paymentConfig.stripePublicKey,
           secretKey: paymentConfig.stripeSecretKey,
         },
@@ -150,7 +150,7 @@ export default function AdminDashboard() {
 
       // Also save to localStorage for backward compatibility
       savePaymentConfig(paymentConfig);
-      
+
       alert('Payment configuration saved successfully!');
       loadData(); // Reload to show updated config
     } catch (error: any) {
@@ -246,7 +246,7 @@ export default function AdminDashboard() {
           <p className="text-sm text-gray-600 mb-6">
             Configure your payment gateway API keys. These will be used for processing payments.
           </p>
-          
+
           <div className="space-y-4">
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
                   className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.451 0 5.97 0h7.976a11.1 11.1 0 0 1 2.33.237c1.941.519 3.105 1.767 3.105 3.745 0 2.268-1.841 4.142-4.604 4.142H12.19l-1.028 5.978a2.28 2.28 0 0 0 .182 1.925 2.243 2.243 0 0 0 1.87.995h8.945a.746.746 0 0 1 .735.896l-1.319 7.66a.641.641 0 0 1-.633.54h-4.846a.635.635 0 0 1-.627-.54l-.408-2.388a.635.635 0 0 0-.627-.54H9.23a2.24 2.24 0 0 1-1.87-.995 2.28 2.28 0 0 1-.182-1.925l1.028-5.978H7.076z"/>
+                    <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.451 0 5.97 0h7.976a11.1 11.1 0 0 1 2.33.237c1.941.519 3.105 1.767 3.105 3.745 0 2.268-1.841 4.142-4.604 4.142H12.19l-1.028 5.978a2.28 2.28 0 0 0 .182 1.925 2.243 2.243 0 0 0 1.87.995h8.945a.746.746 0 0 1 .735.896l-1.319 7.66a.641.641 0 0 1-.633.54h-4.846a.635.635 0 0 1-.627-.54l-.408-2.388a.635.635 0 0 0-.627-.54H9.23a2.24 2.24 0 0 1-1.87-.995 2.28 2.28 0 0 1-.182-1.925l1.028-5.978H7.076z" />
                   </svg>
                   Connect PayPal
                 </button>
@@ -268,7 +268,7 @@ export default function AdminDashboard() {
               <input
                 type="text"
                 value={paymentConfig.paypalClientId}
-                onChange={(e) => setPaymentConfig({...paymentConfig, paypalClientId: e.target.value})}
+                onChange={(e) => setPaymentConfig({ ...paymentConfig, paypalClientId: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="PayPal Client ID"
               />
@@ -276,7 +276,7 @@ export default function AdminDashboard() {
                 Click "Connect PayPal" to get your credentials, or enter manually from your PayPal Developer Dashboard
               </p>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Paystack Public Key
@@ -284,7 +284,7 @@ export default function AdminDashboard() {
               <input
                 type="text"
                 value={paymentConfig.paystackPublicKey}
-                onChange={(e) => setPaymentConfig({...paymentConfig, paystackPublicKey: e.target.value})}
+                onChange={(e) => setPaymentConfig({ ...paymentConfig, paystackPublicKey: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Paystack Public Key"
               />
@@ -292,7 +292,7 @@ export default function AdminDashboard() {
                 Get this from your Paystack Dashboard (Settings → API Keys & Webhooks)
               </p>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Paystack Secret Key
@@ -300,7 +300,7 @@ export default function AdminDashboard() {
               <input
                 type="password"
                 value={paymentConfig.paystackSecretKey}
-                onChange={(e) => setPaymentConfig({...paymentConfig, paystackSecretKey: e.target.value})}
+                onChange={(e) => setPaymentConfig({ ...paymentConfig, paystackSecretKey: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Paystack Secret Key"
               />
@@ -311,7 +311,7 @@ export default function AdminDashboard() {
 
             <div className="border-t border-gray-200 pt-4 mt-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Stripe Configuration</h3>
-              
+
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Stripe Publishable Key
@@ -319,7 +319,7 @@ export default function AdminDashboard() {
                 <input
                   type="text"
                   value={paymentConfig.stripePublicKey}
-                  onChange={(e) => setPaymentConfig({...paymentConfig, stripePublicKey: e.target.value})}
+                  onChange={(e) => setPaymentConfig({ ...paymentConfig, stripePublicKey: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="pk_test_... or pk_live_..."
                 />
@@ -335,7 +335,7 @@ export default function AdminDashboard() {
                 <input
                   type="password"
                   value={paymentConfig.stripeSecretKey}
-                  onChange={(e) => setPaymentConfig({...paymentConfig, stripeSecretKey: e.target.value})}
+                  onChange={(e) => setPaymentConfig({ ...paymentConfig, stripeSecretKey: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="sk_test_... or sk_live_..."
                 />
@@ -344,7 +344,7 @@ export default function AdminDashboard() {
                 </p>
               </div>
             </div>
-            
+
             <button
               onClick={handleSavePaymentConfig}
               disabled={saveLoading}
@@ -371,6 +371,12 @@ export default function AdminDashboard() {
             >
               WhatsApp Settings
             </Link>
+            <Link
+              href="/admin/settings/auth"
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Auth Settings
+            </Link>
           </div>
         </div>
 
@@ -380,7 +386,7 @@ export default function AdminDashboard() {
           <p className="text-sm text-gray-600 mb-6">
             Manage user subscriptions and access levels.
           </p>
-          
+
           {users.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               No users found.
@@ -420,22 +426,20 @@ export default function AdminDashboard() {
                         <div className="text-sm text-gray-900">{u.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          u.subscription?.plan === 'premium'
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${u.subscription?.plan === 'premium'
                             ? 'bg-yellow-100 text-yellow-800'
                             : 'bg-gray-100 text-gray-800'
-                        }`}>
+                          }`}>
                           {u.subscription?.plan || 'free'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          u.subscription?.status === 'active'
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${u.subscription?.status === 'active'
                             ? 'bg-green-100 text-green-800'
                             : u.subscription?.status === 'cancelled'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
                           {u.subscription?.status || 'active'}
                         </span>
                       </td>

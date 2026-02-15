@@ -4,6 +4,7 @@ const apiKey = process.argv[2];
 
 if (!apiKey) {
     console.error('Please provide an API key as an argument.');
+    console.error('Usage: node test-deepseek.js sk-...');
     process.exit(1);
 }
 
@@ -22,12 +23,11 @@ const options = {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Length': data.length
+        'Authorization': `Bearer ${apiKey}`
     }
 };
 
-console.log('Testing connection to api.deepseek.com...');
+console.log('Testing connection to api.deepseek.com with key:', apiKey.substring(0, 5) + '...');
 
 const req = https.request(options, (res) => {
     console.log(`STATUS: ${res.statusCode}`);

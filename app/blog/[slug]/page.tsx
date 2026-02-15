@@ -15,44 +15,62 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-    const post = await prisma.blogPost.findUnique({
-        where: { slug: params.slug },
-    });
+    try {
+        const post = await prisma.blogPost.findUnique({
+            where: { slug: params.slug },
+        });
 
-    if (!post) {
+        if (!post) {
+            return {
+                title: 'Post Not Found',
+            };
+        }
+
         return {
-            title: 'Post Not Found',
+            title: post.title,
+            description: post.excerpt,
+            openGraph: {
+                images: post.coverImage ? [post.coverImage] : [],
+            },
+        };
+    } catch (error) {
+        console.error(`Error generating metadata for ${params.slug}:`, error);
+        return {
+            title: 'Invoice Generator',
         };
     }
-
-    return {
-        title: post.title,
-        description: post.excerpt,
-        openGraph: {
-            images: post.coverImage ? [post.coverImage] : [],
-        },
-    };
 }
 
 export async function generateStaticParams() {
-    const posts = await prisma.blogPost.findMany({
-        where: { published: true },
-        select: { slug: true }
-    });
-    return posts.map((post) => ({
-        slug: post.slug,
-    }));
+    try {
+        const posts = await prisma.blogPost.findMany({
+            where: { published: true },
+            select: { slug: true }
+        });
+        return posts.map((post) => ({
+            slug: post.slug,
+        }));
+    } catch (error) {
+        console.error('Error generating static params:', error);
+        return [];
+    }
 }
 
 export default async function BlogPostPage({ params }: PageProps) {
-    const post = await prisma.blogPost.findUnique({
-        where: { slug: params.slug },
-        include: {
-            author: {
-                select: { name: true }
+    let post;
+    try {
+        post = await prisma.blogPost.findUnique({
+            where: { slug: params.slug },
+            include: {
+                author: {
+                    select: { name: true }
+                }
             }
-        }
-    });
+        });
+    } catch (error) {
+        console.error(`Error fetching post for ${params.slug}:`, error);
+        notFound();
+    }
 
     if (!post) {
         notFound();

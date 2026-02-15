@@ -5,6 +5,8 @@ import { sendVerificationEmail } from '@/lib/email';
 import { validatePassword } from '@/lib/password-validator';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { generateToken } from '@/lib/auth-jwt';
+import { createRefreshToken } from '@/lib/refresh-token';
 
 // POST - Register new user
 export async function POST(request: NextRequest) {
@@ -120,13 +122,38 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Return success message
-    return NextResponse.json({
+    // Prepare response data
+    let responseData: any = {
       message: emailVerificationRequired
         ? 'Registration successful! Please check your email to verify your account.'
         : 'Registration successful! You can now log in.',
       requiresVerification: emailVerificationRequired,
-    }, { status: 201 });
+    };
+
+    // If verification is NOT required, generate tokens for auto-login
+    if (!emailVerificationRequired) {
+      const accessToken = generateToken({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: user.createdAt.toISOString(),
+        isAdmin: user.isAdmin,
+      });
+
+      const refreshToken = await createRefreshToken(user.id);
+
+      responseData.token = accessToken;
+      responseData.refreshToken = refreshToken;
+      responseData.user = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        isAdmin: user.isAdmin,
+      };
+    }
+
+    // Return success message and data
+    return NextResponse.json(responseData, { status: 201 });
 
   } catch (error: any) {
     console.error('Error during registration:', error);

@@ -12,6 +12,24 @@ interface RecurringInvoiceFormProps {
     isEditing?: boolean;
 }
 
+// Fallback currency symbols in case of import failure
+const safeCurrencySymbols: Record<string, string> = currencySymbols || {
+    GBP: '£',
+    USD: '$',
+    EUR: '€',
+    JPY: '¥',
+    CAD: 'C$',
+    AUD: 'A$',
+    NGN: '₦',
+    ZAR: 'R',
+    KES: 'KSh',
+    GHS: '₵',
+    AED: 'د.إ',
+    CNY: '¥',
+    INR: '₹',
+    BRL: 'R$',
+};
+
 export default function RecurringInvoiceForm({ initialData, isEditing = false }: RecurringInvoiceFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
@@ -340,9 +358,9 @@ export default function RecurringInvoiceForm({ initialData, isEditing = false }:
                                     onChange={(e) => setCurrency(e.target.value as Currency)}
                                     className="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                 >
-                                    {Object.keys(currencySymbols).map((code) => (
+                                    {Object.keys(safeCurrencySymbols).map((code) => (
                                         <option key={code} value={code}>
-                                            {code} ({currencySymbols[code as Currency]})
+                                            {code} ({safeCurrencySymbols[code]})
                                         </option>
                                     ))}
                                 </select>
@@ -356,7 +374,7 @@ export default function RecurringInvoiceForm({ initialData, isEditing = false }:
                                 lineItems={lineItems}
                                 onUpdate={setLineItems}
                                 currency={currency}
-                                currencySymbol={currencySymbols[currency]}
+                                currencySymbol={safeCurrencySymbols[currency] || '$'}
                             />
                         </div>
 
@@ -365,7 +383,7 @@ export default function RecurringInvoiceForm({ initialData, isEditing = false }:
                             <div className="w-64 space-y-2">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-500">Subtotal</span>
-                                    <span className="font-medium">{currencySymbols[currency]} {formatCurrency(subtotal, currency)}</span>
+                                    <span className="font-medium">{safeCurrencySymbols[currency] || '$'} {formatCurrency(subtotal, currency)}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-gray-500">Tax (%)</span>
@@ -378,7 +396,7 @@ export default function RecurringInvoiceForm({ initialData, isEditing = false }:
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-500">Tax Amount</span>
-                                    <span className="font-medium">{currencySymbols[currency]} {formatCurrency(taxAmount, currency)}</span>
+                                    <span className="font-medium">{safeCurrencySymbols[currency] || '$'} {formatCurrency(taxAmount, currency)}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-gray-500">Discount (%)</span>
@@ -391,7 +409,7 @@ export default function RecurringInvoiceForm({ initialData, isEditing = false }:
                                 </div>
                                 <div className="flex justify-between text-base font-bold pt-2 border-t text-gray-900">
                                     <span>Total</span>
-                                    <span>{currencySymbols[currency]} {formatCurrency(total, currency)}</span>
+                                    <span>{safeCurrencySymbols[currency] || '$'} {formatCurrency(total, currency)}</span>
                                 </div>
                             </div>
                         </div>

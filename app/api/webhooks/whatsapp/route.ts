@@ -62,6 +62,21 @@ export async function POST(request: NextRequest) {
 /**
  * Handle Twilio webhook
  */
+// Helper to check if message is a strict invoice command
+function checkIsInvoiceCommand(message: string): boolean {
+  const lowerMessage = message.toLowerCase().trim();
+  return (
+    lowerMessage.includes('create invoice') ||
+    lowerMessage.includes('new invoice') ||
+    lowerMessage.includes('invoice for') ||
+    lowerMessage.includes('bill to') ||
+    (lowerMessage.includes('client') && lowerMessage.includes('$'))
+  );
+}
+
+/**
+ * Handle Twilio webhook
+ */
 async function handleTwilioWebhook(body: any) {
   // Log full webhook payload for debugging
   console.log('🔍 Twilio webhook received:', {
@@ -139,30 +154,22 @@ async function handleTwilioWebhook(body: any) {
     });
   }
 
-  // Check if message is an invoice creation command
-  const lowerMessage = message.toLowerCase().trim();
-  const isInvoiceCommand =
-    lowerMessage.includes('create invoice') ||
-    lowerMessage.includes('new invoice') ||
-    lowerMessage.includes('invoice for') ||
-    lowerMessage.includes('bill to') ||
-    (lowerMessage.includes('client') && lowerMessage.includes('$'));
+  // Check if LLM is enabled
+  const llmSettings = await prisma.lLMSettings.findFirst({
+    where: { isEnabled: true }
+  });
+  const isLLMEnabled = !!llmSettings;
 
-  if (isInvoiceCommand) {
-    return await handleInvoiceCreation(credential.userId, message, from);
+  // Check if message is an invoice creation command
+  const isInvoiceCommand = checkIsInvoiceCommand(message);
+
+  // Pass to handler if LLM is enabled OR it's a strict command
+  if (isLLMEnabled || isInvoiceCommand) {
+    return await handleInvoiceCreation(credential.userId, message, from, isInvoiceCommand);
   }
 
   // Default: send help message
-  const helpMessage = `👋 Hello! I can help you create invoices via WhatsApp.\n\n` +
-    `📝 To create an invoice, send a message like:\n` +
-    `"Create invoice for John Doe, 5 items at $100 each, due in 30 days"\n\n` +
-    `Or:\n` +
-    `"Invoice: Client: ABC Company, Items: Web Design $500, Development $1000"\n\n` +
-    `💡 Tips:\n` +
-    `- Include client name\n` +
-    `- List items with quantities and prices\n` +
-    `- Specify due date if needed`;
-
+  const helpMessage = getHelpMessage();
   await sendWhatsAppMessage(from, helpMessage);
 
   return NextResponse.json({ message: 'Help sent' }, { status: 200 });
@@ -171,9 +178,7 @@ async function handleTwilioWebhook(body: any) {
 /**
  * Handle Meta webhook
  */
-import { logInfo, logError, logWarn } from '@/lib/system-logger';
-
-// ... (existing imports)
+// ... imports are at top ...
 
 /**
  * Handle Meta webhook
@@ -258,32 +263,41 @@ async function handleMetaWebhook(body: any) {
     });
   }
 
-  // Similar handling as Twilio
-  const lowerMessage = text.toLowerCase().trim();
-  const isInvoiceCommand =
-    lowerMessage.includes('create invoice') ||
-    lowerMessage.includes('new invoice') ||
-    lowerMessage.includes('invoice for') ||
-    lowerMessage.includes('bill to') ||
-    (lowerMessage.includes('client') && lowerMessage.includes('$'));
+  // Check if LLM is enabled
+  const llmSettings = await prisma.lLMSettings.findFirst({
+    where: { isEnabled: true }
+  });
+  const isLLMEnabled = !!llmSettings;
 
-  if (isInvoiceCommand) {
-    return await handleInvoiceCreation(credential.userId, text, from);
+  // Check if message is an invoice creation command
+  const isInvoiceCommand = checkIsInvoiceCommand(text);
+
+  if (isLLMEnabled || isInvoiceCommand) {
+    return await handleInvoiceCreation(credential.userId, text, from, isInvoiceCommand);
   }
 
-  const helpMessage = `👋 Hello! I can help you create invoices via WhatsApp.\n\n` +
-    `📝 To create an invoice, send a message like:\n` +
-    `"Create invoice for John Doe, 5 items at $100 each, due in 30 days"`;
-
+  const helpMessage = getHelpMessage();
   await sendWhatsAppMessage(from, helpMessage);
 
   return NextResponse.json({ message: 'Help sent' }, { status: 200 });
 }
 
+function getHelpMessage(): string {
+  return `👋 Hello! I can help you create invoices via WhatsApp.\n\n` +
+    `📝 To create an invoice, send a message like:\n` +
+    `"Create invoice for John Doe, 5 items at $100 each, due in 30 days"\n\n` +
+    `Or:\n` +
+    `"Invoice: Client: ABC Company, Items: Web Design $500, Development $1000"\n\n` +
+    `💡 Tips:\n` +
+    `- Include client name\n` +
+    `- List items with quantities and prices\n` +
+    `- Specify due date if needed`;
+}
+
 /**
  * Handle invoice creation from WhatsApp message
  */
-async function handleInvoiceCreation(userId: string, message: string, from: string) {
+async function handleInvoiceCreation(userId: string, message: string, from: string, isStrictCommand: boolean) {
   try {
     // Parse invoice data from message
     const parsedData = await parseInvoiceCommand(message, userId);
@@ -298,10 +312,18 @@ async function handleInvoiceCreation(userId: string, message: string, from: stri
     const validation = validateParsedInvoice(parsedData);
 
     if (!validation.valid) {
-      const errorMessage = `❌ Invoice creation failed:\n\n${validation.errors.join('\n')}\n\n` +
-        `Please provide all required information.`;
-      await sendWhatsAppMessage(from, errorMessage);
-      return NextResponse.json({ message: 'Validation failed' }, { status: 200 });
+      // If valid failed used a strict command, warn them.
+      // If it's a general chat message that the AI failed to answer, send generic help.
+      if (isStrictCommand) {
+        const errorMessage = `❌ Invoice creation failed:\n\n${validation.errors.join('\n')}\n\n` +
+          `Please provide all required information.`;
+        await sendWhatsAppMessage(from, errorMessage);
+        return NextResponse.json({ message: 'Validation failed' }, { status: 200 });
+      } else {
+        // Fallback to generic help for chat messages that didn't trigger AI answer
+        await sendWhatsAppMessage(from, getHelpMessage());
+        return NextResponse.json({ message: 'Fallback help sent' }, { status: 200 });
+      }
     }
 
     // Get user's company defaults

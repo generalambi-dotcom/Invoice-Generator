@@ -67,7 +67,7 @@ export default function AISettingsPage() {
             if (data.success) {
                 setMessage({ type: 'success', text: '✅ Connection successful! ' + data.message });
             } else {
-                setMessage({ type: 'error', text: '❌ Connection failed: ' + data.message });
+                setMessage({ type: 'error', text: '❌ Connection failed: ' + (data.message || data.error || 'Unknown error') });
             }
         } catch (err) {
             setMessage({ type: 'error', text: 'Failed to test connection' });

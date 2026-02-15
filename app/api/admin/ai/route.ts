@@ -87,14 +87,25 @@ export async function POST(request: NextRequest) {
             const { provider, apiKey, model } = body;
 
             // If no API key provided in body, try to fetch from DB if we're testing saved settings
+            // If no API key provided in body, try to fetch from DB if we're testing saved settings
             let keyToUse = apiKey;
+            console.log(`[AI Test] Received request for provider: ${provider}, Model: ${model}`);
+            console.log(`[AI Test] Input key masked? ${keyToUse?.includes('...')}`);
+
             if (!keyToUse || keyToUse.includes('...')) {
                 const saved = await prisma.lLMSettings.findFirst({
                     where: { provider }
                 });
+                console.log(`[AI Test] DB lookup found settings? ${!!saved}`);
+
                 if (saved && saved.apiKey) {
                     keyToUse = decrypt(saved.apiKey);
+                    console.log(`[AI Test] Decrypted key from DB. Length: ${keyToUse.length}`);
+                } else {
+                    console.log(`[AI Test] No saved key found in DB for ${provider}`);
                 }
+            } else {
+                console.log(`[AI Test] Using provided key (unmasked). Length: ${keyToUse.length}`);
             }
 
             const config: LLMConfig = { provider, apiKey: keyToUse, model };
@@ -131,13 +142,13 @@ export async function POST(request: NextRequest) {
                 apiKey: finalApiKey,
                 model,
                 isEnabled,
-                useSmartContext,
+                // useSmartContext,
             },
             update: {
                 apiKey: finalApiKey,
                 model,
                 isEnabled,
-                useSmartContext,
+                // useSmartContext,
             },
         });
 

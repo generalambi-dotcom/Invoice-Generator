@@ -113,23 +113,23 @@ export async function PUT(request: NextRequest) {
     // Encrypt sensitive fields
     const updateData: any = {
       provider: provider || 'twilio',
-      twilioAccountSid: twilioAccountSid || undefined,
+      twilioAccountSid: twilioAccountSid ? twilioAccountSid.trim() : undefined,
       twilioAuthToken: twilioAuthToken && twilioAuthToken !== '***encrypted***'
-        ? encrypt(twilioAuthToken)
+        ? encrypt(twilioAuthToken.trim())
         : undefined,
-      twilioWhatsAppNumber: twilioWhatsAppNumber || undefined,
-      metaAppId: metaAppId || undefined,
+      twilioWhatsAppNumber: twilioWhatsAppNumber ? twilioWhatsAppNumber.trim() : undefined,
+      metaAppId: metaAppId ? metaAppId.trim() : undefined,
       metaAppSecret: metaAppSecret && metaAppSecret !== '***encrypted***'
-        ? encrypt(metaAppSecret)
+        ? encrypt(metaAppSecret.trim())
         : undefined,
       metaAccessToken: metaAccessToken && metaAccessToken !== '***encrypted***'
-        ? encrypt(metaAccessToken)
+        ? encrypt(metaAccessToken.trim())
         : undefined,
-      metaPhoneNumberId: metaPhoneNumberId || undefined,
-      metaBusinessAccountId: metaBusinessAccountId || undefined,
-      webhookUrl: webhookUrl || undefined,
+      metaPhoneNumberId: metaPhoneNumberId ? metaPhoneNumberId.trim() : undefined,
+      metaBusinessAccountId: metaBusinessAccountId ? metaBusinessAccountId.trim() : undefined,
+      webhookUrl: webhookUrl ? webhookUrl.trim() : undefined,
       webhookSecret: webhookSecret && webhookSecret !== '***encrypted***'
-        ? encrypt(webhookSecret)
+        ? encrypt(webhookSecret.trim())
         : undefined,
       isEnabled: isEnabled !== undefined ? isEnabled : false,
       allowUserConnections: allowUserConnections !== undefined ? allowUserConnections : true,

@@ -86,10 +86,14 @@ export async function GET(
         }
 
         // Return PDF stream
+        const searchParams = request.nextUrl.searchParams;
+        const download = searchParams.get('download');
+        const disposition = download === 'true' ? 'attachment' : 'inline';
+
         return new NextResponse(pdfBuffer as unknown as BodyInit, {
             headers: {
                 'Content-Type': 'application/pdf',
-                'Content-Disposition': `inline; filename="Invoice-${invoice.invoiceNumber}.pdf"`,
+                'Content-Disposition': `${disposition}; filename="Invoice-${invoice.invoiceNumber}.pdf"`,
             },
         });
     } catch (error: any) {

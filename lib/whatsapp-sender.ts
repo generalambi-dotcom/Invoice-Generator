@@ -252,7 +252,8 @@ export async function sendInvoiceViaWhatsApp(
       message += `--------------------------------\n\n`;
     }
 
-    message += `View full invoice or download PDF:\n${baseUrl}/invoice/${invoiceId}`;
+    message += `*Download PDF Invoice directly:*\n${pdfUrl}?download=true\n\n`;
+    message += `View full invoice:\n${baseUrl}/invoice/${invoiceId}`;
 
     // Send message with PDF
     const result = await sendWhatsAppMessage(recipientPhone, message, pdfUrl);

@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser, signOut } from '@/lib/auth';
-import { loadInvoicesAPI, deleteInvoiceAPI, updateOverdueInvoicesAPI, getPaymentRemindersAPI, sendPaymentRemindersAPI, approveInvoiceAPI, rejectInvoiceAPI, requestApprovalAPI, markInvoiceSentAPI } from '@/lib/api-client';
-import { Invoice, currencySymbols } from '@/types/invoice';
+import { loadInvoicesAPI, deleteInvoiceAPI, updateOverdueInvoicesAPI, getPaymentRemindersAPI, sendPaymentRemindersAPI, approveInvoiceAPI, rejectInvoiceAPI, requestApprovalAPI, markInvoiceSentAPI, getCompanyDefaultsAPI } from '@/lib/api-client';
+import { Invoice, currencySymbols, Currency } from '@/types/invoice';
 import { formatCurrency } from '@/lib/calculations';
 import { format } from 'date-fns';
 import DashboardGreeting from '@/components/DashboardGreeting';
@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const [showReminders, setShowReminders] = useState(false);
   const [sendingReminders, setSendingReminders] = useState(false);
   const [processingApproval, setProcessingApproval] = useState<string | null>(null);
+  const [currency, setCurrency] = useState('USD');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -37,9 +38,10 @@ export default function DashboardPage() {
       }
 
       const currentUser = getCurrentUser();
+      let userData = currentUser;
+
       if (!currentUser) {
         // Try to get user from token if localStorage user is missing
-        // This handles cases where localStorage was cleared but token exists
         try {
           const response = await fetch('/api/auth/me', {
             headers: {
@@ -47,38 +49,47 @@ export default function DashboardPage() {
             },
           });
           if (response.ok) {
-            const userData = await response.json();
-            localStorage.setItem('invoice-generator-current-user', JSON.stringify(userData.user));
-            setUser(userData.user);
-            loadInvoiceData();
-            loadPaymentReminders();
+            const data = await response.json();
+            localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
+            userData = data.user;
+            setUser(data.user);
+          } else {
+            router.push('/signin?redirect=/dashboard');
             return;
           }
         } catch (error) {
           console.error('Error fetching user:', error);
+          router.push('/signin?redirect=/dashboard');
+          return;
         }
-        router.push('/signin?redirect=/dashboard');
-        return;
+      } else {
+        setUser(currentUser);
       }
 
-      setUser(currentUser);
-      loadInvoiceData();
-      loadPaymentReminders();
+      // Load data in parallel
+      await Promise.all([
+        loadInvoiceData(),
+        loadPaymentReminders(),
+        loadCompanySettings()
+      ]);
 
-      // Update overdue invoices on mount
-      const updateOverdue = async () => {
-        try {
-          await updateOverdueInvoicesAPI();
-          loadInvoiceData();
-        } catch (error) {
-          console.error('Error updating overdue invoices:', error);
-        }
-      };
-      updateOverdue();
+      // Update overdue invoices on mount (background)
+      updateOverdueInvoicesAPI().then(() => loadInvoiceData()).catch(e => console.error(e));
     };
 
     checkAuth();
   }, [router]);
+
+  const loadCompanySettings = async () => {
+    try {
+      const defaults = await getCompanyDefaultsAPI();
+      if (defaults && defaults.defaultCurrency) {
+        setCurrency(defaults.defaultCurrency);
+      }
+    } catch (error) {
+      console.error('Error loading company settings:', error);
+    }
+  };
 
   const loadPaymentReminders = async () => {
     try {
@@ -348,7 +359,7 @@ export default function DashboardPage() {
             <div>
               <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
               <p className="text-2xl font-bold text-gray-900">
-                {currencySymbols[activeInvoices[0]?.currency || 'USD']} {formatCurrency(stats.totalAmount, activeInvoices[0]?.currency || 'USD')}
+                {currencySymbols[currency as Currency] || currencySymbols['USD']} {formatCurrency(stats.totalAmount, currency)}
               </p>
             </div>
           </div>
@@ -360,7 +371,7 @@ export default function DashboardPage() {
             <div>
               <h3 className="text-sm font-medium text-gray-500">Paid Invoices</h3>
               <p className="text-2xl font-bold text-gray-900">
-                {currencySymbols[activeInvoices[0]?.currency || 'USD']} {formatCurrency(stats.paidAmount, activeInvoices[0]?.currency || 'USD')}
+                {currencySymbols[currency as Currency] || currencySymbols['USD']} {formatCurrency(stats.paidAmount, currency)}
               </p>
             </div>
           </div>
@@ -372,7 +383,7 @@ export default function DashboardPage() {
             <div>
               <h3 className="text-sm font-medium text-gray-500">Pending</h3>
               <p className="text-2xl font-bold text-gray-900">
-                {currencySymbols[activeInvoices[0]?.currency || 'USD']} {formatCurrency(stats.unpaidAmount - stats.overdueAmount, activeInvoices[0]?.currency || 'USD')}
+                {currencySymbols[currency as Currency] || currencySymbols['USD']} {formatCurrency(stats.unpaidAmount - stats.overdueAmount, currency)}
               </p>
             </div>
           </div>
@@ -384,14 +395,14 @@ export default function DashboardPage() {
             <div>
               <h3 className="text-sm font-medium text-gray-500">Overdue</h3>
               <p className="text-2xl font-bold text-gray-900">
-                {currencySymbols[activeInvoices[0]?.currency || 'USD']} {formatCurrency(stats.overdueAmount, activeInvoices[0]?.currency || 'USD')}
+                {currencySymbols[currency as Currency] || currencySymbols['USD']} {formatCurrency(stats.overdueAmount, currency)}
               </p>
             </div>
           </div>
         </div>
 
         {/* Charts Section */}
-        <DashboardCharts invoices={activeInvoices} />
+        <DashboardCharts invoices={activeInvoices} currency={currency} />
 
         {/* Action Bar & List Header */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">

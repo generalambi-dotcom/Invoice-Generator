@@ -5,15 +5,16 @@ import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { Invoice, currencySymbols } from '@/types/invoice';
+import { Invoice, currencySymbols, Currency } from '@/types/invoice';
 import { formatCurrency } from '@/lib/calculations';
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from 'date-fns';
 
 interface DashboardChartsProps {
     invoices: Invoice[];
+    currency: string;
 }
 
-export default function DashboardCharts({ invoices }: DashboardChartsProps) {
+export default function DashboardCharts({ invoices, currency }: DashboardChartsProps) {
     // Process Data for Revenue Chart (Last 6 Months)
     const processRevenueData = () => {
         const today = new Date();
@@ -58,7 +59,6 @@ export default function DashboardCharts({ invoices }: DashboardChartsProps) {
 
     const revenueData = processRevenueData();
     const statusData = processStatusData();
-    const currency = invoices[0]?.currency || 'USD';
 
     if (invoices.length === 0) return null;
 
@@ -93,11 +93,11 @@ export default function DashboardCharts({ invoices }: DashboardChartsProps) {
                                 axisLine={false}
                                 tickLine={false}
                                 tick={{ fill: '#9CA3AF', fontSize: 12 }}
-                                tickFormatter={(value) => `${currencySymbols[currency]}${value}`}
+                                tickFormatter={(value) => `${currencySymbols[currency as Currency] || currencySymbols['USD']}${value}`}
                             />
                             <Tooltip
                                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                formatter={(value: any) => [`${currencySymbols[currency]} ${formatCurrency(Number(value), currency)}`, 'Revenue']}
+                                formatter={(value: any) => [`${currencySymbols[currency as Currency] || currencySymbols['USD']} ${formatCurrency(Number(value), currency)}`, 'Revenue']}
                             />
                             <Area
                                 type="monotone"

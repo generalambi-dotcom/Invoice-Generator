@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit';
+import { getNextInvoiceNumber, incrementInvoiceNumber } from '@/lib/invoice-number';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -10,10 +11,11 @@ export const dynamic = 'force-dynamic';
  * GET - Get next invoice number
  * POST - Update invoice number sequence settings
  */
+// GET - Get next invoice number
 export async function GET(request: NextRequest) {
   try {
     const user = getAuthenticatedUser(request);
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -22,7 +24,7 @@ export async function GET(request: NextRequest) {
     const identifier = `user:${user.userId}`;
     const limiter = rateLimit(rateLimitConfigs.general);
     const limitResult = limiter(identifier);
-    
+
     if (!limitResult.allowed) {
       return NextResponse.json(
         { error: limitResult.message },
@@ -34,79 +36,23 @@ export async function GET(request: NextRequest) {
     const prefix = searchParams.get('prefix') || 'INV';
     const format = searchParams.get('format') || 'PREFIX-YYYY-NNNN';
 
-    // Get or create sequence
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
+    // Use shared utility
+    const { invoiceNumber, sequence } = await getNextInvoiceNumber(user.userId, prefix, format);
 
-    // Determine reset period from format
-    let resetPeriod: 'year' | 'month' | null = null;
-    if (format.includes('YYYY-MM')) {
-      resetPeriod = 'month';
-    } else if (format.includes('YYYY')) {
-      resetPeriod = 'year';
-    }
+    // NOTE: This API endpoint peeks at the next number but typically DOES NOT increment it 
+    // until the user actually saves the invoice. However, the original code WAS incrementing it.
+    // "Increment sequence" was usually done here. 
+    // If the frontend calls this to PREFILL a number, and then another person opens the form, 
+    // they might see the same number. 
+    // The original code incremented it immediately: "await prisma.invoiceNumberSequence.update..."
+    // So let's maintain that behavior or check if it was intended.
+    // 
+    // Looking at original code:
+    // await prisma.invoiceNumberSequence.update({ ... currentNumber: sequence.currentNumber + 1 ... })
+    // Yes, it was incrementing. This means every time you load the invoice form (if it calls this), 
+    // you burn a number. This is often done to ensure uniqueness.
 
-    // Find existing sequence
-    let sequence = await prisma.invoiceNumberSequence.findFirst({
-      where: {
-        userId: user.userId,
-        prefix,
-        ...(resetPeriod === 'year' ? { year } : {}),
-        ...(resetPeriod === 'month' ? { year, month } : {}),
-      },
-    });
-
-    // Create if doesn't exist
-    if (!sequence) {
-      sequence = await prisma.invoiceNumberSequence.create({
-        data: {
-          userId: user.userId,
-          prefix,
-          format,
-          currentNumber: 1,
-          year: resetPeriod ? year : null,
-          month: resetPeriod === 'month' ? month : null,
-          resetPeriod,
-        },
-      });
-    } else {
-      // Check if we need to reset (new year/month)
-      let needsReset = false;
-      if (resetPeriod === 'year' && sequence.year !== year) {
-        needsReset = true;
-      } else if (resetPeriod === 'month' && (sequence.year !== year || sequence.month !== month)) {
-        needsReset = true;
-      }
-
-      if (needsReset) {
-        sequence = await prisma.invoiceNumberSequence.update({
-          where: { id: sequence.id },
-          data: {
-            currentNumber: 1,
-            year: resetPeriod ? year : null,
-            month: resetPeriod === 'month' ? month : null,
-          },
-        });
-      }
-    }
-
-    // Generate invoice number
-    let invoiceNumber = format;
-    invoiceNumber = invoiceNumber.replace('PREFIX', prefix);
-    invoiceNumber = invoiceNumber.replace('YYYY', year.toString());
-    invoiceNumber = invoiceNumber.replace('MM', month.toString().padStart(2, '0'));
-    invoiceNumber = invoiceNumber.replace('NNNN', sequence.currentNumber.toString().padStart(4, '0'));
-    invoiceNumber = invoiceNumber.replace('NNN', sequence.currentNumber.toString().padStart(3, '0'));
-    invoiceNumber = invoiceNumber.replace('NN', sequence.currentNumber.toString().padStart(2, '0'));
-
-    // Increment sequence
-    await prisma.invoiceNumberSequence.update({
-      where: { id: sequence.id },
-      data: {
-        currentNumber: sequence.currentNumber + 1,
-      },
-    });
+    await incrementInvoiceNumber(sequence.id);
 
     return NextResponse.json({
       invoiceNumber,
@@ -131,7 +77,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = getAuthenticatedUser(request);
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

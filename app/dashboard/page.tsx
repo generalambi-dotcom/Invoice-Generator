@@ -397,7 +397,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-xl font-bold text-gray-900">
                 {currencySymbols[currency as Currency] || currencySymbols['USD']} {formatCurrency(stats.totalAmount, currency)}
               </p>
             </div>
@@ -409,7 +409,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Paid Invoices</h3>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-xl font-bold text-gray-900">
                 {currencySymbols[currency as Currency] || currencySymbols['USD']} {formatCurrency(stats.paidAmount, currency)}
               </p>
             </div>
@@ -421,7 +421,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Pending</h3>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-xl font-bold text-gray-900">
                 {currencySymbols[currency as Currency] || currencySymbols['USD']} {formatCurrency(stats.unpaidAmount - stats.overdueAmount, currency)}
               </p>
             </div>
@@ -433,7 +433,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Overdue</h3>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-xl font-bold text-gray-900">
                 {currencySymbols[currency as Currency] || currencySymbols['USD']} {formatCurrency(stats.overdueAmount, currency)}
               </p>
             </div>

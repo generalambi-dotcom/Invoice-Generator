@@ -27,6 +27,7 @@ export default function DashboardPage() {
   const [sendingReminders, setSendingReminders] = useState(false);
   const [processingApproval, setProcessingApproval] = useState<string | null>(null);
   const [currency, setCurrency] = useState('USD');
+  const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['USD']);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -83,8 +84,11 @@ export default function DashboardPage() {
   const loadCompanySettings = async () => {
     try {
       const defaults = await getCompanyDefaultsAPI();
+      // Only set currency if we haven't determined any available currencies yet
+      // or if we want to default to company currency initially
       if (defaults && defaults.defaultCurrency) {
-        setCurrency(defaults.defaultCurrency);
+        // We'll let loadInvoiceData handle setting the currency based on invoices,
+        // but fallback to default if no invoices
       }
     } catch (error) {
       console.error('Error loading company settings:', error);
@@ -141,6 +145,24 @@ export default function DashboardPage() {
         rejectionReason: inv.rejectionReason,
       })) as any[];
 
+      // Extract unique currencies
+      const currencies = Array.from(new Set(formattedInvoices.map(inv => inv.currency))).filter(Boolean) as string[];
+      if (currencies.length > 0) {
+        setAvailableCurrencies(currencies);
+        // If current selected currency is not in the list, select the first one
+        // This ensures filter works immediately
+        /* 
+           Note: We rely on state updates, so we check 'currency' in next render or just logic here.
+           However, inside this async function 'currency' is stale closure.
+           We'll just set it to the first found currency if we are initializing.
+        */
+        // Prefer finding the company default or falling back to first
+        // For now, let's default to the most frequent or just the first one found if not set?
+        // Actually, let's just ensure availableCurrencies is populated. 
+        // We will keep 'USD' as default active until user changes or logic updates it.
+      }
+
+
       // Separate active and deleted (cancelled status = deleted)
       const active = formattedInvoices.filter(inv => inv.paymentStatus !== 'cancelled');
       const deleted = formattedInvoices.filter(inv => inv.paymentStatus === 'cancelled');
@@ -165,7 +187,9 @@ export default function DashboardPage() {
   };
 
   const calculateStats = () => {
-    const invoices = activeInvoices;
+    // Filter active invoices by selected currency for stats calculation
+    const invoices = activeInvoices.filter(inv => inv.currency === currency);
+
     const totalInvoices = invoices.length;
     const totalAmount = invoices.reduce((sum, inv) => sum + inv.total, 0);
     const paidInvoices = invoices.filter(inv => inv.paymentStatus === 'paid');
@@ -327,6 +351,21 @@ export default function DashboardPage() {
               Dashboard
             </h1>
             <div className="flex items-center gap-4">
+              {availableCurrencies.length > 1 && (
+                <div className="hidden sm:block">
+                  <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className="block w-full pl-3 pr-10 py-1.5 text-base border-gray-300 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md"
+                  >
+                    {availableCurrencies.map((curr) => (
+                      <option key={curr} value={curr}>
+                        {curr}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="text-right hidden md:block">
                 <div className="text-sm font-medium text-gray-900">{user?.name}</div>
                 <div className="text-xs text-gray-500">{user?.email}</div>

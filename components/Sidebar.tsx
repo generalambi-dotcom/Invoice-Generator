@@ -301,17 +301,36 @@ export default function Sidebar() {
                             </Link>
                         </div>
                     )}
+
+                    {/* Logout Button */}
+                    <div className="pt-4 mt-2">
+                        <button
+                            onClick={async () => {
+                                setIsOpen(false);
+                                await import('@/lib/auth').then(mod => mod.signOut());
+                                window.location.href = '/';
+                            }}
+                            className="w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-red-600 hover:bg-red-50 transition-colors group"
+                        >
+                            <div className="group-hover:text-red-700 transition-colors">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                            </div>
+                            <span className="ml-3">Log Out</span>
+                        </button>
+                    </div>
                 </nav>
 
                 {/* User Profile Mini - Bottom */}
                 <div className="absolute bottom-0 w-full p-4 border-t border-gray-100 bg-gray-50">
                     <Link href="/profile" className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                            U
+                            {user?.name?.[0] || 'U'}
                         </div>
-                        <div>
-                            <p className="text-sm font-medium text-gray-700">My Account</p>
-                            <p className="text-xs text-gray-500">View Profile</p>
+                        <div className="overflow-hidden">
+                            <p className="text-sm font-medium text-gray-700 truncate">{user?.name || 'My Account'}</p>
+                            <p className="text-xs text-gray-500 truncate">{user?.email || 'View Profile'}</p>
                         </div>
                     </Link>
                 </div>

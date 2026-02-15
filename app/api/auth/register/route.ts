@@ -128,11 +128,9 @@ export async function POST(request: NextRequest) {
       requiresVerification: emailVerificationRequired,
     }, { status: 201 });
 
-  } catch (error: any) {
     console.error('Error during registration:', error);
     return NextResponse.json(
       { error: 'Failed to register user' },
       { status: 500 }
     );
   }
-}

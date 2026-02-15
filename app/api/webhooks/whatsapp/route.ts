@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { parseInvoiceCommand, validateParsedInvoice } from '@/lib/whatsapp-nlp';
 import { sendWhatsAppMessage } from '@/lib/whatsapp-sender';
 import { saveInvoiceAPI } from '@/lib/api-client';
+import { logInfo, logError, logWarn } from '@/lib/system-logger';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -174,11 +175,6 @@ async function handleTwilioWebhook(body: any) {
 
   return NextResponse.json({ message: 'Help sent' }, { status: 200 });
 }
-
-/**
- * Handle Meta webhook
- */
-// ... imports are at top ...
 
 /**
  * Handle Meta webhook

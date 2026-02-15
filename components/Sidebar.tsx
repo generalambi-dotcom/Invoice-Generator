@@ -200,7 +200,7 @@ export default function Sidebar() {
       `}>
                 {/* Logo Area */}
                 <div className="h-16 flex items-center px-6 border-b border-gray-100">
-                    <span className="text-xl font-bold text-theme-primary">InvoiceNaija</span>
+                    <span className="text-xl font-bold text-theme-primary">Invoice Generator</span>
                 </div>
 
                 {/* Navigation */}

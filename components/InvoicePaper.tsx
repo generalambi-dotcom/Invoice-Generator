@@ -489,7 +489,7 @@ export default function InvoicePaper({
 
             {/* Watermark / Brand */}
             <div className="mt-12 pt-6 border-t border-gray-50 text-center">
-                <p className="text-xs text-gray-300 font-medium">Powered by InvoiceNaija</p>
+                <p className="text-xs text-gray-300 font-medium">Powered by Invoice Generator</p>
             </div>
         </div>
     );

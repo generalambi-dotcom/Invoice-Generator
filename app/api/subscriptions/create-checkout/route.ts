@@ -12,13 +12,13 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: NextRequest) {
   try {
     const user = getAuthenticatedUser(request);
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    const { userId, plan, amount, currency, userEmail } = body;
+    const { userId, plan, amount, currency, userEmail, trial } = body;
 
     // Validate input
     if (!userId || !plan || !amount || !currency || !userEmail) {
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     // Get Stripe credentials - check database first, then environment variables
     let stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-    
+
     // Try to get from admin's payment credentials in database
     if (!stripeSecretKey) {
       const adminUser = await prisma.user.findFirst({
@@ -99,31 +99,42 @@ export async function POST(request: NextRequest) {
 
     // Calculate subscription duration (30 days for monthly)
     const subscriptionDuration = 30; // days
+    const isTrial = trial === true;
 
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      mode: 'payment', // One-time payment for subscription
+      mode: 'subscription', // Use subscription mode for recurring billing
       customer_email: dbUser.email,
       line_items: [
         {
           price_data: {
             currency: currency.toLowerCase(),
             product_data: {
-              name: `Premium Subscription - ${plan}`,
-              description: `Premium access for ${subscriptionDuration} days`,
+              name: `Premium Subscription - ${plan} ${isTrial ? '(30-Day Free Trial)' : ''}`,
+              description: isTrial
+                ? `Free for 30 days, then ${currency} ${amount}/month`
+                : `Premium access for ${subscriptionDuration} days (Monthly)`,
             },
             unit_amount: Math.round(amount * 100), // Convert to cents
+            recurring: {
+              interval: 'month',
+            },
           },
           quantity: 1,
         },
       ],
+      subscription_data: isTrial ? {
+        trial_period_days: 30,
+        metadata: { isTrial: 'true' }
+      } : undefined,
       metadata: {
         userId,
         plan,
         type: 'subscription',
+        isTrial: isTrial ? 'true' : 'false',
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://invoicegenerator.ng'}/upgrade?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://invoicegenerator.ng'}/upgrade?success=true&session_id={CHECKOUT_SESSION_ID}${isTrial ? '&trial=true' : ''}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://invoicegenerator.ng'}/upgrade?canceled=true`,
     });
 
@@ -136,7 +147,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error creating Stripe checkout session:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to create checkout session',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       },

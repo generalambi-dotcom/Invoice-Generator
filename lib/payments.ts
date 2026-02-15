@@ -11,6 +11,7 @@ export async function initiatePayment(params: {
   amount: number;
   currency: string;
   userEmail: string;
+  trial?: boolean;
 }): Promise<string> {
   if (typeof window === 'undefined') {
     throw new Error('Payment can only be initiated in the browser');
@@ -61,7 +62,7 @@ export async function initiatePayment(params: {
       const script = document.createElement('script');
       script.src = 'https://js.paystack.co/v1/inline.js';
       document.body.appendChild(script);
-      
+
       return new Promise((resolve, reject) => {
         script.onload = () => {
           initializePaystack(params, config.paystackPublicKey!, resolve, reject);
@@ -87,6 +88,7 @@ export async function initiatePayment(params: {
           amount: params.amount,
           currency: params.currency.toLowerCase(),
           userEmail: params.userEmail,
+          trial: params.trial,
         }),
       });
 
@@ -101,7 +103,7 @@ export async function initiatePayment(params: {
       throw new Error('Failed to initiate Stripe payment: ' + error.message);
     }
   }
-  
+
   throw new Error('Invalid payment provider');
 }
 
@@ -131,7 +133,7 @@ function initializePaystack(
         reject(new Error('Payment window closed'));
       },
     });
-    
+
     handler.openIframe();
   } catch (error: any) {
     reject(new Error('Failed to initialize Paystack: ' + error.message));
@@ -150,7 +152,7 @@ function handlePaymentSuccess(
   // Update user subscription
   const { updateUserSubscription } = require('./admin');
   updateUserSubscription(userId, 'premium', 'active');
-  
+
   // Store payment record
   const paymentRecord = {
     userId,
@@ -161,7 +163,7 @@ function handlePaymentSuccess(
     status: 'completed',
     date: new Date().toISOString(),
   };
-  
+
   const payments = JSON.parse(localStorage.getItem('invoice-payments') || '[]');
   payments.push(paymentRecord);
   localStorage.setItem('invoice-payments', JSON.stringify(payments));
@@ -182,7 +184,7 @@ export function createPaymentLink(
   }
 
   const config = getPaymentConfig();
-  
+
   if (provider === 'paypal') {
     // Create PayPal payment link
     const paymentId = `paypal_inv_${invoiceId}_${Date.now()}`;
@@ -199,7 +201,7 @@ export function createPaymentLink(
     if (!config.paystackPublicKey) {
       throw new Error('Paystack public key not configured');
     }
-    
+
     const paymentId = `paystack_inv_${invoiceId}_${Date.now()}`;
     localStorage.setItem(`invoice_payment_${paymentId}`, JSON.stringify({
       invoiceId,
@@ -208,7 +210,7 @@ export function createPaymentLink(
       provider: 'paystack',
       status: 'pending',
     }));
-    
+
     // Return a URL that will trigger Paystack payment
     return `/payment/paystack?invoiceId=${invoiceId}&paymentId=${paymentId}&amount=${amount}&currency=${currency}&email=${encodeURIComponent(userEmail)}`;
   }
@@ -220,16 +222,16 @@ export function createPaymentLink(
  */
 export function isPremiumUser(): boolean {
   if (typeof window === 'undefined') return false;
-  
+
   try {
     const { getCurrentUser } = require('./auth');
     const user = getCurrentUser();
-    
+
     // Admins automatically have premium access
     if (user?.isAdmin) {
       return true;
     }
-    
+
     // Check premium subscription
     if (user?.subscription?.plan === 'premium' && user?.subscription?.status === 'active') {
       // Check if subscription hasn't expired
@@ -241,7 +243,7 @@ export function isPremiumUser(): boolean {
       }
       return true;
     }
-    
+
     return false;
   } catch (error) {
     return false;

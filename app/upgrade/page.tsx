@@ -211,6 +211,7 @@ export default function UpgradePage() {
         amount: pricing.premiumPrice,
         currency: pricing.currency,
         userEmail: user.email,
+        trial: provider === 'stripe', // Enable trial for Stripe
       });
 
       if (paymentLink) {
@@ -429,28 +430,33 @@ export default function UpgradePage() {
                 )}
 
                 {availableProviders.stripe && (
-                  <button
-                    onClick={() => handleUpgrade('stripe')}
-                    disabled={loading}
-                    className="px-8 py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-lg flex items-center justify-center gap-2"
-                  >
-                    {loading && paymentProvider === 'stripe' ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l-2.541 4.083c-.48-.202-1.08-.42-1.94-.42v-.58zm6.777 2.944c.602-.604 1.376-1.015 1.376-1.81 0-1.21-1.044-2.21-2.9-2.21-2.115 0-4.592.92-6.584 2.067l-2.545-4.097c2.194-1.333 5.23-2.18 7.66-2.18 3.74 0 6.662 1.88 6.662 5.14 0 2.353-1.735 4.1-3.99 4.843l-2.679-4.753zM14.471 15.108c-2.29.861-4.691 1.413-6.74 1.413-3.701 0-5.78-1.838-5.78-4.8 0-3.24 2.82-5.5 7.27-5.5 2.366 0 4.94.69 7.27 1.856l-2.58 4.16c-.49-.175-1.03-.35-1.9-.35v-.58c0-1.28.65-1.95 1.84-1.95 1.84 0 3.26.45 4.77 1.11l-2.64 4.24c-.38.15-1.02.33-1.51.44v.37z" />
-                        </svg>
-                        Upgrade with Stripe
-                      </>
-                    )}
-                  </button>
+                  <div className="flex flex-col items-center w-full">
+                    <button
+                      onClick={() => handleUpgrade('stripe')}
+                      disabled={loading}
+                      className="px-8 py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-lg flex items-center justify-center gap-2"
+                    >
+                      {loading && paymentProvider === 'stripe' ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l-2.541 4.083c-.48-.202-1.08-.42-1.94-.42v-.58zm6.777 2.944c.602-.604 1.376-1.015 1.376-1.81 0-1.21-1.044-2.21-2.9-2.21-2.115 0-4.592.92-6.584 2.067l-2.545-4.097c2.194-1.333 5.23-2.18 7.66-2.18 3.74 0 6.662 1.88 6.662 5.14 0 2.353-1.735 4.1-3.99 4.843l-2.679-4.753zM14.471 15.108c-2.29.861-4.691 1.413-6.74 1.413-3.701 0-5.78-1.838-5.78-4.8 0-3.24 2.82-5.5 7.27-5.5 2.366 0 4.94.69 7.27 1.856l-2.58 4.16c-.49-.175-1.03-.35-1.9-.35v-.58c0-1.28.65-1.95 1.84-1.95 1.84 0 3.26.45 4.77 1.11l-2.64 4.24c-.38.15-1.02.33-1.51.44v.37z" />
+                          </svg>
+                          Start 30-Day Free Trial
+                        </>
+                      )}
+                    </button>
+                    <p className="text-sm text-center text-gray-500 mt-2">
+                      30 days free, then {pricing ? formatPrice(pricing.premiumPrice, pricing.currency) : '...'} / month
+                    </p>
+                  </div>
                 )}
 
                 {!availableProviders.paypal && !availableProviders.paystack && !availableProviders.stripe && (
@@ -484,7 +490,7 @@ export default function UpgradePage() {
           )}
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 

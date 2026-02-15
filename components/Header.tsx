@@ -121,7 +121,7 @@ export default function Header() {
                 </svg>
               </div>
               <span className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100">
-                Invoice<span className="text-gray-500 dark:text-gray-400 font-normal">Generator</span><span className="bg-blue-200 dark:bg-blue-600 text-gray-800 dark:text-gray-100 px-1 rounded font-normal">.ng</span>
+                Invoice<span className="text-gray-500 dark:text-gray-400 font-normal">Generator</span>
               </span>
             </Link>
           </div>
@@ -188,8 +188,8 @@ export default function Header() {
                   <button
                     onClick={() => handleLanguageChange('en')}
                     className={`block w-full text-left px-4 py-2 text-sm ${language === 'en'
-                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                       }`}
                   >
                     🇬🇧 English
@@ -771,8 +771,8 @@ export default function Header() {
                       <button
                         onClick={() => handleLanguageChange('en')}
                         className={`block w-full text-left px-4 py-2 text-sm ${language === 'en'
-                            ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                           }`}
                       >
                         🇬🇧 English

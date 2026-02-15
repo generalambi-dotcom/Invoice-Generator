@@ -50,13 +50,13 @@ function SignInContent() {
         }
         // Use the correct key that getCurrentUser() expects
         localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
-        
+
         // Set token as cookie so middleware can access it
         document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
-        
+
         // Create session
         createSession(data.user);
-        
+
         // Force a page reload to ensure authentication state is properly set
         const redirectUrl = searchParams.get('redirect') || '/dashboard';
         window.location.href = redirectUrl;
@@ -89,15 +89,15 @@ function SignInContent() {
       const errorData = await response.json();
       let errorMessage = errorData.error || 'Failed to sign in. Please try again.';
       const details: string[] = [];
-      
+
       if (errorData.attemptsRemaining) {
         details.push(errorData.attemptsRemaining);
       }
-      
+
       if (errorData.errors && Array.isArray(errorData.errors)) {
         details.push(...errorData.errors);
       }
-      
+
       setError(errorMessage);
       if (details.length > 0) {
         setErrorDetails(details);
@@ -139,7 +139,6 @@ function SignInContent() {
           </div>
           <span className="text-2xl font-bold text-gray-800">
             Invoice<span className="text-gray-500 font-normal">Generator</span>
-            <span className="bg-blue-200 text-gray-800 px-1 rounded font-normal">.ng</span>
           </span>
         </Link>
 

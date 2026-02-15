@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { checkPasswordStrength, validatePassword } from '@/lib/password-validator';
+import { createSession } from '@/lib/session';
 import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator';
 
 export default function SignUpPage() {
@@ -13,6 +14,7 @@ export default function SignUpPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string>('');
+  const [errorDetails, setErrorDetails] = useState<string[]>([]);
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -47,30 +49,39 @@ export default function SignUpPage() {
         body: JSON.stringify({ email, password, name }),
       });
 
+      const responseData = await response.json(); // Call json() once
+
       if (response.ok) {
-        const data = await response.json();
-        // Redirect to verification page
-        if (data.requiresVerification) {
+        // Handle successful registration that requires verification
+        if (responseData.requiresVerification) {
           router.push(`/verify-email?email=${encodeURIComponent(email)}`);
           return;
         }
-        // If no verification required (shouldn't happen in new flow), redirect to dashboard
-        if (data.token) {
-          localStorage.setItem('auth_token', data.token);
-          localStorage.setItem('refresh_token', data.refreshToken || '');
-          localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
-          // Set token as cookie so middleware can access it
-          document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
+
+        // Handle successful registration without verification (auto-login)
+        if (responseData.token) {
+          localStorage.setItem('auth_token', responseData.token);
+          if (responseData.refreshToken) {
+            localStorage.setItem('refresh_token', responseData.refreshToken);
+          }
+          localStorage.setItem('invoice-generator-current-user', JSON.stringify(responseData.user));
+
+          createSession(responseData.user);
+
           router.push('/dashboard');
           return;
         }
-      }
 
-      // Handle errors
-      const errorData = await response.json();
-      setError(errorData.error || 'Failed to create account. Please try again.');
-      if (errorData.errors && Array.isArray(errorData.errors)) {
-        setPasswordErrors(errorData.errors);
+        // Fallback for success but no token (shouldn't happen in new flow, but safe fallback)
+        router.push('/signin?registered=true');
+        return;
+      } else {
+        // Handle errors
+        setError(responseData.error || 'Failed to create account. Please try again.');
+
+        if (responseData.errors && Array.isArray(responseData.errors)) {
+          setErrorDetails(responseData.errors);
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Failed to create account. Please try again.');
@@ -101,7 +112,6 @@ export default function SignUpPage() {
           </div>
           <span className="text-2xl font-bold text-gray-800">
             Invoice<span className="text-gray-500 font-normal">Generator</span>
-            <span className="bg-blue-200 text-gray-800 px-1 rounded font-normal">.ng</span>
           </span>
         </Link>
 
@@ -112,7 +122,14 @@ export default function SignUpPage() {
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
-              {error}
+              <p className="font-medium">{error}</p>
+              {errorDetails.length > 0 && (
+                <ul className="mt-2 list-disc list-inside space-y-1 text-xs">
+                  {errorDetails.map((detail, index) => (
+                    <li key={index}>{detail}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 
@@ -168,11 +185,10 @@ export default function SignUpPage() {
                   setPassword(e.target.value);
                   setPasswordErrors([]);
                 }}
-                className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 ${
-                  passwordErrors.length > 0
-                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                    : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
-                }`}
+                className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 ${passwordErrors.length > 0
+                  ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                  : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
+                  }`}
                 placeholder="Create a strong password (min. 8 characters)"
               />
               {passwordStrength && (

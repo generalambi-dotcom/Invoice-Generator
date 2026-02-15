@@ -75,7 +75,9 @@ export async function POST(request: NextRequest) {
             // If no API key provided in body, try to fetch from DB if we're testing saved settings
             let keyToUse = apiKey;
             if (!keyToUse || keyToUse.includes('...')) {
-                const saved = await prisma.lLMSettings.findFirst();
+                const saved = await prisma.lLMSettings.findFirst({
+                    where: { provider }
+                });
                 if (saved && saved.apiKey) {
                     keyToUse = decrypt(saved.apiKey);
                 }

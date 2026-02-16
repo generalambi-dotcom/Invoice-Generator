@@ -153,6 +153,12 @@ export default function Header() {
               FAQ
             </Link>
             <Link
+              href="/contact"
+              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              Contact
+            </Link>
+            <Link
               href="/upgrade"
               className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
@@ -683,6 +689,13 @@ export default function Header() {
                 className="block text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors py-2"
               >
                 FAQ
+              </Link>
+              <Link
+                href="/contact"
+                onClick={closeMenus}
+                className="block text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors py-2"
+              >
+                Contact
               </Link>
               <Link
                 href="/upgrade"

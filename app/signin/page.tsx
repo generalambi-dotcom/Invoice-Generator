@@ -62,9 +62,6 @@ function SignInContent() {
 
       const errorData = await response.json();
       setError(errorData.error || 'Failed to sign in.');
-      if (errorData.debug) {
-        setErrorDetails([errorData.debug]);
-      }
     } catch (err: any) {
       setError(err instanceof Error ? err.message : 'Failed to sign in.');
     } finally {
@@ -94,11 +91,6 @@ function SignInContent() {
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm animate-fade-in">
           {error}
-          {errorDetails.length > 0 && (
-            <div className="mt-2 text-xs text-red-400 font-mono">
-              {errorDetails.map((d, i) => <div key={i}>{d}</div>)}
-            </div>
-          )}
         </div>
       )}
 

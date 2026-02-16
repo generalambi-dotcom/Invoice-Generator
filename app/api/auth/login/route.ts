@@ -130,15 +130,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error during login:', error);
-    const errorMessage = error?.message || 'Unknown error';
-    const errorName = error?.constructor?.name || 'Error';
     return NextResponse.json(
-      {
-        error: 'Failed to login',
-        debug: `${errorName}: ${errorMessage}`,
-      },
+      { error: 'Failed to login' },
       { status: 500 }
     );
   }
 }
-

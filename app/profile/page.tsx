@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { getCurrentUser } from '@/lib/auth';
 import { getCompanyDefaultsAPI, saveCompanyDefaultsAPI } from '@/lib/api-client';
-import { CompanyInfo } from '@/types/invoice';
+import { CompanyInfo, Currency, currencySymbols } from '@/types/invoice';
 
 export default function ProfilePage() {
     const [user, setUser] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [defaultCurrency, setDefaultCurrency] = useState<Currency>('USD');
 
     // Form State
     const [personalInfo, setPersonalInfo] = useState({
@@ -49,13 +50,18 @@ export default function ProfilePage() {
                 }
 
                 const defaults = await getCompanyDefaultsAPI();
-                if (defaults && defaults.companyInfo) {
-                    setBusinessInfo(defaults.companyInfo as CompanyInfo);
-                    // Check if we stored profile image in the "extra" fields of company info
-                    // note: we might need to cast to any to access custom fields if TS complains
-                    const extraData = defaults.companyInfo as any;
-                    if (extraData.profileImage) {
-                        setProfileImage(extraData.profileImage);
+                if (defaults) {
+                    if (defaults.companyInfo) {
+                        setBusinessInfo(defaults.companyInfo as CompanyInfo);
+                        // Check if we stored profile image in the "extra" fields of company info
+                        // note: we might need to cast to any to access custom fields if TS complains
+                        const extraData = defaults.companyInfo as any;
+                        if (extraData.profileImage) {
+                            setProfileImage(extraData.profileImage);
+                        }
+                    }
+                    if (defaults.defaultCurrency) {
+                        setDefaultCurrency(defaults.defaultCurrency as Currency);
                     }
                 }
             } catch (error) {
@@ -94,7 +100,7 @@ export default function ProfilePage() {
 
             await saveCompanyDefaultsAPI({
                 companyInfo: companyDataToSave,
-                defaultCurrency: 'NGN', // Preserve or fetch existing? For now default to NGN if missing
+                defaultCurrency: defaultCurrency,
                 defaultTheme: 'slate',
                 defaultTaxRate: 0
             });
@@ -182,6 +188,22 @@ export default function ProfilePage() {
                             className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                             placeholder="e.g. Demi Ventures"
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Default Currency</label>
+                        <select
+                            value={defaultCurrency}
+                            onChange={(e) => setDefaultCurrency(e.target.value as Currency)}
+                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                        >
+                            {Object.entries(currencySymbols).map(([code, symbol]) => (
+                                <option key={code} value={code}>
+                                    {code} ({symbol})
+                                </option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">This currency will be used for your invoice dashboard data.</p>
                     </div>
 
                     <div>

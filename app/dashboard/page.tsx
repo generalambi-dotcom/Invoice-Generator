@@ -84,11 +84,19 @@ export default function DashboardPage() {
   const loadCompanySettings = async () => {
     try {
       const defaults = await getCompanyDefaultsAPI();
-      // Only set currency if we haven't determined any available currencies yet
-      // or if we want to default to company currency initially
       if (defaults && defaults.defaultCurrency) {
-        // We'll let loadInvoiceData handle setting the currency based on invoices,
-        // but fallback to default if no invoices
+        setCurrency(defaults.defaultCurrency);
+        setAvailableCurrencies(prev => {
+          // If we only have the initial 'USD' and the new default is different, replace it
+          if (prev.length === 1 && prev[0] === 'USD' && defaults.defaultCurrency !== 'USD') {
+            return [defaults.defaultCurrency];
+          }
+          // Otherwise, ensure it's included
+          if (!prev.includes(defaults.defaultCurrency)) {
+            return [...prev, defaults.defaultCurrency];
+          }
+          return prev;
+        });
       }
     } catch (error) {
       console.error('Error loading company settings:', error);
@@ -145,21 +153,13 @@ export default function DashboardPage() {
         rejectionReason: inv.rejectionReason,
       })) as any[];
 
-      // Extract unique currencies
-      const currencies = Array.from(new Set(formattedInvoices.map(inv => inv.currency))).filter(Boolean) as string[];
-      if (currencies.length > 0) {
-        setAvailableCurrencies(currencies);
-        // If current selected currency is not in the list, select the first one
-        // This ensures filter works immediately
-        /* 
-           Note: We rely on state updates, so we check 'currency' in next render or just logic here.
-           However, inside this async function 'currency' is stale closure.
-           We'll just set it to the first found currency if we are initializing.
-        */
-        // Prefer finding the company default or falling back to first
-        // For now, let's default to the most frequent or just the first one found if not set?
-        // Actually, let's just ensure availableCurrencies is populated. 
-        // We will keep 'USD' as default active until user changes or logic updates it.
+      // Extract unique currencies and merge with existing
+      const invoiceCurrencies = Array.from(new Set(formattedInvoices.map(inv => inv.currency))).filter(Boolean) as string[];
+      if (invoiceCurrencies.length > 0) {
+        setAvailableCurrencies(prev => {
+          const newSet = new Set([...prev, ...invoiceCurrencies]);
+          return Array.from(newSet);
+        });
       }
 
 

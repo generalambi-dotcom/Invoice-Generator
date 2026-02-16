@@ -13,7 +13,7 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center max-w-4xl mx-auto mb-16 relative z-10">
+          <div className="text-center max-w-[76rem] mx-auto mb-16 relative z-10">
             {/* Overlapping Avatars + User Count */}
             <div className="inline-flex items-center gap-3 mb-8 animate-fade-in-up">
               {/* Avatar Stack */}
@@ -385,7 +385,7 @@ export default function LandingPage() {
               Start with our generous free plan and upgrade as your business grows. No hidden fees, no surprises.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-[76rem] mx-auto">
             {/* Free Plan */}
             <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
               <div className="flex items-center justify-between mb-6">

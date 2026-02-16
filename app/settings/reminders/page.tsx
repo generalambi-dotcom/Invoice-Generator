@@ -1,21 +1,31 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ReminderSettings from '@/components/settings/ReminderSettings';
-import { useAuth } from '@/components/AuthProvider';
+import { getCurrentUser } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 
 export default function RemindersPage() {
-    const { user, loading } = useAuth();
+    const [user, setUser] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
+
+    useEffect(() => {
+        const currentUser = getCurrentUser();
+        if (!currentUser) {
+            router.push('/signin');
+            return;
+        }
+        setUser(currentUser);
+        setLoading(false);
+    }, [router]);
 
     if (loading) {
         return <div className="p-8 text-center text-gray-500">Loading...</div>;
     }
 
     if (!user) {
-        router.push('/login');
-        return null;
+        return null; // Redirecting
     }
 
     return (

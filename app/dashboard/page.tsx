@@ -516,25 +516,25 @@ export default function DashboardPage() {
               <table className="min-w-full divide-y divide-gray-100">
                 <thead className="bg-gray-50/50">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 md:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Customer
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 md:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Reference
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="hidden md:table-cell px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Due Date
                     </th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 md:px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Total
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="hidden sm:table-cell px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="px-3 md:px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
@@ -542,31 +542,31 @@ export default function DashboardPage() {
                 <tbody className="bg-white divide-y divide-gray-100">
                   {invoices.map((invoice) => (
                     <tr key={invoice.id} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 md:px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-700 font-bold text-xs mr-3">
+                          <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-700 font-bold text-[10px] md:text-xs mr-2 md:mr-3">
                             {invoice.client.name.charAt(0).toUpperCase()}
                           </div>
-                          <div className="text-sm font-semibold text-gray-900">
+                          <div className="text-xs md:text-sm font-semibold text-gray-900 max-w-[80px] sm:max-w-[120px] md:max-w-none truncate">
                             {invoice.client.name}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded inline-block">{invoice.invoiceNumber}</div>
+                      <td className="px-3 md:px-6 py-4 whitespace-nowrap">
+                        <div className="text-[10px] md:text-sm font-medium text-gray-600 bg-gray-100 px-1.5 py-0.5 md:px-2 md:py-1 rounded inline-block max-w-[70px] sm:max-w-[100px] md:max-w-none truncate">{invoice.invoiceNumber}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">
                           {format(new Date(invoice.invoiceDate), 'MMM dd, yyyy')}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">
                           {format(new Date(invoice.dueDate), 'MMM dd, yyyy')}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="text-sm font-bold text-gray-900">
+                      <td className="px-3 md:px-6 py-4 whitespace-nowrap text-right">
+                        <div className="text-xs md:text-sm font-bold text-gray-900">
                           {currencySymbols[invoice.currency]} {formatCurrency(invoice.total, invoice.currency)}
                         </div>
                         {invoice.paidAmount && invoice.paidAmount > 0 && invoice.paidAmount < invoice.total && (
@@ -574,8 +574,12 @@ export default function DashboardPage() {
                             Paid: {currencySymbols[invoice.currency]}{formatCurrency(invoice.paidAmount, invoice.currency)}
                           </div>
                         )}
+                        {/* Mobile Status Indicator (dot) since column is hidden on very small screens? No, I hid it on sm but kept on larger. Let's show status icon or color on total? */}
+                        <div className="sm:hidden mt-1">
+                          <span className={`inline-block w-2 H-2 rounded-full ${invoice.paymentStatus === 'paid' ? 'bg-green-500' : invoice.paymentStatus === 'overdue' ? 'bg-red-500' : 'bg-gray-300'}`}></span>
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap">
                         <span className={`px-3 py-1 text-xs font-bold rounded-full border ${invoice.paymentStatus === 'paid'
                           ? 'bg-green-50 text-green-700 border-green-200'
                           : invoice.paymentStatus === 'overdue'
@@ -587,12 +591,12 @@ export default function DashboardPage() {
                           {invoice.paymentStatus || 'pending'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <td className="px-3 md:px-6 py-4 whitespace-nowrap text-center">
                         {/* Simplified Actions for cleaner look */}
-                        <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-center gap-1 md:gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => handleView(invoice)}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-1 md:p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title="View"
                           >
                             <Eye className="w-4 h-4" />

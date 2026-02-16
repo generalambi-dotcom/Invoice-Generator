@@ -446,38 +446,38 @@ export default function DashboardPage() {
         {/* Action Bar & List Header */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
           <h2 className="text-xl font-bold text-gray-900">Recent Invoices</h2>
-          <div className="flex gap-3 w-full md:w-auto">
+          <div className="flex flex-wrap gap-3 w-full md:w-auto">
             <div className="flex bg-gray-100 p-1 rounded-lg">
               <button
                 onClick={() => setShowDeleted(false)}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${!showDeleted ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`flex-1 md:flex-none px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all ${!showDeleted ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 Active
               </button>
               <button
                 onClick={() => setShowDeleted(true)}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${showDeleted ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`flex-1 md:flex-none px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all ${showDeleted ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 Deleted
               </button>
             </div>
 
-            <div className="flex gap-2 ml-auto">
+            <div className="flex gap-2 ml-auto w-full md:w-auto justify-end">
               {!showDeleted && (
                 <>
                   <Link
                     href="/"
                     id="new-invoice-btn"
-                    className="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-2 font-medium shadow-emerald-200 shadow-lg"
+                    className="flex-1 md:flex-none justify-center px-3 py-2 md:px-4 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-2 text-xs md:text-sm font-medium shadow-emerald-200 shadow-lg whitespace-nowrap"
                   >
-                    <Plus className="w-5 h-5" />
+                    <Plus className="w-4 h-4 md:w-5 md:h-5" />
                     New Invoice
                   </Link>
                   <Link
                     href="/reports"
-                    className="px-4 py-2 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2 font-medium"
+                    className="px-3 py-2 md:px-4 bg-white text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2 text-xs md:text-sm font-medium whitespace-nowrap"
                   >
-                    <BarChart3 className="w-5 h-5" />
+                    <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />
                     Reports
                   </Link>
                 </>

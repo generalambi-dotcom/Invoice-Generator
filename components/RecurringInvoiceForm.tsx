@@ -36,12 +36,17 @@ export default function RecurringInvoiceForm({ initialData, isEditing = false }:
     const [error, setError] = useState<string | null>(null);
 
     // Schedule State
+    // Schedule State
     const [name, setName] = useState(initialData?.name || '');
     const [description, setDescription] = useState(initialData?.description || '');
     const [frequency, setFrequency] = useState(initialData?.frequency || 'monthly');
     const [interval, setInterval] = useState(initialData?.interval || 1);
-    const [startDate, setStartDate] = useState(initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+
+    // Initialize dates as empty strings to avoid hydration mismatch
+    // Set defaults in useEffect
+    const [startDate, setStartDate] = useState(initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : '');
     const [endDate, setEndDate] = useState(initialData?.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : '');
+
     const [autoApprove, setAutoApprove] = useState(initialData?.autoApprove || false);
     const [maxInvoices, setMaxInvoices] = useState(initialData?.maxInvoices || '');
 
@@ -69,6 +74,10 @@ export default function RecurringInvoiceForm({ initialData, isEditing = false }:
         fetchClients();
         if (!isEditing) {
             fetchDefaults();
+            // Set default start date only on client side to avoid hydration mismatch
+            if (!startDate) {
+                setStartDate(new Date().toISOString().split('T')[0]);
+            }
         }
     }, []);
 
@@ -77,16 +86,19 @@ export default function RecurringInvoiceForm({ initialData, isEditing = false }:
             const res = await fetch('/api/clients');
             if (res.ok) {
                 const data = await res.json();
-                setClients(data);
+                // API returns { clients: [] }, so we need to access the property
+                // defaulting to empty array to prevent map errors
+                setClients(Array.isArray(data.clients) ? data.clients : []);
             }
         } catch (err) {
             console.error('Error fetching clients:', err);
+            setClients([]); // Ensure it's always an array
         }
     };
 
     const fetchDefaults = async () => {
         try {
-            const res = await fetch('/api/settings/company-defaults');
+            const res = await fetch('/api/company-defaults');
             if (res.ok) {
                 const data = await res.json();
                 if (data) {

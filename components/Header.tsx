@@ -99,567 +99,132 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 relative z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <header className="fixed top-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-5xl z-50 transition-all duration-300">
+      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-full shadow-lg px-4 sm:px-6 py-2">
+        <div className="flex items-center justify-between h-12 relative">
           {/* Logo */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 shrink-0">
             <Link href="/" className="flex items-center space-x-2" onClick={closeMenus}>
-              <div className="w-8 h-8 bg-green-500 rounded flex items-center justify-center">
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                 <svg
-                  className="w-5 h-5 text-white"
+                  className="w-4 h-4 text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <span className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100">
-                Invoice<span className="text-gray-500 dark:text-gray-400 font-normal">Generator</span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">
+                InvoiceGenerator
               </span>
             </Link>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-6">
+          {/* Desktop Navigation Links - Centered */}
+          <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
             <Link
-              href="/blog"
-              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              href="/resources"
+              className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               Resources
             </Link>
             <Link
               href="/help"
-              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               Help
             </Link>
             <Link
-              href="/history"
-              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              History
-            </Link>
-            <Link
-              href="/faq"
-              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              FAQ
-            </Link>
-            <Link
-              href="/contact"
-              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              Contact
-            </Link>
-            <Link
               href="/upgrade"
-              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               Pricing
             </Link>
           </nav>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            {/* Language Selector - Hidden on Mobile */}
+          <div className="flex items-center space-x-3 shrink-0">
+            {/* Language Selector */}
             <div className="hidden sm:block relative">
               <button
                 onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
-                className="p-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
+                className="p-1.5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
                 aria-label="Select language"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
-                  />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                 </svg>
               </button>
               {languageMenuOpen && (
+                /* ... existing dropdown code ... */
                 <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-200 dark:border-gray-700">
-                  <button
-                    onClick={() => handleLanguageChange('en')}
-                    className={`block w-full text-left px-4 py-2 text-sm ${language === 'en'
-                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                  >
-                    🇬🇧 English
-                  </button>
-                  <button
-                    onClick={() => handleLanguageChange('yo')}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    🇳🇬 Yoruba (Coming Soon)
-                  </button>
-                  <button
-                    onClick={() => handleLanguageChange('ig')}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    🇳🇬 Igbo (Coming Soon)
-                  </button>
-                  <button
-                    onClick={() => handleLanguageChange('ha')}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    🇳🇬 Hausa (Coming Soon)
-                  </button>
+                  <button onClick={() => handleLanguageChange('en')} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">🇬🇧 English</button>
                 </div>
               )}
             </div>
 
-            {/* Dark Mode Toggle - Hidden on Mobile */}
+            {/* Dark Mode Toggle */}
             <button
               onClick={toggleDarkMode}
-              className="hidden sm:block p-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
+              className="hidden sm:block p-1.5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
               aria-label="Toggle dark mode"
             >
               {isDarkMode ? (
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                  />
-                </svg>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
               ) : (
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                  />
-                </svg>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
               )}
             </button>
 
-            {/* Desktop: Text Links, Mobile: Account Icon */}
+
+            {/* Auth Buttons */}
             {user ? (
-              <>
-                {/* Desktop View */}
-                {/* Upgrade Button - Always Separate */}
-                {user.subscription?.plan !== 'premium' && (
-                  <Link
-                    href="/upgrade"
-                    className="hidden md:block px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all font-medium text-sm"
-                  >
-                    ⭐ Upgrade
-                  </Link>
-                )}
-
-                {/* Account Dropdown */}
-                <div className="hidden md:block relative">
-                  <button
-                    onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-                    className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-100"
-                    aria-label="Account menu"
-                  >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
-                    <span className="text-sm font-medium">{user.name || 'Account'}</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform ${accountMenuOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </button>
-                  {accountMenuOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setAccountMenuOpen(false)}
-                      />
-                      <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-200 dark:border-gray-700">
-                        <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
-                        </div>
-                        <Link
-                          href="/dashboard"
-                          onClick={closeMenus}
-                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          Dashboard
-                        </Link>
-                        <Link
-                          href="/clients"
-                          onClick={closeMenus}
-                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          Clients
-                        </Link>
-                        <Link
-                          href="/reports"
-                          onClick={closeMenus}
-                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          Reports
-                        </Link>
-                        <Link
-                          href="/credit-notes"
-                          onClick={closeMenus}
-                          className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          Credit Notes
-                        </Link>
-                        {user.isAdmin && (
-                          <>
-                            <Link
-                              href="/admin"
-                              onClick={closeMenus}
-                              className="block px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-medium"
-                            >
-                              Admin Dashboard
-                            </Link>
-                            <Link
-                              href="/admin/pricing"
-                              onClick={closeMenus}
-                              className="block px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-medium"
-                            >
-                              Pricing Settings
-                            </Link>
-                          </>
-                        )}
-                        {isPremium && (
-                          <Link
-                            href="/settings/payment-methods"
-                            onClick={closeMenus}
-                            className="block px-4 py-2 text-sm text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
-                          >
-                            Payment Methods
-                          </Link>
-                        )}
-                        {isPremium && (
-                          <Link
-                            href="/settings/public-link"
-                            onClick={closeMenus}
-                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            Public Invoice Link
-                          </Link>
-                        )}
-                        <Link
-                          href="/settings/whatsapp"
-                          onClick={closeMenus}
-                          className="block px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
-                        >
-                          WhatsApp Connection
-                        </Link>
-                        <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
-                        <button
-                          onClick={handleSignOut}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          Sign Out
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Mobile: Account Icon and Hamburger Menu */}
-                <div className="md:hidden flex items-center space-x-2">
-                  {/* Account Icon */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-                      className="p-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
-                      aria-label="Account menu"
-                    >
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                    </button>
-                    {accountMenuOpen && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-40"
-                          onClick={() => setAccountMenuOpen(false)}
-                        />
-                        <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-200 dark:border-gray-700">
-                          <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
-                          </div>
-                          <Link
-                            href="/dashboard"
-                            onClick={closeMenus}
-                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            Dashboard
-                          </Link>
-                          <Link
-                            href="/clients"
-                            onClick={closeMenus}
-                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            Clients
-                          </Link>
-                          <Link
-                            href="/reports"
-                            onClick={closeMenus}
-                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            Reports
-                          </Link>
-                          <Link
-                            href="/credit-notes"
-                            onClick={closeMenus}
-                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            Credit Notes
-                          </Link>
-                          {user.isAdmin && (
-                            <>
-                              <Link
-                                href="/admin"
-                                onClick={closeMenus}
-                                className="block px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-medium"
-                              >
-                                Admin Dashboard
-                              </Link>
-                              <Link
-                                href="/admin/pricing"
-                                onClick={closeMenus}
-                                className="block px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 font-medium"
-                              >
-                                Pricing Settings
-                              </Link>
-                            </>
-                          )}
-                          {isPremium && (
-                            <Link
-                              href="/settings/payment-methods"
-                              onClick={closeMenus}
-                              className="block px-4 py-2 text-sm text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
-                            >
-                              Payment Methods
-                            </Link>
-                          )}
-                          {isPremium && (
-                            <Link
-                              href="/settings/public-link"
-                              onClick={closeMenus}
-                              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                            >
-                              Public Invoice Link
-                            </Link>
-                          )}
-                          <Link
-                            href="/settings/whatsapp"
-                            onClick={closeMenus}
-                            className="block px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20"
-                          >
-                            WhatsApp Connection
-                          </Link>
-                          <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
-                          <button
-                            onClick={handleSignOut}
-                            className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          >
-                            Sign Out
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Hamburger Menu Button */}
-                  <button
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="p-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors relative z-50"
-                    aria-label="Toggle menu"
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      {mobileMenuOpen ? (
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      ) : (
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 6h16M4 12h16M4 18h16"
-                        />
-                      )}
-                    </svg>
-                  </button>
-                </div>
-              </>
+              <div className="flex items-center gap-3">
+                <Link href="/dashboard" className="px-5 py-2 text-sm font-semibold text-white bg-black dark:bg-white dark:text-black rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition-all shadow-md">
+                  Dashboard
+                </Link>
+                {/* Mobile Menu Button - inside user block for simplicity spacing */}
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="md:hidden p-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
+              </div>
             ) : (
-              <>
-                {/* Desktop: Sign In, Sign Up, and Upgrade */}
-                <Link
-                  href="/upgrade"
-                  className="hidden md:block px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all font-medium text-sm"
-                >
-                  ⭐ Upgrade
+              <div className="flex items-center gap-2">
+                <Link href="/signin" className="px-5 py-2 text-sm font-semibold text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                  Login
                 </Link>
-                <Link
-                  href="/signin"
-                  className="hidden md:block text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Sign In
+                <Link href="/signup" className="px-5 py-2 text-sm font-semibold text-white bg-black dark:bg-white dark:text-black rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition-all shadow-md items-center gap-2 hidden sm:flex">
+                  <span>Get Started</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                 </Link>
-                <Link
-                  href="/signup"
-                  className="hidden md:block px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors font-medium"
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="md:hidden p-2 text-gray-700 hover:text-gray-900"
                 >
-                  Sign Up
-                </Link>
-
-                {/* Mobile: Account Icon and Hamburger Menu */}
-                <div className="md:hidden flex items-center space-x-2">
-                  {/* Account Icon */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-                      className="p-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
-                      aria-label="Account menu"
-                    >
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                    </button>
-                    {accountMenuOpen && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 z-50 border border-gray-200 dark:border-gray-700">
-                        <Link
-                          href="/signin"
-                          onClick={closeMenus}
-                          className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          Sign In
-                        </Link>
-                        <Link
-                          href="/signup"
-                          onClick={closeMenus}
-                          className="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          Sign Up
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Hamburger Menu Button */}
-                  <button
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="p-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors relative z-50"
-                    aria-label="Toggle menu"
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      {mobileMenuOpen ? (
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      ) : (
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 6h16M4 12h16M4 18h16"
-                        />
-                      )}
-                    </svg>
-                  </button>
-                </div>
-              </>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
+              </div>
             )}
           </div>
         </div>
+      </div>
 
-        {/* Overlay for mobile menu - positioned first so menu can be on top */}
-        {mobileMenuOpen && (
+      {
+        mobileMenuOpen && (
           <div
             className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
             onClick={closeMenus}
           />
-        )}
+        )
+      }
 
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
+      {/* Mobile Menu */}
+      {
+        mobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 relative z-50">
             <nav className="px-4 py-4 space-y-3">
               <Link
@@ -814,9 +379,10 @@ export default function Header() {
               </div>
             </nav>
           </div>
-        )}
-      </div>
-    </header>
+        )
+      }
+
+    </header >
   );
 }
 

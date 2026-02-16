@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from '@/lib/auth';
 import { createSession, setupSessionTracking } from '@/lib/session';
+import AuthLayout from '@/components/AuthLayout';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 function SignInContent() {
   const router = useRouter();
@@ -16,11 +18,8 @@ function SignInContent() {
   const [errorDetails, setErrorDetails] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Setup session tracking on mount
   useEffect(() => {
     setupSessionTracking();
-
-    // Check for expired session
     const expired = searchParams.get('expired');
     if (expired === 'true') {
       setError('Your session has expired. Please sign in again.');
@@ -34,7 +33,6 @@ function SignInContent() {
     setIsLoading(true);
 
     try {
-      // Try API login first
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -43,27 +41,17 @@ function SignInContent() {
 
       if (response.ok) {
         const data = await response.json();
-        // Store tokens in localStorage
         localStorage.setItem('auth_token', data.token);
-        if (data.refreshToken) {
-          localStorage.setItem('refresh_token', data.refreshToken);
-        }
-        // Use the correct key that getCurrentUser() expects
+        if (data.refreshToken) localStorage.setItem('refresh_token', data.refreshToken);
         localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
-
-        // Set token as cookie so middleware can access it
         document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
-
-        // Create session
         createSession(data.user);
 
-        // Force a page reload to ensure authentication state is properly set
         const redirectUrl = searchParams.get('redirect') || '/dashboard';
         window.location.href = redirectUrl;
         return;
       }
 
-      // Handle email verification requirement
       if (response.status === 403) {
         const errorData = await response.json();
         if (errorData.requiresVerification) {
@@ -72,196 +60,113 @@ function SignInContent() {
         }
       }
 
-      // Handle account lockout
-      if (response.status === 423) {
-        const errorData = await response.json();
-        setError(errorData.error || 'Account is locked. Please try again later.');
-        if (errorData.lockedUntil) {
-          setErrorDetails([
-            `Account locked until: ${new Date(errorData.lockedUntil).toLocaleString()}`,
-            'You can reset your password to unlock your account immediately.',
-          ]);
-        }
-        return;
-      }
-
-      // Handle other errors
       const errorData = await response.json();
-      let errorMessage = errorData.error || 'Failed to sign in. Please try again.';
-      const details: string[] = [];
-
-      if (errorData.attemptsRemaining) {
-        details.push(errorData.attemptsRemaining);
-      }
-
-      if (errorData.errors && Array.isArray(errorData.errors)) {
-        details.push(...errorData.errors);
-      }
-
-      setError(errorMessage);
-      if (details.length > 0) {
-        setErrorDetails(details);
-      }
-
-      // Fallback to localStorage auth (legacy support)
-      try {
-        signIn(email, password);
-        router.push('/dashboard');
-      } catch (localError: any) {
-        // Error already set above
-      }
+      setError(errorData.error || 'Failed to sign in.');
     } catch (err: any) {
-      setError(err instanceof Error ? err.message : 'Failed to sign in. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to sign in.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        {/* Logo */}
-        <Link href="/" className="flex justify-center items-center space-x-2 mb-8">
-          <div className="w-10 h-10 bg-green-500 rounded flex items-center justify-center">
-            <svg
-              className="w-6 h-6 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
+    <AuthLayout
+      heading="Welcome Back"
+      subheading="Please enter your details to sign in."
+    >
+      {/* Social Login */}
+      <div className="mb-8">
+        <GoogleSignInButton />
+
+        <div className="relative mt-8">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200"></div>
           </div>
-          <span className="text-2xl font-bold text-gray-800">
-            Invoice<span className="text-gray-500 font-normal">Generator</span>
-          </span>
-        </Link>
-
-        {/* Sign In Card */}
-        <div className="bg-white py-8 px-6 shadow rounded-lg sm:px-10">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Sign In</h2>
-          <p className="text-gray-600 mb-6">Welcome back!</p>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
-              <p className="font-medium">{error}</p>
-              {errorDetails.length > 0 && (
-                <ul className="mt-2 list-disc list-inside space-y-1 text-xs">
-                  {errorDetails.map((detail, index) => (
-                    <li key={index}>{detail}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <div className="relative">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  placeholder="Enter your email"
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <Link
-                  href="/forgot-password"
-                  className="text-sm text-gray-600 hover:text-gray-900"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="Enter your password"
-              />
-            </div>
-
-            {/* Keep me logged in */}
-            <div className="flex items-center">
-              <input
-                id="keep-logged-in"
-                name="keep-logged-in"
-                type="checkbox"
-                checked={keepLoggedIn}
-                onChange={(e) => setKeepLoggedIn(e.target.checked)}
-                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-              />
-              <label htmlFor="keep-logged-in" className="ml-2 block text-sm text-gray-700">
-                Keep me logged in
-              </label>
-            </div>
-
-            {/* Sign In Button */}
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? 'Signing in...' : 'Sign In'}
-              </button>
-            </div>
-
-          </form>
-
-          {/* Sign Up Link */}
-          <div className="mt-6 text-center text-sm">
-            <span className="text-gray-600">Don't have an account yet? </span>
-            <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
-              Sign Up
-            </Link>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-white text-gray-500">or sign in with email</span>
           </div>
         </div>
       </div>
-    </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm animate-fade-in">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#1F4D45] focus:border-[#1F4D45] transition-all bg-gray-50 focus:bg-white"
+            placeholder="Enter your email"
+          />
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-semibold text-gray-700">Password</label>
+            <Link href="/forgot-password" className="text-sm text-[#1F4D45] hover:text-[#163832] font-medium">
+              Forgot Password?
+            </Link>
+          </div>
+          <input
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#1F4D45] focus:border-[#1F4D45] transition-all bg-gray-50 focus:bg-white"
+            placeholder="••••••••"
+          />
+        </div>
+
+        <div className="flex items-center">
+          <input
+            id="keep-logged-in"
+            type="checkbox"
+            checked={keepLoggedIn}
+            onChange={(e) => setKeepLoggedIn(e.target.checked)}
+            className="h-4 w-4 text-[#1F4D45] focus:ring-[#1F4D45] border-gray-300 rounded"
+          />
+          <label htmlFor="keep-logged-in" className="ml-2 block text-sm text-gray-600">
+            Keep me logged in
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full py-3.5 px-4 bg-[#1F4D45] hover:bg-[#163832] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {isLoading ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Signing In...
+            </span>
+          ) : 'Sign In'}
+        </button>
+      </form>
+
+      <p className="mt-8 text-center text-sm text-gray-600">
+        Don't have an account?{' '}
+        <Link href="/signup" className="font-bold text-[#1F4D45] hover:text-[#163832]">
+          Create an account
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white py-8 px-6 shadow rounded-lg sm:px-10">
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
-              <p className="text-gray-600">Loading...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>}>
       <SignInContent />
     </Suspense>
   );

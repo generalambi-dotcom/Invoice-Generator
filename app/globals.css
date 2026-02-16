@@ -18,6 +18,52 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  .animate-scroll-up {
+    animation: scroll-up 20s linear infinite;
+  }
+
+  .animate-scroll-down {
+    animation: scroll-down 25s linear infinite;
+  }
+
+  .animate-scroll-up-slow {
+    animation: scroll-up 30s linear infinite;
+  }
+
+  .animate-scroll-left {
+    animation: scroll-left 40s linear infinite;
+  }
+}
+
+@keyframes scroll-up {
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes scroll-down {
+  0% {
+    transform: translateY(-50%);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 /* Print styles for PDF */

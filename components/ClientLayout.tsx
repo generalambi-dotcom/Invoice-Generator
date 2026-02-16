@@ -29,12 +29,12 @@ export default function ClientLayout({
     const showSidebar = isLoggedIn;
 
     // We could also allow forcing sidebar hidden on specific public pages if needed
-    // const isPublicPage = ['/login', '/register', '/'].includes(pathname);
+    const isAuthPage = ['/signin', '/signup'].includes(pathname);
     // but for now, rely strictly on auth status as requested.
 
     return (
         <>
-            {showSidebar ? <Sidebar /> : <Header />}
+            {showSidebar ? <Sidebar /> : (!isAuthPage && <Header />)}
 
             <main
                 className={`
@@ -45,13 +45,16 @@ export default function ClientLayout({
                 <div className={`
           flex-grow p-4 sm:p-6 lg:p-8 
           ${showSidebar ? 'mt-16 lg:mt-0' : ''}
+          ${isAuthPage ? '!p-0' : ''}
         `}>
                     {children}
                 </div>
 
-                <div className="mt-auto">
-                    <Footer />
-                </div>
+                {!isAuthPage && (
+                    <div className="mt-auto">
+                        <Footer />
+                    </div>
+                )}
             </main>
             <Toaster position="top-right" />
         </>

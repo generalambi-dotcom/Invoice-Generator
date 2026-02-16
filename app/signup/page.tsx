@@ -4,253 +4,193 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { checkPasswordStrength, validatePassword } from '@/lib/password-validator';
+import AuthLayout from '@/components/AuthLayout';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 import { createSession } from '@/lib/session';
-import PasswordStrengthIndicator from '@/components/PasswordStrengthIndicator';
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string>('');
-  const [errorDetails, setErrorDetails] = useState<string[]>([]);
-  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Calculate password strength in real-time
-  const passwordStrength = password ? checkPasswordStrength(password) : null;
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setPasswordErrors([]);
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    // Validate password strength
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.valid) {
-      setPasswordErrors(passwordValidation.errors);
-      setError('Please fix the password requirements below');
-      return;
-    }
-
     setIsLoading(true);
+    setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setIsLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      // Use API registration instead of localStorage
       const response = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
       });
 
-      const responseData = await response.json(); // Call json() once
+      const data = await response.json();
 
-      if (response.ok) {
-        // Handle successful registration that requires verification
-        if (responseData.requiresVerification) {
-          router.push(`/verify-email?email=${encodeURIComponent(email)}`);
-          return;
-        }
-
-        // Handle successful registration without verification (auto-login)
-        if (responseData.token) {
-          localStorage.setItem('auth_token', responseData.token);
-          if (responseData.refreshToken) {
-            localStorage.setItem('refresh_token', responseData.refreshToken);
-          }
-          localStorage.setItem('invoice-generator-current-user', JSON.stringify(responseData.user));
-
-          createSession(responseData.user);
-
-          router.push('/dashboard');
-          return;
-        }
-
-        // Fallback for success but no token (shouldn't happen in new flow, but safe fallback)
-        router.push('/signin?registered=true');
-        return;
-      } else {
-        // Handle errors
-        setError(responseData.error || 'Failed to create account. Please try again.');
-
-        if (responseData.errors && Array.isArray(responseData.errors)) {
-          setErrorDetails(responseData.errors);
-        }
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
       }
+
+      // Store tokens and user data
+      localStorage.setItem('auth_token', data.token);
+      if (data.refreshToken) localStorage.setItem('refresh_token', data.refreshToken);
+      localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
+      document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
+
+      createSession(data.user);
+
+      // Redirect to email verification or dashboard
+      if (data.requiresVerification) {
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+      } else {
+        router.push('/dashboard');
+      }
+
     } catch (err: any) {
-      setError(err.message || 'Failed to create account. Please try again.');
+      setError(err.message || 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        {/* Logo */}
-        <Link href="/" className="flex justify-center items-center space-x-2 mb-8">
-          <div className="w-10 h-10 bg-green-500 rounded flex items-center justify-center">
-            <svg
-              className="w-6 h-6 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
+    <AuthLayout
+      heading="Create Account"
+      subheading="Get started with your free account today."
+    >
+      <div className="mb-8">
+        <GoogleSignInButton text="Sign up with Google" />
+
+        <div className="relative mt-8">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200"></div>
           </div>
-          <span className="text-2xl font-bold text-gray-800">
-            Invoice<span className="text-gray-500 font-normal">Generator</span>
-          </span>
-        </Link>
-
-        {/* Sign Up Card */}
-        <div className="bg-white py-8 px-6 shadow rounded-lg sm:px-10">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Sign Up</h2>
-          <p className="text-gray-600 mb-6">Create your account to get started</p>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-800 text-sm">
-              <p className="font-medium">{error}</p>
-              {errorDetails.length > 0 && (
-                <ul className="mt-2 list-disc list-inside space-y-1 text-xs">
-                  {errorDetails.map((detail, index) => (
-                    <li key={index}>{detail}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="Enter your full name"
-              />
-            </div>
-
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="Enter your email"
-              />
-            </div>
-
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setPasswordErrors([]);
-                }}
-                className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 ${passwordErrors.length > 0
-                  ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                  : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
-                  }`}
-                placeholder="Create a strong password (min. 8 characters)"
-              />
-              {passwordStrength && (
-                <PasswordStrengthIndicator strength={passwordStrength} />
-              )}
-              {passwordErrors.length > 0 && (
-                <div className="mt-2 text-sm text-red-600">
-                  <ul className="list-disc list-inside space-y-1">
-                    {passwordErrors.map((err, index) => (
-                      <li key={index}>{err}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {password && !passwordStrength?.isValid && passwordErrors.length === 0 && (
-                <p className="mt-2 text-xs text-gray-500">
-                  Password must be at least 8 characters and include uppercase, lowercase, number, and special character.
-                </p>
-              )}
-            </div>
-
-            {/* Confirm Password */}
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm Password
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="Confirm your password"
-              />
-            </div>
-
-            {/* Sign Up Button */}
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? 'Creating account...' : 'Sign Up'}
-              </button>
-            </div>
-
-          </form>
-
-          {/* Sign In Link */}
-          <div className="mt-6 text-center text-sm">
-            <span className="text-gray-600">Already have an account? </span>
-            <Link href="/signin" className="font-medium text-blue-600 hover:text-blue-500">
-              Sign In
-            </Link>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-white text-gray-500">or sign up with email</span>
           </div>
         </div>
       </div>
-    </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+          <input
+            name="name"
+            type="text"
+            required
+            value={formData.name}
+            onChange={handleChange}
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#1F4D45] focus:border-[#1F4D45] transition-all bg-gray-50 focus:bg-white"
+            placeholder="John Doe"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+          <input
+            name="email"
+            type="email"
+            required
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#1F4D45] focus:border-[#1F4D45] transition-all bg-gray-50 focus:bg-white"
+            placeholder="john@example.com"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+            <input
+              name="password"
+              type="password"
+              required
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#1F4D45] focus:border-[#1F4D45] transition-all bg-gray-50 focus:bg-white"
+              placeholder="••••••••"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
+            <input
+              name="confirmPassword"
+              type="password"
+              required
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#1F4D45] focus:border-[#1F4D45] transition-all bg-gray-50 focus:bg-white"
+              placeholder="••••••••"
+            />
+          </div>
+        </div>
+
+        <p className="text-xs text-gray-500">
+          By creating an account, you agree to our <Link href="/terms" className="text-[#1F4D45] hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-[#1F4D45] hover:underline">Privacy Policy</Link>.
+        </p>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full py-3.5 px-4 bg-[#1F4D45] hover:bg-[#163832] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {isLoading ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Creating Account...
+            </span>
+          ) : 'Create Account'}
+        </button>
+      </form>
+
+      <p className="mt-8 text-center text-sm text-gray-600">
+        Already have an account?{' '}
+        <Link href="/signin" className="font-bold text-[#1F4D45] hover:text-[#163832]">
+          Sign In
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }
-

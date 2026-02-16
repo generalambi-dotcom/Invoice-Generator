@@ -16,6 +16,11 @@ model User {
   password      String    // Hashed password
   isAdmin       Boolean   @default(false)
   publicSlug    String?   @unique // Public username/slug for invoice links (e.g., "company-name")
+  
+  // Google Auth
+  googleId      String?   @unique
+  image         String?
+  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

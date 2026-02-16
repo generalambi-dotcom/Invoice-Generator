@@ -60,6 +60,20 @@ export async function GET(request: NextRequest) {
       webhookSecret: settings.webhookSecret ? '***encrypted***' : null,
     };
 
+    // Fetch display phone number
+    const publicConfig = await prisma.systemSetting.findUnique({
+      where: { key: 'whatsapp_public_config' }
+    });
+
+    if (publicConfig) {
+      try {
+        const config = JSON.parse(publicConfig.value);
+        (decryptedSettings as any).displayPhoneNumber = config.displayPhoneNumber;
+      } catch (e) {
+        console.error("Error parsing whatsapp_public_config:", e);
+      }
+    }
+
     return NextResponse.json({ settings: decryptedSettings });
   } catch (error: any) {
     console.error('Error fetching WhatsApp settings:', error);
@@ -165,11 +179,29 @@ export async function PUT(request: NextRequest) {
       },
     });
 
+
+    // Update public display number in SystemSetting
+    if (body.displayPhoneNumber !== undefined) {
+      await prisma.systemSetting.upsert({
+        where: { key: 'whatsapp_public_config' },
+        update: {
+          value: JSON.stringify({ displayPhoneNumber: body.displayPhoneNumber }),
+          description: 'Public WhatsApp configuration'
+        },
+        create: {
+          key: 'whatsapp_public_config',
+          value: JSON.stringify({ displayPhoneNumber: body.displayPhoneNumber }),
+          description: 'Public WhatsApp configuration'
+        }
+      });
+    }
+
     console.log(`✅ WhatsApp settings updated by admin ${user.userId}`);
 
     return NextResponse.json({
       settings: {
         ...settings,
+        displayPhoneNumber: body.displayPhoneNumber, // Return it back
         twilioAuthToken: settings.twilioAuthToken ? '***encrypted***' : null,
         metaAppSecret: settings.metaAppSecret ? '***encrypted***' : null,
         metaAccessToken: settings.metaAccessToken ? '***encrypted***' : null,

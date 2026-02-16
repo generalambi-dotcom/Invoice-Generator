@@ -13,7 +13,7 @@ function WhatsAppSettingsContent() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+
   const [settings, setSettings] = useState({
     provider: 'twilio',
     twilioAccountSid: '',
@@ -30,6 +30,7 @@ function WhatsAppSettingsContent() {
     allowUserConnections: true,
     messagesPerMinute: 60,
     messagesPerDay: 1000,
+    displayPhoneNumber: '',
   });
 
   useEffect(() => {
@@ -79,6 +80,7 @@ function WhatsAppSettingsContent() {
           allowUserConnections: data.settings.allowUserConnections !== undefined ? data.settings.allowUserConnections : true,
           messagesPerMinute: data.settings.messagesPerMinute || 60,
           messagesPerDay: data.settings.messagesPerDay || 1000,
+          displayPhoneNumber: data.settings.displayPhoneNumber || '',
         });
       }
     } catch (err: any) {
@@ -165,6 +167,26 @@ function WhatsAppSettingsContent() {
               </div>
             )}
 
+            {/* Public Display Number */}
+            <div className="mb-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Public Configuration</h2>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Display Phone Number
+                </label>
+                <input
+                  type="text"
+                  value={settings.displayPhoneNumber}
+                  onChange={(e) => updateSetting('displayPhoneNumber', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="+234..."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  This number will be displayed to users in their WhatsApp settings page so they know who to message.
+                </p>
+              </div>
+            </div>
+
             {/* Provider Selection */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -188,7 +210,7 @@ function WhatsAppSettingsContent() {
             {settings.provider === 'twilio' && (
               <div className="mb-6 p-6 bg-blue-50 rounded-lg border border-blue-200">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Twilio Configuration</h2>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -245,7 +267,7 @@ function WhatsAppSettingsContent() {
             {settings.provider === 'meta' && (
               <div className="mb-6 p-6 bg-blue-50 rounded-lg border border-blue-200">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Meta WhatsApp Business API Configuration</h2>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -318,7 +340,7 @@ function WhatsAppSettingsContent() {
             {/* Webhook Configuration */}
             <div className="mb-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Webhook Configuration</h2>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -357,7 +379,7 @@ function WhatsAppSettingsContent() {
             {/* Feature Flags */}
             <div className="mb-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Feature Settings</h2>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -404,7 +426,7 @@ function WhatsAppSettingsContent() {
             {/* Rate Limiting */}
             <div className="mb-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Rate Limiting</h2>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">

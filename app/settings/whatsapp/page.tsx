@@ -14,10 +14,11 @@ function WhatsAppConnectionContent() {
   const [disconnecting, setDisconnecting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  
+
   const [phoneNumber, setPhoneNumber] = useState('');
   const [credential, setCredential] = useState<any>(null);
   const [isEnabled, setIsEnabled] = useState(false);
+  const [displayPhoneNumber, setDisplayPhoneNumber] = useState('');
 
   useEffect(() => {
     const currentUser = getCurrentUser();
@@ -47,17 +48,18 @@ function WhatsAppConnectionContent() {
         }
       }
 
-      // Check if WhatsApp is enabled globally
-      const settingsResponse = await fetch('/api/admin/whatsapp', {
+      // Check if WhatsApp is enabled globally and get display number
+      const configResponse = await fetch('/api/whatsapp/config', {
         headers: {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` }),
         },
       });
 
-      if (settingsResponse.ok) {
-        const settingsData = await settingsResponse.json();
-        setIsEnabled(settingsData.settings?.isEnabled || false);
+      if (configResponse.ok) {
+        const configData = await configResponse.json();
+        setIsEnabled(configData.settings?.isEnabled || false);
+        setDisplayPhoneNumber(configData.settings?.displayPhoneNumber || '');
       }
     } catch (err: any) {
       console.error('Error loading WhatsApp connection:', err);
@@ -248,7 +250,10 @@ function WhatsAppConnectionContent() {
                 <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg">
                   <h4 className="text-sm font-semibold text-blue-900 mb-2">How to Use</h4>
                   <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-                    <li>Send a message to your connected WhatsApp number</li>
+                    {displayPhoneNumber && (
+                      <li><strong>Step 1:</strong> Save our number <span className="font-mono bg-blue-100 px-1 rounded">{displayPhoneNumber}</span> to your contacts</li>
+                    )}
+                    <li>Send a message to the number above</li>
                     <li>Use commands like: "Create invoice for John Doe, 5 items at $100 each"</li>
                     <li>You'll receive the invoice PDF via WhatsApp</li>
                     <li>Forward the invoice to your clients</li>
@@ -271,6 +276,12 @@ function WhatsAppConnectionContent() {
                   <p className="text-sm text-gray-600 mb-4">
                     Enter your WhatsApp phone number to connect. Make sure to include the country code.
                   </p>
+
+                  {displayPhoneNumber && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
+                      Our WhatsApp Number: <span className="font-mono font-bold">{displayPhoneNumber}</span>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">

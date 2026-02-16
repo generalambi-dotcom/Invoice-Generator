@@ -120,18 +120,18 @@ export async function sendInvoiceEmail({
 
     if (error) {
       console.error('Resend error:', error);
-      return { 
-        success: false, 
-        error: formatErrorMessage(error, 'sending email') 
+      return {
+        success: false,
+        error: formatErrorMessage(error, 'sending email')
       };
     }
 
     return { success: true, emailId: data?.id };
   } catch (error: any) {
     console.error('Error sending email:', error);
-    return { 
-      success: false, 
-      error: formatErrorMessage(error, 'sending email') 
+    return {
+      success: false,
+      error: formatErrorMessage(error, 'sending email')
     };
   }
 }
@@ -158,9 +158,9 @@ export async function sendPasswordResetEmail({
         to,
         resetUrl: resetUrl.substring(0, 50) + '...',
       });
-      return { 
-        success: false, 
-        error: 'RESEND_API_KEY environment variable is not configured' 
+      return {
+        success: false,
+        error: 'RESEND_API_KEY environment variable is not configured'
       };
     }
 
@@ -211,9 +211,9 @@ export async function sendPasswordResetEmail({
         code: (error as any).code,
         fullError: JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
       });
-      return { 
-        success: false, 
-        error: formatErrorMessage(error, 'sending password reset email') 
+      return {
+        success: false,
+        error: formatErrorMessage(error, 'sending password reset email')
       };
     }
 
@@ -230,9 +230,9 @@ export async function sendPasswordResetEmail({
       stack: error.stack,
       fullError: JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
     });
-    return { 
-      success: false, 
-      error: formatErrorMessage(error, 'sending password reset email') 
+    return {
+      success: false,
+      error: formatErrorMessage(error, 'sending password reset email')
     };
   }
 }
@@ -259,9 +259,9 @@ export async function sendVerificationEmail({
         to,
         verificationUrl: verificationUrl.substring(0, 50) + '...',
       });
-      return { 
-        success: false, 
-        error: 'RESEND_API_KEY environment variable is not configured' 
+      return {
+        success: false,
+        error: 'RESEND_API_KEY environment variable is not configured'
       };
     }
 
@@ -294,9 +294,9 @@ export async function sendVerificationEmail({
 
     if (error) {
       console.error('❌ Resend API error:', error);
-      return { 
-        success: false, 
-        error: formatErrorMessage(error, 'sending verification email') 
+      return {
+        success: false,
+        error: formatErrorMessage(error, 'sending verification email')
       };
     }
 
@@ -308,9 +308,116 @@ export async function sendVerificationEmail({
     return { success: true, emailId: data?.id };
   } catch (error: any) {
     console.error('❌ Exception in sendVerificationEmail:', error);
-    return { 
-      success: false, 
-      error: formatErrorMessage(error, 'sending verification email') 
+    return {
+      success: false,
+      error: formatErrorMessage(error, 'sending verification email')
+    };
+  }
+}
+
+/**
+ * Send support email from contact form
+ */
+interface SendSupportEmailParams {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
+export async function sendSupportEmail({
+  name,
+  email,
+  subject,
+  message,
+}: SendSupportEmailParams): Promise<{ success: boolean; error?: string; emailId?: string }> {
+  try {
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      console.log('⚠️  RESEND_API_KEY not set. Support email would be sent:', {
+        from: `${name} <${email}>`,
+        subject,
+        message: message.substring(0, 50) + '...',
+      });
+      return {
+        success: false,
+        error: 'RESEND_API_KEY environment variable is not configured'
+      };
+    }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    // HTML content for the support team
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .header { background: #f3f4f6; padding: 20px; border-bottom: 2px solid #e5e7eb; }
+            .content { padding: 20px; }
+            .field { margin-bottom: 15px; }
+            .label { font-weight: bold; color: #6b7280; font-size: 0.9em; }
+            .value { background: #f9fafb; padding: 10px; border-radius: 4px; border: 1px solid #e5e7eb; }
+            .message-box { white-space: pre-wrap; background: #fff; padding: 15px; border: 1px solid #e5e7eb; border-radius: 4px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h2>New Contact Form Submission</h2>
+            <p>From: <strong>${name}</strong> (${email})</p>
+          </div>
+          <div class="content">
+            <div class="field">
+              <div class="label">Subject</div>
+              <div class="value">${subject}</div>
+            </div>
+            
+            <div class="field">
+              <div class="label">Message</div>
+              <div class="message-box">${message}</div>
+            </div>
+
+            <div style="margin-top: 30px; font-size: 0.8em; color: #888;">
+              <p>This email was sent via the contact form on Invoice Generator.</p>
+              <p>Reply to this email to contact the user directly at ${email}.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const emailData = {
+      from: 'Invoice Generator Contact <contact@resend.dev>', // Update in production
+      to: 'support@invoicegenerator.ng',
+      reply_to: email, // Allow direct reply to user
+      subject: `[Contact Form] ${subject}`,
+      html: emailHtml,
+      text: `Name: ${name}\nEmail: ${email}\nSubject: ${subject}\n\nMessage:\n${message}`,
+    };
+
+    const result = await retryWithBackoff(async () => {
+      return await resend.emails.send(emailData);
+    }, {
+      maxRetries: 2,
+    });
+
+    const { data, error } = result;
+
+    if (error) {
+      console.error('❌ Resend API error (Support):', error);
+      return {
+        success: false,
+        error: formatErrorMessage(error, 'sending support email')
+      };
+    }
+
+    return { success: true, emailId: data?.id };
+  } catch (error: any) {
+    console.error('❌ Exception in sendSupportEmail:', error);
+    return {
+      success: false,
+      error: formatErrorMessage(error, 'sending support email')
     };
   }
 }

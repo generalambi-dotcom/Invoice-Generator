@@ -124,7 +124,7 @@ export default function Header() {
           {/* Desktop Navigation Links - Centered */}
           <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
             <Link
-              href="/resources"
+              href="/blog"
               className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               Resources

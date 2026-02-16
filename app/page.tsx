@@ -399,7 +399,7 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3 mb-6">
-                <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-teal-600">✓</span> Up to 5 clients</span>
+                <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-teal-600">✓</span> Unlimited clients</span>
                 <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-teal-600">✓</span> 15 invoices/month</span>
                 <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-teal-600">✓</span> Company branding & logo</span>
                 <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-teal-600">✓</span> 6 color themes</span>

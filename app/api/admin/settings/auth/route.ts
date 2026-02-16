@@ -22,7 +22,14 @@ export async function GET(request: NextRequest) {
 
         const settings = setting ? JSON.parse(setting.value) : defaultSettings;
 
-        return NextResponse.json({ settings });
+        // Check Google OAuth status from env
+        const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+        const googleOAuth = {
+            status: googleClientId ? 'configured' : 'not_configured',
+            clientId: googleClientId ? googleClientId.substring(0, 12) + '...' : '',
+        };
+
+        return NextResponse.json({ settings, googleOAuth });
     } catch (error) {
         console.error('Error fetching auth settings:', error);
         return NextResponse.json(

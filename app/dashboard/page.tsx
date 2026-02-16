@@ -190,6 +190,7 @@ export default function DashboardPage() {
     // Filter active invoices by selected currency for stats calculation
     const invoices = activeInvoices.filter(inv => inv.currency === currency);
 
+    const now = new Date();
     const totalInvoices = invoices.length;
     const totalAmount = invoices.reduce((sum, inv) => sum + inv.total, 0);
     const paidInvoices = invoices.filter(inv => inv.paymentStatus === 'paid');
@@ -199,9 +200,32 @@ export default function DashboardPage() {
     const overdueInvoices = invoices.filter(inv => {
       if (inv.paymentStatus === 'paid' || inv.paymentStatus === 'cancelled') return false;
       const dueDate = new Date(inv.dueDate);
-      return dueDate < new Date();
+      return dueDate < now;
     });
     const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + inv.total, 0);
+
+    // Due this week
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+    const dueThisWeekInvoices = invoices.filter(inv => {
+      if (inv.paymentStatus === 'paid' || inv.paymentStatus === 'cancelled') return false;
+      const dueDate = new Date(inv.dueDate);
+      return dueDate >= startOfWeek && dueDate < endOfWeek;
+    });
+    const dueThisWeekAmount = dueThisWeekInvoices.reduce((sum, inv) => sum + inv.total, 0);
+
+    // Received this month
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const receivedThisMonth = paidInvoices.filter(inv => {
+      const paidDate = inv.paymentDate ? new Date(inv.paymentDate) : (inv.updatedAt ? new Date(inv.updatedAt) : null);
+      if (!paidDate) return false;
+      return paidDate >= startOfMonth && paidDate <= endOfMonth;
+    });
+    const receivedThisMonthAmount = receivedThisMonth.reduce((sum, inv) => sum + (inv.paidAmount || inv.total), 0);
 
     return {
       totalInvoices,
@@ -212,6 +236,10 @@ export default function DashboardPage() {
       unpaidAmount,
       overdueCount: overdueInvoices.length,
       overdueAmount,
+      dueThisWeekCount: dueThisWeekInvoices.length,
+      dueThisWeekAmount,
+      receivedThisMonthCount: receivedThisMonth.length,
+      receivedThisMonthAmount,
     };
   };
 
@@ -389,53 +417,84 @@ export default function DashboardPage() {
           totalStats={{ paid: stats.paidCount, unpaid: stats.unpaidCount }}
         />
 
-        {/* Stats Cards - Premium Redesign */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="p-3 bg-blue-50 rounded-xl text-blue-600">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 3.666V19.124a.5.5 0 01-.258.438l-2.003.896-.612.2a.5.5 0 01-.456-.118l-2.833-2.738a.5.5 0 01-.157-.348V7.5M8.5 7v10h2.755M1.5 7h1.666a.5.5 0 01.354.146l2.167 2.167h.578a.5.5 0 01.354.146l2.167 2.166H10.5a.5.5 0 01.354.146l.77.771M22.5 7h-1.666a.5.5 0 00-.354.146l-2.167 2.167h-.578a.5.5 0 00-.354.146l-2.167 2.166H13.5a.5.5 0 00-.354.146l-.771.771" /></svg>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Total Revenue</h3>
-              <p className="text-xl font-bold text-gray-900">
-                {currencySymbols[currency as Currency] || currencySymbols['USD']} {formatCurrency(stats.totalAmount, currency)}
+        {/* Stats Cards - Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          {/* Total Outstanding */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-[60px] -mr-4 -mt-4"></div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">Total Outstanding</h3>
+              </div>
+              <p className="text-2xl font-bold text-gray-900 mb-1">
+                {currencySymbols[currency as Currency] || currencySymbols['USD']}{formatCurrency(stats.unpaidAmount, currency)}
               </p>
+              <p className="text-xs text-gray-400">{stats.unpaidCount} unpaid invoice{stats.unpaidCount !== 1 ? 's' : ''}</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="p-3 bg-green-50 rounded-xl text-green-600">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Paid Invoices</h3>
-              <p className="text-xl font-bold text-gray-900">
-                {currencySymbols[currency as Currency] || currencySymbols['USD']} {formatCurrency(stats.paidAmount, currency)}
+          {/* Due This Week */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-50 rounded-bl-[60px] -mr-4 -mt-4"></div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">Due This Week</h3>
+                {stats.dueThisWeekCount > 0 && (
+                  <span className="ml-auto bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {stats.dueThisWeekCount}
+                  </span>
+                )}
+              </div>
+              <p className="text-2xl font-bold text-gray-900 mb-1">
+                {currencySymbols[currency as Currency] || currencySymbols['USD']}{formatCurrency(stats.dueThisWeekAmount, currency)}
               </p>
+              <p className="text-xs text-gray-400">{stats.dueThisWeekCount} invoice{stats.dueThisWeekCount !== 1 ? 's' : ''} due</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="p-3 bg-orange-50 rounded-xl text-orange-600">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Pending</h3>
-              <p className="text-xl font-bold text-gray-900">
-                {currencySymbols[currency as Currency] || currencySymbols['USD']} {formatCurrency(stats.unpaidAmount - stats.overdueAmount, currency)}
+          {/* Received This Month */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-bl-[60px] -mr-4 -mt-4"></div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">Received This Month</h3>
+              </div>
+              <p className="text-2xl font-bold text-gray-900 mb-1">
+                {currencySymbols[currency as Currency] || currencySymbols['USD']}{formatCurrency(stats.receivedThisMonthAmount, currency)}
               </p>
+              <p className="text-xs text-gray-400">{stats.receivedThisMonthCount} payment{stats.receivedThisMonthCount !== 1 ? 's' : ''} received</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className="p-3 bg-red-50 rounded-xl text-red-600">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Overdue</h3>
-              <p className="text-xl font-bold text-gray-900">
-                {currencySymbols[currency as Currency] || currencySymbols['USD']} {formatCurrency(stats.overdueAmount, currency)}
+          {/* Overdue */}
+          <div className={`bg-white rounded-2xl shadow-sm border p-5 hover:shadow-md transition-shadow relative overflow-hidden ${stats.overdueCount > 0 ? 'border-red-200' : 'border-gray-200'
+            }`}>
+            <div className="absolute top-0 right-0 w-24 h-24 bg-red-50 rounded-bl-[60px] -mr-4 -mt-4"></div>
+            <div className="relative">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 bg-red-100 rounded-lg text-red-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <h3 className="text-sm font-medium text-gray-500">Overdue</h3>
+                {stats.overdueCount > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+                    {stats.overdueCount}
+                  </span>
+                )}
+              </div>
+              <p className="text-2xl font-bold text-gray-900 mb-1">
+                {currencySymbols[currency as Currency] || currencySymbols['USD']}{formatCurrency(stats.overdueAmount, currency)}
               </p>
+              <p className="text-xs text-red-400">{stats.overdueCount > 0 ? `${stats.overdueCount} overdue invoice${stats.overdueCount !== 1 ? 's' : ''} — follow up!` : 'No overdue invoices 🎉'}</p>
             </div>
           </div>
         </div>

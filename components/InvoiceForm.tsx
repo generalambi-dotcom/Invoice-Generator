@@ -106,6 +106,7 @@ function InvoiceFormContent() {
   const [invoiceHistory, setInvoiceHistory] = useState<Invoice[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showSaveDefaults, setShowSaveDefaults] = useState(false);
   const [companyAddressFormat, setCompanyAddressFormat] = useState<'simple' | 'detailed'>('simple');
   const [clientAddressFormat, setClientAddressFormat] = useState<'simple' | 'detailed'>('simple');
@@ -984,7 +985,27 @@ function InvoiceFormContent() {
             <div className="w-full xl:w-80 shrink-0 space-y-6 xl:sticky xl:top-8 order-2 xl:order-2 h-fit">
               {/* Action Buttons */}
               <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-3">
-
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={isGeneratingPDF}
+                  className="w-full py-3 px-4 bg-gray-900 hover:bg-black text-white font-bold rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
+                </button>
+                <button
+                  onClick={() => {
+                    if (!user) {
+                      setShowLoginPrompt(true);
+                    } else {
+                      handleSaveInvoice();
+                    }
+                  }}
+                  className="w-full py-3 px-4 bg-theme-primary hover:opacity-90 text-white font-bold rounded-lg text-sm transition-colors flex items-center justify-center gap-2 shadow-md shadow-theme-primary/20"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                  Save Invoice
+                </button>
 
                 <div className="flex gap-2">
                   <button
@@ -2015,6 +2036,44 @@ function InvoiceFormContent() {
           </div>
         )
       }
+      {/* Login Prompt Modal */}
+      {showLoginPrompt && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all" style={{ margin: 0 }}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Save Your Invoice</h3>
+              <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+                Create a free account or log in to save your invoices, track payments, email clients, and access your invoice history from anywhere.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Link
+                  href="/auth/register"
+                  className="w-full py-3 px-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl text-sm transition-colors text-center"
+                >
+                  Create Free Account
+                </Link>
+                <Link
+                  href="/auth/login"
+                  className="w-full py-3 px-4 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold rounded-xl text-sm transition-colors text-center"
+                >
+                  Log In
+                </Link>
+              </div>
+            </div>
+            <div className="px-8 pb-6">
+              <button
+                onClick={() => setShowLoginPrompt(false)}
+                className="w-full py-2.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     if (user.lockedUntil && user.lockedUntil > new Date()) {
       const minutesRemaining = Math.ceil((user.lockedUntil.getTime() - Date.now()) / (1000 * 60));
       return NextResponse.json(
-        { 
+        {
           error: `Account is temporarily locked due to multiple failed login attempts. Please try again in ${minutesRemaining} minute(s).`,
           locked: true,
           lockedUntil: user.lockedUntil.toISOString(),
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password);
-    
+
     if (!isValidPassword) {
       // Increment failed login attempts
       const failedAttempts = (user.failedLoginAttempts || 0) + 1;
@@ -70,11 +70,11 @@ export async function POST(request: NextRequest) {
       });
 
       const attemptsRemaining = MAX_FAILED_ATTEMPTS - failedAttempts;
-      
+
       return NextResponse.json(
-        { 
+        {
           error: 'Invalid email or password',
-          ...(attemptsRemaining > 0 && attemptsRemaining <= 3 
+          ...(attemptsRemaining > 0 && attemptsRemaining <= 3
             ? { attemptsRemaining: `${attemptsRemaining} attempt(s) remaining before account lockout` }
             : {}),
         },
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     // Check email verification
     if (!user.emailVerified) {
       return NextResponse.json(
-        { 
+        {
           error: 'Please verify your email address before signing in. Check your inbox for the verification email.',
           requiresVerification: true,
           email: user.email,
@@ -130,8 +130,13 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error during login:', error);
+    const errorMessage = error?.message || 'Unknown error';
+    const errorName = error?.constructor?.name || 'Error';
     return NextResponse.json(
-      { error: 'Failed to login' },
+      {
+        error: 'Failed to login',
+        debug: `${errorName}: ${errorMessage}`,
+      },
       { status: 500 }
     );
   }

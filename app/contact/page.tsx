@@ -2,8 +2,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import FAQAccordion from '@/components/FAQAccordion';
 import Link from 'next/link';
 
@@ -49,8 +47,7 @@ export default function ContactPage() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50">
-            <Header />
+        <div className="flex flex-col bg-gray-50">
 
             <main className="flex-grow container mx-auto px-4 py-8 sm:py-12">
 
@@ -268,7 +265,6 @@ export default function ContactPage() {
                 </div>
             </main>
 
-            <Footer />
         </div>
     );
 }

@@ -413,11 +413,129 @@ export async function sendSupportEmail({
     }
 
     return { success: true, emailId: data?.id };
+    return { success: true, emailId: data?.id };
   } catch (error: any) {
     console.error('❌ Exception in sendSupportEmail:', error);
     return {
       success: false,
       error: formatErrorMessage(error, 'sending support email')
     };
+  }
+}
+
+/**
+ * Send invoice reminder email
+ */
+interface SendInvoiceReminderParams {
+  invoice: any;
+  type: 'due_soon' | 'due_today' | 'overdue';
+  days?: number; // Days overdue or days until due
+}
+
+export async function sendInvoiceReminderEmail({
+  invoice,
+  type,
+  days,
+}: SendInvoiceReminderParams): Promise<{ success: boolean; error?: string; emailId?: string }> {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.log('⚠️ RESEND_API_KEY not set. Reminder would be sent:', {
+        to: invoice.clientInfo?.email,
+        type,
+        invoiceNumber: invoice.invoiceNumber,
+      });
+      return { success: true, emailId: 'dev-mode' };
+    }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const clientName = invoice.clientInfo?.name || 'Valued Client';
+    const invoiceUrl = `https://invoicegenerator.ng/invoice/${invoice.id}`; // Adjust based on your public invoice URL structure
+
+    let subject = '';
+    let headline = '';
+    let bodyText = '';
+    let color = '#4F46E5'; // Default blue
+
+    switch (type) {
+      case 'due_soon':
+        subject = `Reminder: Invoice ${invoice.invoiceNumber} is due soon`;
+        headline = 'Payment Reminder';
+        bodyText = `This is a friendly reminder that Invoice ${invoice.invoiceNumber} is due in ${days} days on ${new Date(invoice.dueDate).toLocaleDateString()}.`;
+        break;
+      case 'due_today':
+        subject = `Invoice ${invoice.invoiceNumber} is due today`;
+        headline = 'Payment Due Today';
+        bodyText = `This is a reminder that Invoice ${invoice.invoiceNumber} is due today. Please settle the payment at your earliest convenience.`;
+        break;
+      case 'overdue':
+        subject = `Overdue: Invoice ${invoice.invoiceNumber} is ${days} days late`;
+        headline = 'Payment Overdue';
+        bodyText = `We noticed that payment for Invoice ${invoice.invoiceNumber} was due on ${new Date(invoice.dueDate).toLocaleDateString()} and is now ${days} days overdue. Please make payment immediately to avoid service interruption.`;
+        color = '#DC2626'; // Red
+        break;
+    }
+
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: ${color}; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }
+            .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }
+            .button { display: inline-block; padding: 12px 24px; background: ${color}; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+            .details { background: white; padding: 15px; border-radius: 6px; margin: 15px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>${headline}</h1>
+            </div>
+            <div class="content">
+              <p>Dear ${clientName},</p>
+              <p>${bodyText}</p>
+              
+              <div class="details">
+                <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
+                <p><strong>Amount Due:</strong> ${invoice.currency} ${invoice.total?.toFixed(2)}</p>
+                <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
+              </div>
+
+              <div style="text-align: center;">
+                 <a href="${invoiceUrl}" class="button">View & Pay Invoice</a>
+              </div>
+              
+              <p>If you have already made payment, please disregard this email.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const emailData = {
+      from: 'Invoice Generator <reminders@resend.dev>',
+      to: invoice.clientInfo?.email, // Assuming client email is reachable here
+      subject: subject,
+      html: emailHtml,
+    };
+
+    if (!emailData.to) {
+      return { success: false, error: 'Client email not found' };
+    }
+
+    const result = await resend.emails.send(emailData);
+
+    if (result.error) {
+      console.error('Error sending reminder:', result.error);
+      return { success: false, error: formatErrorMessage(result.error, 'sending reminder') };
+    }
+
+    return { success: true, emailId: result.data?.id };
+
+  } catch (error: any) {
+    console.error('Error in sendInvoiceReminderEmail:', error);
+    return { success: false, error: formatErrorMessage(error, 'sending reminder') };
   }
 }

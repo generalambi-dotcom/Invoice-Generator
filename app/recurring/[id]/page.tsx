@@ -3,17 +3,32 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import RecurringInvoiceForm from '@/components/RecurringInvoiceForm';
+import { getCurrentUser } from '@/lib/auth';
 
 export default function EditRecurringInvoicePage({ params }: { params: { id: string } }) {
     const [invoice, setInvoice] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const [isPremium, setIsPremium] = useState(false);
 
     useEffect(() => {
+        const user = getCurrentUser();
+        const premium = user?.isAdmin === true ||
+            (user?.subscription?.plan === 'premium' &&
+                user?.subscription?.status === 'active');
+
+        if (!premium) {
+            router.push('/upgrade');
+            return;
+        }
+
+        setIsPremium(true);
         // Unwrap params if necessary (Next.js 13+ behavior variability)
         // Simply accessing params.id is usually fine in client components if passed as prop
         fetchInvoice();
     }, [params.id]);
+
+    if (!isPremium) return null; // Or a loading spinner
 
     const fetchInvoice = async () => {
         try {

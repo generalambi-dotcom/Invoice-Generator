@@ -1,9 +1,29 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import RecurringInvoiceForm from '@/components/RecurringInvoiceForm';
+import { getCurrentUser } from '@/lib/auth';
 
 export default function NewRecurringInvoicePage() {
+    const router = useRouter();
+    const [isPremium, setIsPremium] = useState(false);
+
+    useEffect(() => {
+        const user = getCurrentUser();
+        const premium = user?.isAdmin === true ||
+            (user?.subscription?.plan === 'premium' &&
+                user?.subscription?.status === 'active');
+
+        if (!premium) {
+            router.push('/upgrade');
+            return;
+        }
+
+        setIsPremium(true);
+    }, []);
+
+    if (!isPremium) return null; // Or a loading spinner
 
     return (
         <div className="min-h-screen p-4 md:p-6 max-w-7xl mx-auto">

@@ -16,12 +16,28 @@ interface RecurringInvoiceData {
     invoiceData: any;
 }
 
+import { getCurrentUser } from '@/lib/auth';
+
+// ... imports
+
 export default function RecurringInvoicesPage() {
     const router = useRouter();
     const [recurringInvoices, setRecurringInvoices] = useState<RecurringInvoiceData[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isPremium, setIsPremium] = useState(false);
 
     useEffect(() => {
+        const user = getCurrentUser();
+        const premium = user?.isAdmin === true ||
+            (user?.subscription?.plan === 'premium' &&
+                user?.subscription?.status === 'active');
+
+        if (!premium) {
+            router.push('/upgrade');
+            return;
+        }
+
+        setIsPremium(true);
         fetchRecurringInvoices();
     }, []);
 

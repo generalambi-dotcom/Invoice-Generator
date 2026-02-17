@@ -83,11 +83,27 @@ export async function POST(request: NextRequest) {
       </div>
     </div>`;
 
-        await resend.emails.send({
+        const data = await resend.emails.send({
             from: `InvoiceNaija <${fromEmail}>`,
             to: recipientEmail,
             subject: `[TEST] ${testSubject}`,
             html,
+        });
+
+        // Log the test email
+        if (data.error) {
+            console.error('Resend error:', data.error);
+        }
+
+        await prisma.emailLog.create({
+            data: {
+                userId: user.userId,
+                to: recipientEmail,
+                subject: `[TEST] ${testSubject}`,
+                body: html,
+                status: data.error ? 'failed' : 'sent',
+                errorMessage: data.error ? JSON.stringify(data.error) : null,
+            },
         });
 
         return NextResponse.json({ success: true, sentTo: recipientEmail });

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 import { useSearchParams, useRouter } from 'next/navigation';
 import InvoicePaper from './InvoicePaper';
 import { pdf } from '@react-pdf/renderer';
@@ -131,6 +132,8 @@ function InvoiceFormContent() {
   const [templates, setTemplates] = useState<any[]>([]);
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
+  const [bulkActionLoading, setBulkActionLoading] = useState<string | null>(null);
   const [newClient, setNewClient] = useState({
     name: '',
     email: '',
@@ -1026,60 +1029,185 @@ function InvoiceFormContent() {
           {/* Invoice History */}
           {showHistory && (
             <div className="mb-6 sm:mb-8 bg-white rounded-lg shadow p-4 sm:p-6">
-              <h2 className="text-xl font-semibold mb-4">Invoice History</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Invoice History</h2>
+                {selectedInvoices.size > 0 && (
+                  <span className="text-sm text-indigo-600 font-medium bg-indigo-50 px-3 py-1 rounded-full">
+                    {selectedInvoices.size} selected
+                  </span>
+                )}
+              </div>
               {invoiceHistory.length === 0 ? (
                 <p className="text-gray-500">No invoices yet. Create your first invoice!</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-2">Invoice #</th>
-                        <th className="text-left p-2">Client</th>
-                        <th className="text-left p-2">Date</th>
-                        <th className="text-right p-2">Total</th>
-                        <th className="text-center p-2">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {invoiceHistory.map((inv) => (
-                        <tr key={inv.id} className="border-b hover:bg-gray-50">
-                          <td className="p-2">{inv.invoiceNumber}</td>
-                          <td className="p-2">{inv.client.name}</td>
-                          <td className="p-2">{format(new Date(inv.invoiceDate), 'MMM dd, yyyy')}</td>
-                          <td className="p-2 text-right">
-                            {currencySymbols[inv.currency]} {formatCurrency(inv.total, inv.currency)}
-                          </td>
-                          <td className="p-2">
-                            <div className="flex gap-2 justify-center">
-                              <button
-                                onClick={() => loadInvoiceFromHistory(inv.id)}
-                                className="text-blue-600 hover:text-blue-800"
-                                title="Load"
-                              >
-                                Load
-                              </button>
-                              <button
-                                onClick={() => handleDuplicateInvoice(inv)}
-                                className="text-green-600 hover:text-green-800"
-                                title="Duplicate"
-                              >
-                                Duplicate
-                              </button>
-                              <button
-                                onClick={() => handleDeleteInvoice(inv.id)}
-                                className="text-red-600 hover:text-red-800"
-                                title="Delete"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="p-2 w-8">
+                            <input
+                              type="checkbox"
+                              className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                              checked={selectedInvoices.size === invoiceHistory.length && invoiceHistory.length > 0}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedInvoices(new Set(invoiceHistory.map(inv => inv.id)));
+                                } else {
+                                  setSelectedInvoices(new Set());
+                                }
+                              }}
+                            />
+                          </th>
+                          <th className="text-left p-2">Invoice #</th>
+                          <th className="text-left p-2">Client</th>
+                          <th className="text-left p-2">Date</th>
+                          <th className="text-right p-2">Total</th>
+                          <th className="text-center p-2">Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {invoiceHistory.map((inv) => (
+                          <tr key={inv.id} className={`border-b hover:bg-gray-50 ${selectedInvoices.has(inv.id) ? 'bg-indigo-50/50' : ''}`}>
+                            <td className="p-2">
+                              <input
+                                type="checkbox"
+                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                checked={selectedInvoices.has(inv.id)}
+                                onChange={(e) => {
+                                  const next = new Set(selectedInvoices);
+                                  if (e.target.checked) { next.add(inv.id); } else { next.delete(inv.id); }
+                                  setSelectedInvoices(next);
+                                }}
+                              />
+                            </td>
+                            <td className="p-2">{inv.invoiceNumber}</td>
+                            <td className="p-2">{inv.client.name}</td>
+                            <td className="p-2">{format(new Date(inv.invoiceDate), 'MMM dd, yyyy')}</td>
+                            <td className="p-2 text-right">
+                              {currencySymbols[inv.currency]} {formatCurrency(inv.total, inv.currency)}
+                            </td>
+                            <td className="p-2">
+                              <div className="flex gap-2 justify-center">
+                                <button
+                                  onClick={() => loadInvoiceFromHistory(inv.id)}
+                                  className="text-blue-600 hover:text-blue-800"
+                                  title="Load"
+                                >
+                                  Load
+                                </button>
+                                <button
+                                  onClick={() => handleDuplicateInvoice(inv)}
+                                  className="text-green-600 hover:text-green-800"
+                                  title="Duplicate"
+                                >
+                                  Duplicate
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteInvoice(inv.id)}
+                                  className="text-red-600 hover:text-red-800"
+                                  title="Delete"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Floating Bulk Action Bar */}
+                  {selectedInvoices.size > 0 && (
+                    <div className="mt-4 p-3 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-between text-white shadow-lg">
+                      <span className="text-sm font-medium">
+                        {selectedInvoices.size} invoice{selectedInvoices.size > 1 ? 's' : ''} selected
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          disabled={bulkActionLoading !== null}
+                          onClick={async () => {
+                            setBulkActionLoading('send-reminders');
+                            try {
+                              const res = await fetch('/api/invoices/bulk', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'send-reminders', invoiceIds: Array.from(selectedInvoices) }),
+                              });
+                              const data = await res.json();
+                              if (res.ok) {
+                                toast.success(`Reminders sent: ${data.results.sent} success, ${data.results.failed} failed`);
+                                setSelectedInvoices(new Set());
+                              } else { toast.error(data.error || 'Failed'); }
+                            } catch { toast.error('Error sending reminders'); }
+                            setBulkActionLoading(null);
+                          }}
+                          className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                        >
+                          {bulkActionLoading === 'send-reminders' ? 'Sending...' : '📧 Send Reminders'}
+                        </button>
+                        <button
+                          disabled={bulkActionLoading !== null}
+                          onClick={async () => {
+                            setBulkActionLoading('mark-paid');
+                            try {
+                              const res = await fetch('/api/invoices/bulk', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'mark-paid', invoiceIds: Array.from(selectedInvoices) }),
+                              });
+                              const data = await res.json();
+                              if (res.ok) {
+                                toast.success(`${data.results.updated} invoice(s) marked as paid`);
+                                setSelectedInvoices(new Set());
+                                if (typeof window !== 'undefined') window.location.reload();
+                              } else { toast.error(data.error || 'Failed'); }
+                            } catch { toast.error('Error marking as paid'); }
+                            setBulkActionLoading(null);
+                          }}
+                          className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                        >
+                          {bulkActionLoading === 'mark-paid' ? 'Updating...' : '✅ Mark Paid'}
+                        </button>
+                        <button
+                          disabled={bulkActionLoading !== null}
+                          onClick={async () => {
+                            setBulkActionLoading('export-csv');
+                            try {
+                              const res = await fetch('/api/invoices/bulk', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'export-csv', invoiceIds: Array.from(selectedInvoices) }),
+                              });
+                              if (res.ok) {
+                                const blob = await res.blob();
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `invoices-export-${new Date().toISOString().split('T')[0]}.csv`;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                                toast.success('CSV exported!');
+                                setSelectedInvoices(new Set());
+                              } else { toast.error('Export failed'); }
+                            } catch { toast.error('Error exporting'); }
+                            setBulkActionLoading(null);
+                          }}
+                          className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                        >
+                          {bulkActionLoading === 'export-csv' ? 'Exporting...' : '📥 Export CSV'}
+                        </button>
+                        <button
+                          onClick={() => setSelectedInvoices(new Set())}
+                          className="px-2 py-1.5 hover:bg-white/20 rounded-lg text-xs transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

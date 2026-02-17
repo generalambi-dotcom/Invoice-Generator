@@ -540,3 +540,120 @@ export async function sendInvoiceReminderEmail({
     return { success: false, error: formatErrorMessage(error, 'sending reminder') };
   }
 }
+
+/**
+ * Send client statement email
+ */
+interface SendClientStatementParams {
+  to: string;
+  clientName: string;
+  companyName: string;
+  invoices: Array<{
+    invoiceNumber: string;
+    date: Date | null;
+    dueDate: Date | null;
+    total: number;
+    paidAmount: number;
+    currency: string;
+    status: string;
+  }>;
+  totalInvoiced: number;
+  totalPaid: number;
+  outstandingBalance: number;
+  currency: string;
+}
+
+export async function sendClientStatementEmail(params: SendClientStatementParams): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.log('⚠️ RESEND_API_KEY not set. Statement would be sent:', { to: params.to });
+      return { success: true };
+    }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const currencySymbol = params.currency === 'NGN' ? '₦' : params.currency === 'GBP' ? '£' : params.currency === 'EUR' ? '€' : '$';
+
+    const invoiceRows = params.invoices.map((inv) => `
+      <tr>
+        <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:14px;color:#334155;">${inv.invoiceNumber}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:14px;color:#64748b;">${inv.date ? new Date(inv.date).toLocaleDateString() : '-'}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:14px;color:#334155;text-align:right;">${currencySymbol}${inv.total.toFixed(2)}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:14px;color:#16a34a;text-align:right;">${currencySymbol}${inv.paidAmount.toFixed(2)}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:14px;font-weight:600;color:${(inv.total - inv.paidAmount) > 0 ? '#dc2626' : '#16a34a'};text-align:right;">${currencySymbol}${(inv.total - inv.paidAmount).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    const html = `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:640px;margin:0 auto;background:#ffffff;">
+      <div style="background:linear-gradient(135deg,#1F4D45,#2D6A5F);padding:32px;text-align:center;">
+        <h1 style="color:#ffffff;font-size:24px;margin:0 0 4px 0;">Account Statement</h1>
+        <p style="color:rgba(255,255,255,0.8);font-size:14px;margin:0;">From ${params.companyName}</p>
+      </div>
+
+      <div style="padding:32px;">
+        <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 24px 0;">
+          Dear ${params.clientName},<br><br>
+          Please find below a summary of your account activity with ${params.companyName}.
+        </p>
+
+        <!-- Summary Cards -->
+        <div style="display:flex;gap:12px;margin-bottom:24px;">
+          <div style="flex:1;background:#f0fdf4;border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-size:12px;color:#16a34a;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Total Invoiced</div>
+            <div style="font-size:22px;font-weight:700;color:#15803d;margin-top:4px;">${currencySymbol}${params.totalInvoiced.toFixed(2)}</div>
+          </div>
+          <div style="flex:1;background:#eff6ff;border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-size:12px;color:#2563eb;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Total Paid</div>
+            <div style="font-size:22px;font-weight:700;color:#1d4ed8;margin-top:4px;">${currencySymbol}${params.totalPaid.toFixed(2)}</div>
+          </div>
+          <div style="flex:1;background:${params.outstandingBalance > 0 ? '#fef2f2' : '#f0fdf4'};border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-size:12px;color:${params.outstandingBalance > 0 ? '#dc2626' : '#16a34a'};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Balance Due</div>
+            <div style="font-size:22px;font-weight:700;color:${params.outstandingBalance > 0 ? '#b91c1c' : '#15803d'};margin-top:4px;">${currencySymbol}${params.outstandingBalance.toFixed(2)}</div>
+          </div>
+        </div>
+
+        <!-- Invoice Table -->
+        <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+          <thead>
+            <tr style="background:#f8fafc;">
+              <th style="padding:10px 12px;text-align:left;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Invoice</th>
+              <th style="padding:10px 12px;text-align:left;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Date</th>
+              <th style="padding:10px 12px;text-align:right;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Amount</th>
+              <th style="padding:10px 12px;text-align:right;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Paid</th>
+              <th style="padding:10px 12px;text-align:right;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${invoiceRows}
+          </tbody>
+          <tfoot>
+            <tr style="background:#f8fafc;">
+              <td colspan="2" style="padding:12px;font-size:14px;font-weight:700;color:#1e293b;">Total</td>
+              <td style="padding:12px;text-align:right;font-size:14px;font-weight:700;color:#1e293b;">${currencySymbol}${params.totalInvoiced.toFixed(2)}</td>
+              <td style="padding:12px;text-align:right;font-size:14px;font-weight:700;color:#16a34a;">${currencySymbol}${params.totalPaid.toFixed(2)}</td>
+              <td style="padding:12px;text-align:right;font-size:14px;font-weight:700;color:${params.outstandingBalance > 0 ? '#dc2626' : '#16a34a'};">${currencySymbol}${params.outstandingBalance.toFixed(2)}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <p style="color:#94a3b8;font-size:12px;margin-top:24px;text-align:center;">
+          Statement generated on ${new Date().toLocaleDateString()} • ${params.companyName}
+        </p>
+      </div>
+    </div>`;
+
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
+
+    await resend.emails.send({
+      from: `${params.companyName} <${fromEmail}>`,
+      to: params.to,
+      subject: `Account Statement from ${params.companyName}`,
+      html,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error sending client statement email:', error);
+    return { success: false, error: error.message };
+  }
+}

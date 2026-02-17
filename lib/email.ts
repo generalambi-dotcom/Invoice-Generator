@@ -6,6 +6,7 @@ import { Resend } from 'resend';
 import { retryWithBackoff, formatErrorMessage } from './error-handler';
 import { getPasswordResetEmailHtml, getPasswordResetEmailText } from './password-reset-email';
 import { getVerificationEmailHtml, getVerificationEmailText } from './verification-email';
+import { prisma } from './db';
 
 // Don't initialize Resend at module level - do it lazily in the function
 // This prevents build-time errors when RESEND_API_KEY is not set
@@ -654,6 +655,221 @@ export async function sendClientStatementEmail(params: SendClientStatementParams
     return { success: true };
   } catch (error: any) {
     console.error('Error sending client statement email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Check if a notification type is enabled in the admin settings
+ */
+export async function isNotificationEnabled(key: string): Promise<boolean> {
+  try {
+    const template = await prisma.emailNotificationTemplate.findUnique({
+      where: { key },
+      select: { enabled: true },
+    });
+    // If template doesn't exist yet (not seeded), default to enabled
+    return template ? template.enabled : true;
+  } catch (error) {
+    console.error(`Error checking notification status for ${key}:`, error);
+    return true; // Default to enabled on error
+  }
+}
+
+/**
+ * Send welcome email after registration
+ */
+interface SendWelcomeEmailParams {
+  to: string;
+  name?: string;
+}
+
+export async function sendWelcomeEmail({
+  to,
+  name,
+}: SendWelcomeEmailParams): Promise<{ success: boolean; error?: string }> {
+  try {
+    const enabled = await isNotificationEnabled('welcome_email');
+    if (!enabled) return { success: true };
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return { success: false, error: 'RESEND_API_KEY not set' };
+    const resend = new Resend(apiKey);
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
+    const userName = name || 'there';
+
+    const html = `
+    <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+      <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Welcome to InvoiceNaija! 🎉</h1>
+      </div>
+      <div style="padding: 30px;">
+        <p style="color: #374151; font-size: 16px;">Hi ${userName},</p>
+        <p style="color: #6b7280; font-size: 14px;">Your account is now set up and ready to go. Here are some things you can do right away:</p>
+        <ul style="color: #6b7280; font-size: 14px; padding-left: 20px;">
+          <li style="margin-bottom: 8px;">📄 Create your first invoice</li>
+          <li style="margin-bottom: 8px;">🏢 Add your company details</li>
+          <li style="margin-bottom: 8px;">💳 Set up payment methods</li>
+          <li style="margin-bottom: 8px;">👥 Add your clients</li>
+        </ul>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng'}/dashboard" 
+             style="background: #4f46e5; color: #ffffff; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;">
+            Go to Dashboard
+          </a>
+        </div>
+        <p style="color: #6b7280; font-size: 14px;">If you have any questions, feel free to reach out to our support team.</p>
+        <p style="color: #6b7280; font-size: 14px;">Happy invoicing!<br/>The InvoiceNaija Team</p>
+      </div>
+    </div>`;
+
+    await resend.emails.send({
+      from: `InvoiceNaija <${fromEmail}>`,
+      to,
+      subject: 'Welcome to InvoiceNaija! 🎉',
+      html,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error sending welcome email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Send payment received notification
+ */
+interface SendPaymentReceivedEmailParams {
+  to: string;
+  userName: string;
+  clientName: string;
+  invoiceNumber: string;
+  paymentAmount: string;
+  invoiceTotal: string;
+  remainingBalance: string;
+  currency: string;
+}
+
+export async function sendPaymentReceivedEmail({
+  to,
+  userName,
+  clientName,
+  invoiceNumber,
+  paymentAmount,
+  invoiceTotal,
+  remainingBalance,
+  currency,
+}: SendPaymentReceivedEmailParams): Promise<{ success: boolean; error?: string }> {
+  try {
+    const enabled = await isNotificationEnabled('payment_received');
+    if (!enabled) return { success: true };
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return { success: false, error: 'RESEND_API_KEY not set' };
+    const resend = new Resend(apiKey);
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
+
+    const html = `
+    <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+      <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">💰 Payment Received</h1>
+      </div>
+      <div style="padding: 30px;">
+        <p style="color: #374151; font-size: 16px;">Hi ${userName},</p>
+        <p style="color: #6b7280; font-size: 14px;">A payment has been recorded for one of your invoices.</p>
+        <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Invoice</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #111827;">${invoiceNumber}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Client</td><td style="padding: 8px 0; text-align: right; color: #111827;">${clientName}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Payment</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #059669;">${currency} ${paymentAmount}</td></tr>
+            <tr style="border-top: 1px solid #e5e7eb;"><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Invoice Total</td><td style="padding: 8px 0; text-align: right; color: #111827;">${currency} ${invoiceTotal}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Balance</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: ${remainingBalance === '0' || remainingBalance === '0.00' ? '#059669' : '#dc2626'};">${currency} ${remainingBalance}</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>`;
+
+    await resend.emails.send({
+      from: `InvoiceNaija <${fromEmail}>`,
+      to,
+      subject: `Payment received for Invoice ${invoiceNumber}`,
+      html,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error sending payment received email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Send recurring invoice created notification
+ */
+interface SendRecurringInvoiceCreatedEmailParams {
+  to: string;
+  userName: string;
+  invoiceNumber: string;
+  clientName: string;
+  amount: string;
+  currency: string;
+  dueDate: string;
+}
+
+export async function sendRecurringInvoiceCreatedEmail({
+  to,
+  userName,
+  invoiceNumber,
+  clientName,
+  amount,
+  currency,
+  dueDate,
+}: SendRecurringInvoiceCreatedEmailParams): Promise<{ success: boolean; error?: string }> {
+  try {
+    const enabled = await isNotificationEnabled('recurring_invoice_created');
+    if (!enabled) return { success: true };
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return { success: false, error: 'RESEND_API_KEY not set' };
+    const resend = new Resend(apiKey);
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
+
+    const html = `
+    <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+      <div style="background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">🔄 Recurring Invoice Created</h1>
+      </div>
+      <div style="padding: 30px;">
+        <p style="color: #374151; font-size: 16px;">Hi ${userName},</p>
+        <p style="color: #6b7280; font-size: 14px;">A new invoice has been automatically created from your recurring schedule.</p>
+        <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Invoice #</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #111827;">${invoiceNumber}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Client</td><td style="padding: 8px 0; text-align: right; color: #111827;">${clientName}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Amount</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #111827;">${currency} ${amount}</td></tr>
+            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Due Date</td><td style="padding: 8px 0; text-align: right; color: #111827;">${dueDate}</td></tr>
+          </table>
+        </div>
+        <div style="text-align: center; margin: 20px 0;">
+          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng'}/dashboard" 
+             style="background: #2563eb; color: #ffffff; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;">
+            Review & Send Invoice
+          </a>
+        </div>
+      </div>
+    </div>`;
+
+    await resend.emails.send({
+      from: `InvoiceNaija <${fromEmail}>`,
+      to,
+      subject: `New recurring invoice ${invoiceNumber} created`,
+      html,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error sending recurring invoice email:', error);
     return { success: false, error: error.message };
   }
 }

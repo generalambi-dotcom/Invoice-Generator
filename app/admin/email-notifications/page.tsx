@@ -240,8 +240,8 @@ export default function EmailNotificationsPage() {
                     <button
                         onClick={() => setActiveTab('templates')}
                         className={`px-5 py-2.5 rounded-md text-sm font-medium transition-all ${activeTab === 'templates'
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
                             }`}
                     >
                         📋 Notification Templates
@@ -249,8 +249,8 @@ export default function EmailNotificationsPage() {
                     <button
                         onClick={() => setActiveTab('logs')}
                         className={`px-5 py-2.5 rounded-md text-sm font-medium transition-all ${activeTab === 'logs'
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
+                            ? 'bg-white text-gray-900 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
                             }`}
                     >
                         📊 Email Logs {logsTotal > 0 && <span className="ml-1 text-xs bg-gray-200 px-2 py-0.5 rounded-full">{logsTotal}</span>}
@@ -522,20 +522,55 @@ export default function EmailNotificationsPage() {
                             </div>
                         </div>
 
-                        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
-                            <button
-                                onClick={() => setEditingTemplate(null)}
-                                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-                            >
-                                {saving ? 'Saving...' : 'Save Changes'}
-                            </button>
+                        <div className="px-6 py-4 border-t border-gray-100 flex justify-between items-center bg-gray-50 rounded-b-2xl">
+                            <div>
+                                <button
+                                    onClick={async () => {
+                                        if (!editingTemplate) return;
+                                        const toastId = 'sending-test';
+                                        // Simple toast notification (you might want to use a library like react-hot-toast)
+                                        const showToast = (msg: string) => alert(msg);
+
+                                        try {
+                                            const res = await fetch('/api/admin/email-notifications/test', {
+                                                method: 'POST',
+                                                headers: getAuthHeaders(),
+                                                body: JSON.stringify({
+                                                    templateId: editingTemplate.id,
+                                                    // to: 'optional-recipient@example.com' // defaults to current user
+                                                }),
+                                            });
+                                            if (res.ok) {
+                                                const data = await res.json();
+                                                showToast(`Test email sent to ${data.sentTo}`);
+                                            } else {
+                                                const err = await res.json();
+                                                showToast(`Failed to send test: ${err.error}`);
+                                            }
+                                        } catch (e: any) {
+                                            showToast(`Error: ${e.message}`);
+                                        }
+                                    }}
+                                    className="px-4 py-2 text-sm text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg font-medium transition-colors border border-indigo-200"
+                                >
+                                    ⚡ Send Test Email
+                                </button>
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setEditingTemplate(null)}
+                                    className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
+                                >
+                                    {saving ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

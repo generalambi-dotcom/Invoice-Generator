@@ -72,6 +72,8 @@ export interface Invoice {
   paymentLink?: string;
   paymentProvider?: 'paypal' | 'paystack';
   paidAmount?: number;
+  viewedAt?: string;
+  sentAt?: string;
 }
 
 export interface CompanyDefaults {

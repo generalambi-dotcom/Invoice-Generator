@@ -19,6 +19,7 @@ export async function GET(
           select: {
             name: true,
             email: true,
+            image: true,
           },
         },
         payments: {
@@ -42,7 +43,31 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ invoice });
+    // If user is the owner, also fetch email activity
+    let emailLogs: any[] = [];
+    if (user && invoice.userId === user.userId) {
+      emailLogs = await prisma.emailLog.findMany({
+        where: { invoiceId },
+        orderBy: { sentAt: 'desc' },
+        select: {
+          id: true,
+          to: true,
+          status: true,
+          sentAt: true,
+          openedAt: true,
+        },
+      });
+    }
+
+    // If public access (no user), record viewedAt
+    if (!user) {
+      await prisma.invoice.updateMany({
+        where: { id: invoiceId, viewedAt: null },
+        data: { viewedAt: new Date() },
+      }).catch(() => { }); // Silent fail
+    }
+
+    return NextResponse.json({ invoice, emailLogs });
   } catch (error: any) {
     console.error('Error fetching invoice:', error);
     return NextResponse.json(
@@ -108,7 +133,7 @@ export async function PATCH(
 ) {
   try {
     const user = getAuthenticatedUser(request);
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -142,9 +167,9 @@ export async function PATCH(
     // 1. No payment link is being explicitly set
     // 2. Invoice has a positive total
     // 3. Payment link doesn't already exist (or is being cleared)
-    const shouldAutoGenerate = 
-      body.paymentLink === undefined && 
-      !existingInvoice.paymentLink && 
+    const shouldAutoGenerate =
+      body.paymentLink === undefined &&
+      !existingInvoice.paymentLink &&
       totalAmount > 0;
 
     // Update invoice with provided fields
@@ -181,8 +206,8 @@ export async function PATCH(
           paymentStatus: body.paidAmount >= totalAmount
             ? 'paid'
             : body.paidAmount > 0
-            ? 'pending' // Partial payment - keep as pending
-            : existingInvoice.paymentStatus,
+              ? 'pending' // Partial payment - keep as pending
+              : existingInvoice.paymentStatus,
         }),
       },
     });

@@ -80,6 +80,7 @@ export async function sendInvoiceEmail({
             <div class="footer">
               <p>This is an automated email from Invoice Generator.ng</p>
               <p>If you have any questions, please contact the sender.</p>
+              <img src="https://www.invoicegenerator.ng/api/invoices/${invoice.id}/track?t=${Date.now()}" width="1" height="1" style="display:none" alt="" />
             </div>
           </div>
         </body>

@@ -128,7 +128,12 @@ export async function loadInvoiceAPI(invoiceId: string): Promise<any | null> {
     }
 
     const data = await response.json();
-    return data.invoice;
+    // Attach email logs to the invoice object for convenience
+    const invoice = data.invoice;
+    if (invoice) {
+      invoice._emailLogs = data.emailLogs || [];
+    }
+    return invoice;
   } catch (error) {
     console.error('Error loading invoice:', error);
     return null;
@@ -1203,3 +1208,103 @@ export async function generateInvoiceEditTokenAPI(invoiceId: string): Promise<{ 
   }
 }
 
+/**
+ * Get all templates for the current user
+ */
+export async function getTemplatesAPI(): Promise<any[]> {
+  try {
+    const response = await fetch(`${API_BASE}/api/templates`, {
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to load templates');
+    }
+
+    const data = await response.json();
+    return data.templates || [];
+  } catch (error: any) {
+    console.error('Error loading templates:', error);
+    throw error;
+  }
+}
+
+/**
+ * Save current invoice as a template
+ */
+export async function saveAsTemplateAPI(templateData: {
+  name: string;
+  description?: string;
+  companyInfo?: any;
+  clientInfo?: any;
+  lineItems?: any;
+  currency?: string;
+  theme?: string;
+  notes?: string;
+  bankDetails?: string;
+  terms?: string;
+  taxRate?: number;
+  discountRate?: number;
+}): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/templates`, {
+      method: 'POST',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(templateData),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to save template');
+    }
+
+    const data = await response.json();
+    return data.template;
+  } catch (error: any) {
+    console.error('Error saving template:', error);
+    throw error;
+  }
+}
+
+/**
+ * Load a template with full data
+ */
+export async function loadTemplateAPI(templateId: string): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/templates/${templateId}`, {
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to load template');
+    }
+
+    const data = await response.json();
+    return data.template;
+  } catch (error: any) {
+    console.error('Error loading template:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a template
+ */
+export async function deleteTemplateAPI(templateId: string): Promise<void> {
+  try {
+    const response = await fetch(`${API_BASE}/api/templates/${templateId}`, {
+      method: 'DELETE',
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete template');
+    }
+  } catch (error: any) {
+    console.error('Error deleting template:', error);
+    throw error;
+  }
+}

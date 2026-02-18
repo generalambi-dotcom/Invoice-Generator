@@ -66,6 +66,18 @@ export async function POST(request: NextRequest) {
 // Helper to check if message is a strict invoice command
 function checkIsInvoiceCommand(message: string): boolean {
   const lowerMessage = message.toLowerCase().trim();
+
+  // 1. Loop Prevention: Ignore our own confirmation messages
+  if (
+    lowerMessage.startsWith('invoice created') ||
+    lowerMessage.startsWith('✅ invoice created') ||
+    lowerMessage.includes('invoice #')
+  ) {
+    console.log('🛑 Ignoring echo/bot message (Loop Prevention)');
+    return false;
+  }
+
+  // 2. Check for invoice commands
   return (
     lowerMessage.includes('create invoice') ||
     lowerMessage.includes('new invoice') ||
@@ -137,6 +149,29 @@ async function handleTwilioWebhook(body: any) {
   }
 
   console.log(`✅ Found credential for ${credential.phoneNumber} (user: ${credential.userId})`);
+
+  // --- IDEMPOTENCY CHECK ---
+  const messageId = body.MessageSid;
+  const currentMetadata = (credential.metadata as any) || {};
+
+  if (messageId && currentMetadata.lastMessageId === messageId) {
+    console.log(`🔄 Ignoring duplicate message ${messageId} (Idempotency)`);
+    return NextResponse.json({ message: 'Duplicate ignored' }, { status: 200 });
+  }
+
+  // Update lastMessageId immediately to prevent race conditions
+  if (messageId) {
+    await prisma.whatsAppCredential.update({
+      where: { id: credential.id },
+      data: {
+        metadata: {
+          ...currentMetadata,
+          lastMessageId: messageId
+        }
+      }
+    });
+  }
+  // -------------------------
 
   // Mark as verified if not already
   if (!credential.isVerified) {
@@ -241,6 +276,29 @@ async function handleMetaWebhook(body: any) {
   }
 
   console.log(`✅ Found credential for ${credential.phoneNumber} (user: ${credential.userId})`);
+
+  // --- IDEMPOTENCY CHECK ---
+  const messageId = message.id; // Meta message ID
+  const currentMetadata = (credential.metadata as any) || {};
+
+  if (messageId && currentMetadata.lastMessageId === messageId) {
+    console.log(`🔄 Ignoring duplicate message ${messageId} (Idempotency)`);
+    return NextResponse.json({ message: 'Duplicate ignored' }, { status: 200 });
+  }
+
+  // Update lastMessageId immediately
+  if (messageId) {
+    await prisma.whatsAppCredential.update({
+      where: { id: credential.id },
+      data: {
+        metadata: {
+          ...currentMetadata,
+          lastMessageId: messageId
+        }
+      }
+    });
+  }
+  // -------------------------
 
   // Mark as verified if not already
   if (!credential.isVerified) {

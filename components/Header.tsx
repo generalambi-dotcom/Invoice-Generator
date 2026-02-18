@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getCurrentUser, signOut } from '@/lib/auth';
+import { toast } from 'react-hot-toast';
 
 export default function Header() {
   const router = useRouter();
@@ -81,7 +82,9 @@ export default function Header() {
     setLanguageMenuOpen(false);
     // For now, just show a message. In the future, you can implement actual translation
     if (lang !== 'en') {
-      alert('More languages coming soon! Currently only English is available.');
+      toast('More languages coming soon! Currently only English is available.', {
+        icon: '🌍',
+      });
     }
   };
 

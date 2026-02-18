@@ -490,7 +490,7 @@ function InvoiceFormContent() {
   const handleSaveInvoice = async () => {
     // Basic validation
     if (!invoice.invoiceNumber || !invoice.company?.name || !invoice.client?.name) {
-      alert('Please fill in required fields: Invoice Number, Company Name, and Client Name');
+      toast.error('Please fill in required fields: Invoice Number, Company Name, and Client Name');
       return;
     }
 
@@ -571,10 +571,10 @@ function InvoiceFormContent() {
       }));
       setInvoiceHistory(formattedInvoices);
 
-      alert('Invoice saved successfully!');
+      toast.success('Invoice saved successfully!');
     } catch (error: any) {
       console.error('Error saving invoice:', error);
-      alert('Failed to save invoice: ' + (error.message || 'Please try again.'));
+      toast.error('Failed to save invoice: ' + (error.message || 'Please try again.'));
     } finally {
       setSavingInvoice(false);
     }
@@ -583,7 +583,7 @@ function InvoiceFormContent() {
   // Generate and download PDF
   const handleDownloadPDF = async () => {
     if (!invoice.invoiceNumber || !invoice.company?.name || !invoice.client?.name) {
-      alert('Please fill in required fields: Invoice Number, Company Name, and Client Name');
+      toast.error('Please fill in required fields: Invoice Number, Company Name, and Client Name');
       return;
     }
 
@@ -676,13 +676,13 @@ function InvoiceFormContent() {
         setInvoiceHistory(formattedInvoices);
       } catch (error: any) {
         console.error('Error saving invoice:', error);
-        alert('Failed to save invoice. Please try again.');
+        toast.error('Failed to save invoice. Please try again.');
       } finally {
         setSavingInvoice(false);
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      toast.error('Error generating PDF. Please try again.');
     } finally {
       setIsGeneratingPDF(false);
     }
@@ -720,10 +720,10 @@ function InvoiceFormContent() {
         // Close history view and scroll to top
         setShowHistory(false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        alert('Invoice duplicated! Review and save to create the new invoice.');
+        toast.success('Invoice duplicated! Review and save to create the new invoice.');
       } catch (error) {
         console.error('Error duplicating invoice:', error);
-        alert('Failed to duplicate invoice');
+        toast.error('Failed to duplicate invoice');
       }
     }
   };
@@ -748,14 +748,14 @@ function InvoiceFormContent() {
         taxRate: invoice.taxRate,
         discountRate: invoice.discountRate,
       });
-      alert('Template saved successfully!');
+      toast.success('Template saved successfully!');
       // Refresh templates list
       try {
         const tpls = await getTemplatesAPI();
         setTemplates(tpls);
       } catch (e) { }
     } catch (error: any) {
-      alert('Failed to save template: ' + error.message);
+      toast.error('Failed to save template: ' + error.message);
     } finally {
       setSavingTemplate(false);
     }
@@ -803,9 +803,9 @@ function InvoiceFormContent() {
 
       setShowTemplateDropdown(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      alert(`Template "${template.name}" loaded! Adjust details and save.`);
+      toast.success(`Template "${template.name}" loaded! Adjust details and save.`);
     } catch (error: any) {
-      alert('Failed to load template: ' + error.message);
+      toast.error('Failed to load template: ' + error.message);
     }
   };
 
@@ -839,16 +839,16 @@ function InvoiceFormContent() {
         }));
       }
 
-      alert('Payment deleted successfully');
+      toast.success('Payment deleted successfully');
     } catch (error: any) {
-      alert('Failed to delete payment: ' + error.message);
+      toast.error('Failed to delete payment: ' + error.message);
     }
   };
 
   // Save company defaults
   const handleSaveDefaults = async () => {
     if (!invoice.company?.name) {
-      alert('Please enter company name first');
+      toast.error('Please enter company name first');
       return;
     }
 
@@ -865,10 +865,10 @@ function InvoiceFormContent() {
 
       await saveCompanyDefaultsAPI(defaults);
       setShowSaveDefaults(false);
-      alert('Company defaults saved!');
+      toast.success('Company defaults saved!');
     } catch (error: any) {
       console.error('Error saving company defaults:', error);
-      alert('Failed to save company defaults. Please try again.');
+      toast.error('Failed to save company defaults. Please try again.');
     }
   };
 
@@ -919,7 +919,7 @@ function InvoiceFormContent() {
       }
     } catch (error) {
       console.error('Error loading invoice:', error);
-      alert('Failed to load invoice. Please try again.');
+      toast.error('Failed to load invoice. Please try again.');
     }
   };
 
@@ -932,7 +932,7 @@ function InvoiceFormContent() {
         setInvoiceHistory(invoices);
       } catch (error) {
         console.error('Error deleting invoice:', error);
-        alert('Failed to delete invoice. Please try again.');
+        toast.error('Failed to delete invoice. Please try again.');
       }
     }
   };
@@ -1450,11 +1450,11 @@ function InvoiceFormContent() {
                     {invoice.paymentLink ? (
                       <div className="flex gap-2">
                         <input type="text" readOnly value={invoice.paymentLink} className="w-full text-xs bg-gray-50 border-gray-200 rounded px-3 py-2 truncate" />
-                        <button onClick={() => { navigator.clipboard.writeText(invoice.paymentLink || ''); alert('Copied!'); }} className="text-xs font-bold text-indigo-600">Copy</button>
+                        <button onClick={() => { navigator.clipboard.writeText(invoice.paymentLink || ''); toast.success('Copied!'); }} className="text-xs font-bold text-indigo-600">Copy</button>
                       </div>
                     ) : (
                       <button onClick={async () => {
-                        if (!invoice.id) { alert('Save invoice first'); return; }
+                        if (!invoice.id) { toast.error('Save invoice first'); return; }
                         const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
                         setInvoice(prev => ({ ...prev, paymentLink: link }));
                       }} className="w-full py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors">
@@ -1832,7 +1832,7 @@ function InvoiceFormContent() {
                                 setPaymentHistory(history.payments || []);
                                 setShowPaymentHistory(!showPaymentHistory);
                               } catch (error: any) {
-                                alert('Failed to load payment history: ' + error.message);
+                                toast.error('Failed to load payment history: ' + error.message);
                               }
                             }}
                             className="text-xs text-blue-600 hover:text-blue-800"
@@ -1912,9 +1912,9 @@ function InvoiceFormContent() {
                                       }
                                       const history = await getInvoicePaymentHistoryAPI(invoice.id);
                                       setPaymentHistory(history.payments || []);
-                                      alert('Payment recorded successfully!');
+                                      toast.success('Payment recorded successfully!');
                                     } catch (error: any) {
-                                      alert('Failed to record payment: ' + error.message);
+                                      toast.error('Failed to record payment: ' + error.message);
                                     }
                                   }
                                 }}
@@ -2036,7 +2036,7 @@ function InvoiceFormContent() {
                               <button
                                 onClick={() => {
                                   navigator.clipboard.writeText(invoice.paymentLink || '');
-                                  alert('Payment link copied to clipboard!');
+                                  toast.success('Payment link copied to clipboard!');
                                 }}
                                 className="px-6 py-3 text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl transition-all shadow-md shadow-indigo-200 hover:shadow-indigo-300"
                               >
@@ -2051,8 +2051,8 @@ function InvoiceFormContent() {
                                   try {
                                     const link = await generatePaymentLinkAPI(invoice.id, 'paypal');
                                     setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paypal' }));
-                                    alert('PayPal payment link updated!');
-                                  } catch (error: any) { alert(error.message); }
+                                    toast.success('PayPal payment link updated!');
+                                  } catch (error: any) { toast.error(error.message); }
                                 }} className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors">Use PayPal</button>
                                 <span className="text-gray-300">|</span>
                                 <button onClick={async () => {
@@ -2060,8 +2060,8 @@ function InvoiceFormContent() {
                                   try {
                                     const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
                                     setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paystack' }));
-                                    alert('Paystack payment link updated!');
-                                  } catch (error: any) { alert(error.message); }
+                                    toast.success('Paystack payment link updated!');
+                                  } catch (error: any) { toast.error(error.message); }
                                 }} className="text-xs font-bold text-green-600 hover:text-green-800 hover:underline transition-colors">Use Paystack</button>
                               </div>
                             </div>
@@ -2074,11 +2074,11 @@ function InvoiceFormContent() {
                             <div className="flex gap-3">
                               <button
                                 onClick={async () => {
-                                  if (!user || !invoice.total || !invoice.id) { alert('Please save the invoice first'); return; }
+                                  if (!user || !invoice.total || !invoice.id) { toast.error('Please save the invoice first'); return; }
                                   try {
                                     const link = await generatePaymentLinkAPI(invoice.id, 'paypal');
                                     setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paypal' }));
-                                  } catch (error: any) { alert(error.message); }
+                                  } catch (error: any) { toast.error(error.message); }
                                 }}
                                 className="flex-1 px-4 py-2.5 text-xs sm:text-sm font-bold bg-white border border-gray-200 text-gray-700 rounded-xl hover:border-blue-500 hover:text-blue-600 hover:shadow-md transition-all"
                               >
@@ -2086,11 +2086,11 @@ function InvoiceFormContent() {
                               </button>
                               <button
                                 onClick={async () => {
-                                  if (!user || !invoice.total || !invoice.id) { alert('Please save the invoice first'); return; }
+                                  if (!user || !invoice.total || !invoice.id) { toast.error('Please save the invoice first'); return; }
                                   try {
                                     const link = await generatePaymentLinkAPI(invoice.id, 'paystack');
                                     setInvoice(prev => ({ ...prev, paymentLink: link, paymentProvider: 'paystack' }));
-                                  } catch (error: any) { alert(error.message); }
+                                  } catch (error: any) { toast.error(error.message); }
                                 }}
                                 className="flex-1 px-4 py-2.5 text-xs sm:text-sm font-bold bg-white border border-gray-200 text-gray-700 rounded-xl hover:border-green-500 hover:text-green-600 hover:shadow-md transition-all"
                               >
@@ -2256,7 +2256,7 @@ function InvoiceFormContent() {
                 <button
                   onClick={async () => {
                     if (!newClient.name) {
-                      alert('Client name is required');
+                      toast.error('Client name is required');
                       return;
                     }
                     try {
@@ -2287,7 +2287,7 @@ function InvoiceFormContent() {
                       });
                       setShowClientModal(false);
                     } catch (error: any) {
-                      alert('Failed to create client: ' + (error.message || 'Unknown error'));
+                      toast.error('Failed to create client: ' + (error.message || 'Unknown error'));
                     }
                   }}
                   className="flex-1 px-4 py-3 bg-theme-primary text-white font-bold rounded-xl hover:opacity-90 transition-all shadow-lg shadow-theme-primary/20"
@@ -2375,11 +2375,11 @@ function InvoiceFormContent() {
                 <button
                   onClick={async () => {
                     if (!invoice.client?.email) {
-                      alert('Please enter a recipient email address.');
+                      toast.error('Please enter a recipient email address.');
                       return;
                     }
                     if (!invoice.id) {
-                      alert('Please save the invoice first.');
+                      toast.error('Please save the invoice first.');
                       return;
                     }
 
@@ -2390,10 +2390,10 @@ function InvoiceFormContent() {
                         invoice.client.email,
                         `Please find your invoice ${invoice.invoiceNumber || 'N/A'} attached.${invoice.paymentLink ? `\n\nPay online: ${invoice.paymentLink}` : ''} `
                       );
-                      alert('Invoice sent successfully!');
+                      toast.success('Invoice sent successfully!');
                       setIsEmailModalOpen(false);
                     } catch (error: any) {
-                      alert('Failed to send invoice: ' + error.message);
+                      toast.error('Failed to send invoice: ' + error.message);
                     } finally {
                       setSendingEmail(false);
                     }

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 import { pdf } from '@react-pdf/renderer';
 import { InvoicePDF } from '@/lib/pdf-generator';
 import {
@@ -99,7 +100,7 @@ export default function PublicInvoiceForm({ slug }: PublicInvoiceFormProps) {
         }
         const data = await response.json();
         setCompanyInfo(data);
-        
+
         // Pre-fill company info
         if (data.companyInfo) {
           setInvoice((prev) => ({
@@ -172,7 +173,7 @@ export default function PublicInvoiceForm({ slug }: PublicInvoiceFormProps) {
 
       // Ensure invoice number is set synchronously
       const finalInvoiceNumber = invoice.invoiceNumber || `INV-${Date.now()}`;
-      
+
       const invoiceData = {
         invoiceNumber: finalInvoiceNumber,
         invoiceDate: invoice.invoiceDate || format(new Date(), 'yyyy-MM-dd'),
@@ -199,7 +200,7 @@ export default function PublicInvoiceForm({ slug }: PublicInvoiceFormProps) {
 
       // If invoiceId exists, update existing invoice; otherwise create new one
       const method = invoiceId ? 'PATCH' : 'POST';
-      const requestData = invoiceId 
+      const requestData = invoiceId
         ? { invoiceId, ...invoiceData }
         : invoiceData;
 
@@ -215,14 +216,14 @@ export default function PublicInvoiceForm({ slug }: PublicInvoiceFormProps) {
       }
 
       const result = await response.json();
-      
+
       // Set invoiceId if it's a new invoice, or keep existing one if updating
       if (!invoiceId && result.invoice?.id) {
         setInvoiceId(result.invoice.id);
       }
-      
+
       setSuccess(true);
-      
+
       // Scroll to top to show success message
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
@@ -236,7 +237,7 @@ export default function PublicInvoiceForm({ slug }: PublicInvoiceFormProps) {
   const handleDownloadPDF = async () => {
     try {
       if (!invoice.invoiceNumber || !invoice.company?.name || !invoice.client?.name) {
-        alert('Please fill in all required fields before generating PDF');
+        toast.error('Please fill in all required fields before generating PDF');
         return;
       }
 
@@ -277,7 +278,7 @@ export default function PublicInvoiceForm({ slug }: PublicInvoiceFormProps) {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      toast.error('Error generating PDF. Please try again.');
     }
   };
 

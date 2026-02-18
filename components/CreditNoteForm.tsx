@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'react-hot-toast';
 import { pdf } from '@react-pdf/renderer';
 import { CreditNotePDF } from '@/lib/credit-note-pdf';
 import { getCurrentUser } from '@/lib/auth';
@@ -41,7 +42,7 @@ export default function CreditNoteForm({ id, editMode = false, onSuccess }: Cred
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  
+
   const [creditNote, setCreditNote] = useState({
     creditNoteNumber: '',
     creditNoteDate: format(new Date(), 'yyyy-MM-dd'),
@@ -95,9 +96,9 @@ export default function CreditNoteForm({ id, editMode = false, onSuccess }: Cred
       return;
     }
     setUser(currentUser);
-    
+
     loadData();
-    
+
     if (id) {
       loadCreditNote();
     }
@@ -115,11 +116,11 @@ export default function CreditNoteForm({ id, editMode = false, onSuccess }: Cred
           taxRate: defaults.defaultTaxRate || 0,
         }));
       }
-      
+
       // Load clients
       const clientList = await getClientsAPI();
       setClients(clientList);
-      
+
       // Load invoices for selection
       const invoiceList = await loadInvoicesAPI();
       setInvoices(invoiceList);
@@ -130,12 +131,12 @@ export default function CreditNoteForm({ id, editMode = false, onSuccess }: Cred
 
   const loadCreditNote = async () => {
     if (!id) return;
-    
+
     try {
       setLoading(true);
       const result = await getCreditNoteAPI(id);
       const note = result.creditNote;
-      
+
       setCreditNote({
         creditNoteNumber: note.creditNoteNumber,
         creditNoteDate: format(new Date(note.creditNoteDate), 'yyyy-MM-dd'),
@@ -163,7 +164,7 @@ export default function CreditNoteForm({ id, editMode = false, onSuccess }: Cred
     const subtotal = calculateSubtotal(creditNote.lineItems);
     const taxAmount = calculateTax(subtotal, creditNote.taxRate);
     const total = subtotal + taxAmount;
-    
+
     setCreditNote((prev) => ({
       ...prev,
       subtotal,
@@ -242,7 +243,7 @@ export default function CreditNoteForm({ id, editMode = false, onSuccess }: Cred
 
   const handleDownloadPDF = async () => {
     if (!creditNote.creditNoteNumber || !creditNote.company?.name || !creditNote.client?.name) {
-      alert('Please fill in required fields: Credit Note Number, Company Name, and Client Name');
+      toast.error('Please fill in required fields: Credit Note Number, Company Name, and Client Name');
       return;
     }
 
@@ -276,7 +277,7 @@ export default function CreditNoteForm({ id, editMode = false, onSuccess }: Cred
       URL.revokeObjectURL(url);
     } catch (error: any) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      toast.error('Failed to generate PDF. Please try again.');
     } finally {
       setIsGeneratingPDF(false);
     }

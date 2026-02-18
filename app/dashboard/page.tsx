@@ -283,8 +283,8 @@ export default function DashboardPage() {
   };
 
   const handleView = (invoice: Invoice) => {
-    // Use invoice ID to load from database
-    router.push(`/?invoiceId=${invoice.id}`);
+    // Navigate to read-only view
+    router.push(`/invoice/${invoice.id}`);
   };
 
   const handleApproveInvoice = async (invoiceId: string) => {

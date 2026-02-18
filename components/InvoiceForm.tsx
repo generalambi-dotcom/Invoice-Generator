@@ -375,8 +375,9 @@ function InvoiceFormContent() {
               setEmailActivity(loaded._emailLogs);
             }
 
-            // Remove invoiceId from URL
-            router.replace('/', { scroll: false });
+            // Remove invoiceId from URL but stay on the same page
+            const currentPath = window.location.pathname;
+            router.replace(currentPath, { scroll: false });
           }
         } catch (error) {
           console.error('Error loading invoice by ID:', error);

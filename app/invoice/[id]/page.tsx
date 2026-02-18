@@ -106,7 +106,7 @@ export default function InvoiceViewPage() {
 
                     <div className="flex flex-wrap gap-3">
                         <button
-                            onClick={() => router.push(`/?invoiceId=${invoice.id}`)}
+                            onClick={() => router.push(`/free-invoice-generator?invoiceId=${invoice.id}`)}
                             className="px-4 py-2 bg-white text-emerald-600 border border-emerald-200 rounded-lg hover:bg-emerald-50 transition-colors font-medium text-sm"
                         >
                             Edit Invoice

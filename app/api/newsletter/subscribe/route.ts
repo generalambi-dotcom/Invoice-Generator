@@ -120,21 +120,46 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// GET - Check if newsletter/popup is enabled (public, no auth needed)
+// GET - Check if newsletter/popup is enabled and return popup config (public, no auth needed)
 export async function GET() {
     try {
-        const settings = await getSystemSettings(['BREVO_API_KEY', 'BREVO_POPUP_ENABLED']);
+        const settings = await getSystemSettings([
+            'BREVO_API_KEY',
+            'BREVO_POPUP_ENABLED',
+            'BREVO_POPUP_HEADING',
+            'BREVO_POPUP_SUBTITLE',
+            'BREVO_POPUP_BUTTON_TEXT',
+            'BREVO_POPUP_SUCCESS_MSG',
+            'BREVO_POPUP_ACCENT_COLOR',
+            'BREVO_POPUP_POSITION',
+            'BREVO_POPUP_DELAY',
+            'BREVO_POPUP_COOLDOWN_DAYS',
+            'BREVO_POPUP_SHOW_NAME',
+        ]);
+
         const apiKey = settings['BREVO_API_KEY'];
         const popupEnabled = settings['BREVO_POPUP_ENABLED'] !== 'false';
 
         return NextResponse.json({
             enabled: !!apiKey,
             popupEnabled: !!apiKey && popupEnabled,
+            popup: {
+                heading: settings['BREVO_POPUP_HEADING'] || 'Stay in the Loop!',
+                subtitle: settings['BREVO_POPUP_SUBTITLE'] || 'Get invoicing tips, product updates, and exclusive offers delivered to your inbox.',
+                buttonText: settings['BREVO_POPUP_BUTTON_TEXT'] || 'Subscribe Now 🚀',
+                successMessage: settings['BREVO_POPUP_SUCCESS_MSG'] || 'Thanks for joining our newsletter.',
+                accentColor: settings['BREVO_POPUP_ACCENT_COLOR'] || 'blue',
+                position: settings['BREVO_POPUP_POSITION'] || 'center',
+                delaySeconds: parseInt(settings['BREVO_POPUP_DELAY'] || '8', 10),
+                cooldownDays: parseInt(settings['BREVO_POPUP_COOLDOWN_DAYS'] || '7', 10),
+                showNameField: settings['BREVO_POPUP_SHOW_NAME'] !== 'false',
+            },
         });
     } catch {
         return NextResponse.json({
             enabled: false,
             popupEnabled: false,
+            popup: {},
         });
     }
 }

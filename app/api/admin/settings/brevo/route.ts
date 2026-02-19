@@ -14,6 +14,15 @@ export async function GET(request: NextRequest) {
             'BREVO_API_KEY',
             'BREVO_LIST_ID',
             'BREVO_POPUP_ENABLED',
+            'BREVO_POPUP_HEADING',
+            'BREVO_POPUP_SUBTITLE',
+            'BREVO_POPUP_BUTTON_TEXT',
+            'BREVO_POPUP_SUCCESS_MSG',
+            'BREVO_POPUP_ACCENT_COLOR',
+            'BREVO_POPUP_POSITION',
+            'BREVO_POPUP_DELAY',
+            'BREVO_POPUP_COOLDOWN_DAYS',
+            'BREVO_POPUP_SHOW_NAME',
         ]);
 
         const apiKey = settings['BREVO_API_KEY'] || '';
@@ -30,6 +39,17 @@ export async function GET(request: NextRequest) {
             apiKey: maskedKey,
             listId,
             popupEnabled,
+            popup: {
+                heading: settings['BREVO_POPUP_HEADING'] || '',
+                subtitle: settings['BREVO_POPUP_SUBTITLE'] || '',
+                buttonText: settings['BREVO_POPUP_BUTTON_TEXT'] || '',
+                successMessage: settings['BREVO_POPUP_SUCCESS_MSG'] || '',
+                accentColor: settings['BREVO_POPUP_ACCENT_COLOR'] || 'blue',
+                position: settings['BREVO_POPUP_POSITION'] || 'center',
+                delaySeconds: parseInt(settings['BREVO_POPUP_DELAY'] || '8', 10),
+                cooldownDays: parseInt(settings['BREVO_POPUP_COOLDOWN_DAYS'] || '7', 10),
+                showNameField: settings['BREVO_POPUP_SHOW_NAME'] !== 'false',
+            },
         });
     } catch (error) {
         console.error('Error reading Brevo config:', error);
@@ -49,7 +69,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { apiKey, listId, popupEnabled } = body;
+        const { apiKey, listId, popupEnabled, popup } = body;
 
         if (!apiKey || typeof apiKey !== 'string') {
             return NextResponse.json({ error: 'Brevo API Key is required' }, { status: 400 });
@@ -63,12 +83,45 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Save to database
-        await saveSystemSettings([
+        // Build settings to save
+        const settingsToSave: Array<{ key: string; value: string; description?: string }> = [
             { key: 'BREVO_API_KEY', value: apiKey.trim(), description: 'Brevo API Key' },
             { key: 'BREVO_LIST_ID', value: (listId || '').toString().trim(), description: 'Brevo Contact List ID' },
             { key: 'BREVO_POPUP_ENABLED', value: popupEnabled !== false ? 'true' : 'false', description: 'Newsletter popup enabled' },
-        ]);
+        ];
+
+        // Save popup customization settings if provided
+        if (popup && typeof popup === 'object') {
+            if (popup.heading !== undefined) {
+                settingsToSave.push({ key: 'BREVO_POPUP_HEADING', value: popup.heading || '', description: 'Popup heading text' });
+            }
+            if (popup.subtitle !== undefined) {
+                settingsToSave.push({ key: 'BREVO_POPUP_SUBTITLE', value: popup.subtitle || '', description: 'Popup subtitle text' });
+            }
+            if (popup.buttonText !== undefined) {
+                settingsToSave.push({ key: 'BREVO_POPUP_BUTTON_TEXT', value: popup.buttonText || '', description: 'Popup subscribe button text' });
+            }
+            if (popup.successMessage !== undefined) {
+                settingsToSave.push({ key: 'BREVO_POPUP_SUCCESS_MSG', value: popup.successMessage || '', description: 'Popup success message' });
+            }
+            if (popup.accentColor !== undefined) {
+                settingsToSave.push({ key: 'BREVO_POPUP_ACCENT_COLOR', value: popup.accentColor || 'blue', description: 'Popup accent color' });
+            }
+            if (popup.position !== undefined) {
+                settingsToSave.push({ key: 'BREVO_POPUP_POSITION', value: popup.position || 'center', description: 'Popup position on screen' });
+            }
+            if (popup.delaySeconds !== undefined) {
+                settingsToSave.push({ key: 'BREVO_POPUP_DELAY', value: String(popup.delaySeconds ?? 8), description: 'Popup delay in seconds' });
+            }
+            if (popup.cooldownDays !== undefined) {
+                settingsToSave.push({ key: 'BREVO_POPUP_COOLDOWN_DAYS', value: String(popup.cooldownDays ?? 7), description: 'Popup cooldown in days' });
+            }
+            if (popup.showNameField !== undefined) {
+                settingsToSave.push({ key: 'BREVO_POPUP_SHOW_NAME', value: popup.showNameField !== false ? 'true' : 'false', description: 'Show name field in popup' });
+            }
+        }
+
+        await saveSystemSettings(settingsToSave);
 
         return NextResponse.json({
             success: true,

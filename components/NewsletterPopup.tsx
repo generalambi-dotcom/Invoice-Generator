@@ -4,6 +4,81 @@ import React, { useState, useEffect } from 'react';
 import { X, Mail, Sparkles } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
+interface PopupConfig {
+    heading: string;
+    subtitle: string;
+    buttonText: string;
+    successMessage: string;
+    accentColor: string;
+    position: string;
+    delaySeconds: number;
+    cooldownDays: number;
+    showNameField: boolean;
+}
+
+const ACCENT_COLORS: Record<string, { gradient: string; ring: string; iconBg: string; subtitleText: string; buttonGradient: string; hoverGradient: string }> = {
+    blue: {
+        gradient: 'from-blue-600 via-indigo-600 to-purple-600',
+        ring: 'focus:ring-blue-500 focus:border-blue-500',
+        iconBg: 'bg-white/20',
+        subtitleText: 'text-blue-100',
+        buttonGradient: 'from-blue-600 to-indigo-600',
+        hoverGradient: 'hover:from-blue-700 hover:to-indigo-700',
+    },
+    green: {
+        gradient: 'from-emerald-600 via-green-600 to-teal-600',
+        ring: 'focus:ring-green-500 focus:border-green-500',
+        iconBg: 'bg-white/20',
+        subtitleText: 'text-green-100',
+        buttonGradient: 'from-emerald-600 to-green-600',
+        hoverGradient: 'hover:from-emerald-700 hover:to-green-700',
+    },
+    purple: {
+        gradient: 'from-purple-600 via-violet-600 to-indigo-600',
+        ring: 'focus:ring-purple-500 focus:border-purple-500',
+        iconBg: 'bg-white/20',
+        subtitleText: 'text-purple-100',
+        buttonGradient: 'from-purple-600 to-violet-600',
+        hoverGradient: 'hover:from-purple-700 hover:to-violet-700',
+    },
+    orange: {
+        gradient: 'from-orange-500 via-amber-500 to-yellow-500',
+        ring: 'focus:ring-orange-500 focus:border-orange-500',
+        iconBg: 'bg-white/20',
+        subtitleText: 'text-orange-100',
+        buttonGradient: 'from-orange-500 to-amber-500',
+        hoverGradient: 'hover:from-orange-600 hover:to-amber-600',
+    },
+    red: {
+        gradient: 'from-red-600 via-rose-600 to-pink-600',
+        ring: 'focus:ring-red-500 focus:border-red-500',
+        iconBg: 'bg-white/20',
+        subtitleText: 'text-red-100',
+        buttonGradient: 'from-red-600 to-rose-600',
+        hoverGradient: 'hover:from-red-700 hover:to-rose-700',
+    },
+    dark: {
+        gradient: 'from-gray-800 via-gray-900 to-black',
+        ring: 'focus:ring-gray-500 focus:border-gray-500',
+        iconBg: 'bg-white/15',
+        subtitleText: 'text-gray-300',
+        buttonGradient: 'from-gray-700 to-gray-900',
+        hoverGradient: 'hover:from-gray-800 hover:to-black',
+    },
+};
+
+const DEFAULTS: PopupConfig = {
+    heading: 'Stay in the Loop!',
+    subtitle: 'Get invoicing tips, product updates, and exclusive offers delivered to your inbox.',
+    buttonText: 'Subscribe Now 🚀',
+    successMessage: 'Thanks for joining our newsletter.',
+    accentColor: 'blue',
+    position: 'center',
+    delaySeconds: 8,
+    cooldownDays: 7,
+    showNameField: true,
+};
+
 export default function NewsletterPopup() {
     const [isVisible, setIsVisible] = useState(false);
     const [isEnabled, setIsEnabled] = useState(false);
@@ -11,21 +86,13 @@ export default function NewsletterPopup() {
     const [name, setName] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [config, setConfig] = useState<PopupConfig>(DEFAULTS);
 
     useEffect(() => {
-        // Check if popup should be shown
         checkAndShowPopup();
     }, []);
 
     const checkAndShowPopup = async () => {
-        // Don't show if already dismissed recently
-        const dismissedAt = localStorage.getItem('newsletter_popup_dismissed');
-        if (dismissedAt) {
-            const dismissedDate = new Date(dismissedAt);
-            const daysSince = (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24);
-            if (daysSince < 7) return; // Don't show for 7 days after dismissal
-        }
-
         // Don't show if already subscribed
         if (localStorage.getItem('newsletter_subscribed')) return;
 
@@ -35,15 +102,27 @@ export default function NewsletterPopup() {
             if (res.ok) {
                 const data = await res.json();
                 if (data.popupEnabled) {
+                    // Merge server config with defaults
+                    const popupCfg = { ...DEFAULTS, ...(data.popup || {}) };
+                    setConfig(popupCfg);
                     setIsEnabled(true);
-                    // Show after 8 seconds
+
+                    // Check cooldown
+                    const dismissedAt = localStorage.getItem('newsletter_popup_dismissed');
+                    if (dismissedAt) {
+                        const dismissedDate = new Date(dismissedAt);
+                        const daysSince = (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24);
+                        if (daysSince < popupCfg.cooldownDays) return;
+                    }
+
+                    // Show after configured delay
                     setTimeout(() => {
                         setIsVisible(true);
-                    }, 8000);
+                    }, popupCfg.delaySeconds * 1000);
                 }
             }
         } catch {
-            // Silently fail — don't show popup if check fails
+            // Silently fail
         }
     };
 
@@ -72,10 +151,7 @@ export default function NewsletterPopup() {
                 setSubmitted(true);
                 localStorage.setItem('newsletter_subscribed', 'true');
                 toast.success(data.message || 'Successfully subscribed!');
-                // Auto-dismiss after 3 seconds
-                setTimeout(() => {
-                    setIsVisible(false);
-                }, 3000);
+                setTimeout(() => setIsVisible(false), 3000);
             } else {
                 toast.error(data.error || 'Failed to subscribe');
             }
@@ -88,6 +164,15 @@ export default function NewsletterPopup() {
 
     if (!isEnabled || !isVisible) return null;
 
+    const colors = ACCENT_COLORS[config.accentColor] || ACCENT_COLORS.blue;
+    const isBottom = config.position === 'bottom-right' || config.position === 'bottom-left';
+
+    const positionClasses = {
+        'center': 'items-center justify-center',
+        'bottom-right': 'items-end justify-end',
+        'bottom-left': 'items-end justify-start',
+    }[config.position] || 'items-center justify-center';
+
     return (
         <>
             {/* Backdrop */}
@@ -97,9 +182,10 @@ export default function NewsletterPopup() {
             />
 
             {/* Modal */}
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className={`fixed inset-0 z-[9999] flex ${positionClasses} p-4`}>
                 <div
-                    className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500"
+                    className={`relative w-full ${isBottom ? 'max-w-sm' : 'max-w-md'} bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in ${isBottom ? 'slide-in-from-bottom-8' : 'slide-in-from-bottom-4'
+                        } duration-500 ${isBottom ? 'mb-4 mr-4 ml-4' : ''}`}
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Close Button */}
@@ -112,13 +198,13 @@ export default function NewsletterPopup() {
                     </button>
 
                     {/* Top Banner */}
-                    <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-8 text-center text-white">
-                        <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full mb-4">
+                    <div className={`bg-gradient-to-r ${colors.gradient} px-6 py-8 text-center text-white`}>
+                        <div className={`inline-flex items-center justify-center w-14 h-14 ${colors.iconBg} backdrop-blur-sm rounded-full mb-4`}>
                             <Mail className="w-7 h-7" />
                         </div>
-                        <h2 className="text-2xl font-bold mb-2">Stay in the Loop!</h2>
-                        <p className="text-blue-100 text-sm">
-                            Get invoicing tips, product updates, and exclusive offers delivered to your inbox.
+                        <h2 className="text-2xl font-bold mb-2">{config.heading}</h2>
+                        <p className={`${colors.subtitleText} text-sm`}>
+                            {config.subtitle}
                         </p>
                     </div>
 
@@ -130,19 +216,21 @@ export default function NewsletterPopup() {
                                     <Sparkles className="w-6 h-6 text-green-600" />
                                 </div>
                                 <h3 className="text-lg font-semibold text-gray-900 mb-1">You&apos;re subscribed!</h3>
-                                <p className="text-sm text-gray-500">Thanks for joining our newsletter.</p>
+                                <p className="text-sm text-gray-500">{config.successMessage}</p>
                             </div>
                         ) : (
                             <form onSubmit={handleSubmit} className="space-y-3">
-                                <div>
-                                    <input
-                                        type="text"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        placeholder="Your name (optional)"
-                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
-                                    />
-                                </div>
+                                {config.showNameField && (
+                                    <div>
+                                        <input
+                                            type="text"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            placeholder="Your name (optional)"
+                                            className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm ${colors.ring} transition-shadow`}
+                                        />
+                                    </div>
+                                )}
                                 <div>
                                     <input
                                         type="email"
@@ -150,13 +238,13 @@ export default function NewsletterPopup() {
                                         onChange={(e) => setEmail(e.target.value)}
                                         placeholder="your@email.com"
                                         required
-                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow"
+                                        className={`w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm ${colors.ring} transition-shadow`}
                                     />
                                 </div>
                                 <button
                                     type="submit"
                                     disabled={submitting}
-                                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 transition-all shadow-md hover:shadow-lg text-sm"
+                                    className={`w-full py-3 bg-gradient-to-r ${colors.buttonGradient} text-white font-semibold rounded-lg ${colors.hoverGradient} disabled:opacity-50 transition-all shadow-md hover:shadow-lg text-sm`}
                                 >
                                     {submitting ? (
                                         <span className="inline-flex items-center gap-2">
@@ -167,7 +255,7 @@ export default function NewsletterPopup() {
                                             Subscribing...
                                         </span>
                                     ) : (
-                                        'Subscribe Now 🚀'
+                                        config.buttonText
                                     )}
                                 </button>
                                 <p className="text-xs text-gray-400 text-center">

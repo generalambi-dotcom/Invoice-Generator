@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// GET - Check current Google OAuth status
+// GET - Check current Google OAuth status and return saved values
 export async function GET(request: NextRequest) {
     try {
         const user = getAuthenticatedUser(request);
@@ -66,10 +66,18 @@ export async function GET(request: NextRequest) {
         }
 
         const clientId = await getSystemSetting('NEXT_PUBLIC_GOOGLE_CLIENT_ID');
+        const clientSecret = await getSystemSetting('GOOGLE_CLIENT_SECRET');
+
+        // Mask the secret for display (Google Client IDs are public by design)
+        const maskedSecret = clientSecret
+            ? clientSecret.substring(0, 6) + '••••••' + clientSecret.substring(clientSecret.length - 4)
+            : '';
 
         return NextResponse.json({
             status: clientId ? 'configured' : 'not_configured',
-            clientId: clientId ? clientId.substring(0, 12) + '...' : '',
+            clientId: clientId || '',
+            clientSecret: maskedSecret,
+            hasSecret: !!clientSecret,
         });
     } catch (error: any) {
         console.error('[Google OAuth] Error checking status:', error);

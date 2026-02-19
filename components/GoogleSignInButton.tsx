@@ -19,22 +19,13 @@ export default function GoogleSignInButton({ text = "Sign in with Google" }: { t
     );
 
     useEffect(() => {
-        // If client ID is not in env, fetch from API
+        // If client ID is not in env, fetch from public config endpoint
         if (!googleClientId) {
-            fetch('/api/admin/settings/google-oauth')
+            fetch('/api/auth/google-config')
                 .then(res => res.ok ? res.json() : null)
                 .then(data => {
-                    if (data?.clientId && data.status === 'configured') {
-                        // The API returns a masked ID — we need the full one
-                        // So we fetch it from a dedicated public endpoint
-                        fetch('/api/auth/google-config')
-                            .then(r => r.ok ? r.json() : null)
-                            .then(cfg => {
-                                if (cfg?.clientId) {
-                                    setGoogleClientId(cfg.clientId);
-                                }
-                            })
-                            .catch(() => { });
+                    if (data?.clientId) {
+                        setGoogleClientId(data.clientId);
                     }
                 })
                 .catch(() => { });
@@ -72,7 +63,6 @@ export default function GoogleSignInButton({ text = "Sign in with Google" }: { t
                 cancel_on_tap_outside: true,
             });
 
-            // Use a wrapper div for the button to control styling better if needed
             window.google.accounts.id.renderButton(
                 document.getElementById('google-btn-wrapper'),
                 { theme: 'outline', size: 'large', width: '100%', text: 'continue_with' }

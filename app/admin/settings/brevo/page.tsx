@@ -66,7 +66,7 @@ export default function BrevoSettingsPage() {
 
             if (res.ok) {
                 setStatus('configured');
-                toast.success('Brevo settings saved! Restart the server (npm run dev) for changes to take effect.');
+                toast.success('Brevo settings saved successfully!');
             } else {
                 const data = await res.json();
                 toast.error(data.error || 'Failed to save Brevo settings');
@@ -285,9 +285,9 @@ export default function BrevoSettingsPage() {
                 </div>
 
                 {/* Info Banner */}
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                    <p className="text-xs text-amber-800">
-                        <strong>⚠️ Important:</strong> After saving, you must <strong>restart your server</strong> (<code className="bg-amber-100/80 px-1 rounded">npm run dev</code> or redeploy) for changes to take effect. Environment variables are loaded at server startup.
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs text-blue-800">
+                        <strong>💡 Tip:</strong> Settings are saved to the database and take effect <strong>immediately</strong>. No restart needed.
                     </p>
                 </div>
             </div>

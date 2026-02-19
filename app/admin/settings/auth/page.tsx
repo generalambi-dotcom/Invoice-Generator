@@ -44,9 +44,22 @@ export default function AuthSettingsPage() {
                 // Check Google OAuth status
                 if (data.googleOAuth) {
                     setGoogleStatus(data.googleOAuth.status);
-                    if (data.googleOAuth.clientId) {
-                        setGoogleClientId(data.googleOAuth.clientId);
-                    }
+                }
+            }
+
+            // Also fetch saved Google OAuth credentials for form population
+            const goRes = await fetch('/api/admin/settings/google-oauth', {
+                headers: getAuthHeaders(),
+            });
+            if (goRes.ok) {
+                const goData = await goRes.json();
+                setGoogleStatus(goData.status);
+                if (goData.clientId) {
+                    setGoogleClientId(goData.clientId);
+                }
+                // Show indicator that secret exists (don't overwrite with masked value)
+                if (goData.hasSecret) {
+                    setGoogleClientSecret('••••••••••••••••');
                 }
             }
         } catch (error) {
@@ -90,13 +103,14 @@ export default function AuthSettingsPage() {
                 headers: getAuthHeaders(),
                 body: JSON.stringify({
                     clientId: googleClientId.trim(),
-                    clientSecret: googleClientSecret.trim(),
+                    // Don't send the masked placeholder as the actual secret
+                    clientSecret: googleClientSecret.includes('••') ? '' : googleClientSecret.trim(),
                 }),
             });
 
             if (res.ok) {
                 setGoogleStatus('configured');
-                toast.success('Google OAuth credentials saved! You need to restart the server (npm run dev) for the changes to take effect.');
+                toast.success('Google OAuth credentials saved successfully!');
             } else {
                 const data = await res.json();
                 toast.error(data.error || 'Failed to save Google OAuth credentials');

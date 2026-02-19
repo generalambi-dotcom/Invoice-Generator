@@ -7,6 +7,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { getCurrentUser } from '@/lib/auth';
 import { Toaster } from 'react-hot-toast';
+import NewsletterPopup from '@/components/NewsletterPopup';
 
 export default function ClientLayout({
     children,
@@ -56,6 +57,7 @@ export default function ClientLayout({
                     </div>
                 )}
             </main>
+            {!isLoggedIn && !isAuthPage && <NewsletterPopup />}
             <Toaster position="top-right" />
         </>
     );

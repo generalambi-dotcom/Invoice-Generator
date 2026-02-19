@@ -477,6 +477,20 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+
+        {/* Newsletter / Brevo Settings */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6 mt-6">
+          <h2 className="text-xl font-semibold mb-4">📬 Newsletter Settings</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Configure Brevo integration to collect newsletter subscribers via a popup and footer signup form.
+          </p>
+          <Link
+            href="/admin/settings/brevo"
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          >
+            Configure Brevo →
+          </Link>
+        </div>
       </div>
     </div>
   );

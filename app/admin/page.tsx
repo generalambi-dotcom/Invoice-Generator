@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { getUsers, updateUserSubscription, getPaymentConfig, savePaymentConfig } from '@/lib/admin';
 import { getCoupons, createCoupon, deleteCoupon } from '@/lib/coupons';
 import { Coupon } from '@/types/coupon';
+import { toast } from 'react-hot-toast';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -151,10 +152,10 @@ export default function AdminDashboard() {
       // Also save to localStorage for backward compatibility
       savePaymentConfig(paymentConfig);
 
-      alert('Payment configuration saved successfully!');
+      toast.success('Payment configuration saved successfully!');
       loadData(); // Reload to show updated config
     } catch (error: any) {
-      alert('Failed to save configuration: ' + error.message);
+      toast.error('Failed to save configuration: ' + error.message);
     } finally {
       setSaveLoading(false);
     }
@@ -165,9 +166,9 @@ export default function AdminDashboard() {
       try {
         updateUserSubscription(userId, plan, status);
         loadData();
-        alert('User subscription updated successfully!');
+        toast.success('User subscription updated successfully!');
       } catch (error: any) {
-        alert('Failed to update subscription: ' + error.message);
+        toast.error('Failed to update subscription: ' + error.message);
       }
     }
   };
@@ -183,7 +184,7 @@ export default function AdminDashboard() {
         maxUses: newCoupon.maxUses,
         expiresAt: newCoupon.expiresAt || undefined,
       });
-      alert('Coupon created successfully!');
+      toast.success('Coupon created successfully!');
       setShowCouponForm(false);
       setNewCoupon({
         code: '',
@@ -195,7 +196,7 @@ export default function AdminDashboard() {
       });
       loadData();
     } catch (error: any) {
-      alert('Failed to create coupon: ' + error.message);
+      toast.error('Failed to create coupon: ' + error.message);
     }
   };
 
@@ -204,9 +205,9 @@ export default function AdminDashboard() {
       try {
         deleteCoupon(code);
         loadData();
-        alert('Coupon deleted successfully!');
+        toast.success('Coupon deleted successfully!');
       } catch (error: any) {
-        alert('Failed to delete coupon: ' + error.message);
+        toast.error('Failed to delete coupon: ' + error.message);
       }
     }
   };

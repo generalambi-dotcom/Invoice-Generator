@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
+import { toast } from 'react-hot-toast';
 
 export default function PaymentMethodsPage() {
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function PaymentMethodsPage() {
 
   const loadCredentials = async () => {
     if (!user) return;
-    
+
     try {
       // In production, this would use proper authentication
       const response = await fetch('/api/payment-credentials', {
@@ -76,7 +77,7 @@ export default function PaymentMethodsPage() {
       });
 
       if (response.ok) {
-        alert('Payment credentials saved successfully!');
+        toast.success('Payment credentials saved successfully!');
         setShowForm(false);
         setFormProvider(null);
         setFormData({
@@ -89,10 +90,10 @@ export default function PaymentMethodsPage() {
         loadCredentials();
       } else {
         const error = await response.json();
-        alert('Failed to save: ' + error.error);
+        toast.error('Failed to save: ' + error.error);
       }
     } catch (error: any) {
-      alert('Error: ' + error.message);
+      toast.error('Error: ' + error.message);
     } finally {
       setSaving(false);
     }
@@ -112,15 +113,15 @@ export default function PaymentMethodsPage() {
       });
 
       if (response.ok) {
-        alert('Payment credentials removed successfully');
+        toast.success('Payment credentials removed successfully');
         loadCredentials();
       } else {
         const error = await response.json();
-        alert('Failed to remove: ' + (error.error || 'Unknown error'));
+        toast.error('Failed to remove: ' + (error.error || 'Unknown error'));
       }
     } catch (error: any) {
       console.error('Error deleting payment credential:', error);
-      alert('Error: ' + error.message);
+      toast.error('Error: ' + error.message);
     }
   };
 
@@ -238,7 +239,7 @@ export default function PaymentMethodsPage() {
                       <input
                         type="text"
                         value={formData.publicKey}
-                        onChange={(e) => setFormData({...formData, publicKey: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, publicKey: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         placeholder="pk_test_..."
                       />
@@ -250,7 +251,7 @@ export default function PaymentMethodsPage() {
                       <input
                         type="password"
                         value={formData.secretKey}
-                        onChange={(e) => setFormData({...formData, secretKey: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, secretKey: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         placeholder="sk_test_..."
                       />
@@ -267,7 +268,7 @@ export default function PaymentMethodsPage() {
                       <input
                         type="text"
                         value={formData.publicKey}
-                        onChange={(e) => setFormData({...formData, publicKey: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, publicKey: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         placeholder="pk_test_..."
                       />
@@ -279,7 +280,7 @@ export default function PaymentMethodsPage() {
                       <input
                         type="password"
                         value={formData.secretKey}
-                        onChange={(e) => setFormData({...formData, secretKey: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, secretKey: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
                         placeholder="sk_test_..."
                       />
@@ -301,7 +302,7 @@ export default function PaymentMethodsPage() {
                       className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center gap-2"
                     >
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.451 0 5.97 0h7.976a11.1 11.1 0 0 1 2.33.237c1.941.519 3.105 1.767 3.105 3.745 0 2.268-1.841 4.142-4.604 4.142H12.19l-1.028 5.978a2.28 2.28 0 0 0 .182 1.925 2.243 2.243 0 0 0 1.87.995h8.945a.746.746 0 0 1 .735.896l-1.319 7.66a.641.641 0 0 1-.633.54h-4.846a.635.635 0 0 1-.627-.54l-.408-2.388a.635.635 0 0 0-.627-.54H9.23a2.24 2.24 0 0 1-1.87-.995 2.28 2.28 0 0 1-.182-1.925l1.028-5.978H7.076z"/>
+                        <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.451 0 5.97 0h7.976a11.1 11.1 0 0 1 2.33.237c1.941.519 3.105 1.767 3.105 3.745 0 2.268-1.841 4.142-4.604 4.142H12.19l-1.028 5.978a2.28 2.28 0 0 0 .182 1.925 2.243 2.243 0 0 0 1.87.995h8.945a.746.746 0 0 1 .735.896l-1.319 7.66a.641.641 0 0 1-.633.54h-4.846a.635.635 0 0 1-.627-.54l-.408-2.388a.635.635 0 0 0-.627-.54H9.23a2.24 2.24 0 0 1-1.87-.995 2.28 2.28 0 0 1-.182-1.925l1.028-5.978H7.076z" />
                       </svg>
                       Connect with PayPal
                     </button>
@@ -320,7 +321,7 @@ export default function PaymentMethodsPage() {
                           <input
                             type="text"
                             value={formData.clientId}
-                            onChange={(e) => setFormData({...formData, clientId: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
                             placeholder="Client ID"
                           />
@@ -332,7 +333,7 @@ export default function PaymentMethodsPage() {
                           <input
                             type="password"
                             value={formData.clientSecret}
-                            onChange={(e) => setFormData({...formData, clientSecret: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, clientSecret: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md"
                             placeholder="Client Secret"
                           />
@@ -347,7 +348,7 @@ export default function PaymentMethodsPage() {
                     type="checkbox"
                     id="testMode"
                     checked={formData.isTestMode}
-                    onChange={(e) => setFormData({...formData, isTestMode: e.target.checked})}
+                    onChange={(e) => setFormData({ ...formData, isTestMode: e.target.checked })}
                     className="h-4 w-4 text-green-600"
                   />
                   <label htmlFor="testMode" className="ml-2 text-sm text-gray-700">

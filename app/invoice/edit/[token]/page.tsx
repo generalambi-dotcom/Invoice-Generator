@@ -20,12 +20,13 @@ import {
 } from '@/lib/calculations';
 import LineItems from '@/components/LineItems';
 import { format } from 'date-fns';
+import { toast } from 'react-hot-toast';
 
 export default function EditInvoicePage() {
   const params = useParams();
   const router = useRouter();
   const token = params.token as string;
-  
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -42,7 +43,7 @@ export default function EditInvoicePage() {
     try {
       setLoading(true);
       const response = await fetch(`/api/invoices/edit/${token}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to load invoice');
@@ -83,7 +84,7 @@ export default function EditInvoicePage() {
   // Recalculate totals when line items or rates change
   useEffect(() => {
     if (!invoice.lineItems) return;
-    
+
     const subtotal = calculateSubtotal(invoice.lineItems);
     const discountAmount = calculateDiscount(subtotal, invoice.discountRate || 0);
     const taxAmount = calculateTax(subtotal - discountAmount, invoice.taxRate || 0);
@@ -169,7 +170,7 @@ export default function EditInvoicePage() {
 
   const handleDownloadPDF = async () => {
     if (!invoice.invoiceNumber || !invoice.company?.name || !invoice.client?.name) {
-      alert('Please fill in all required fields before generating PDF');
+      toast.error('Please fill in all required fields before generating PDF');
       return;
     }
 
@@ -212,7 +213,7 @@ export default function EditInvoicePage() {
       URL.revokeObjectURL(url);
     } catch (error: any) {
       console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      toast.error('Failed to generate PDF. Please try again.');
     } finally {
       setIsGeneratingPDF(false);
     }

@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Shield, Save, ArrowLeft, ExternalLink, CheckCircle, XCircle, Copy, Eye, EyeOff } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function AuthSettingsPage() {
     const router = useRouter();
@@ -56,13 +57,13 @@ export default function AuthSettingsPage() {
             });
 
             if (res.ok) {
-                alert('Settings saved successfully');
+                toast.success('Settings saved successfully');
             } else {
-                alert('Failed to save settings');
+                toast.error('Failed to save settings');
             }
         } catch (error) {
             console.error('Error saving settings:', error);
-            alert('An error occurred');
+            toast.error('An error occurred');
         } finally {
             setSaving(false);
         }
@@ -70,7 +71,7 @@ export default function AuthSettingsPage() {
 
     const handleSaveGoogle = async () => {
         if (!googleClientId.trim()) {
-            alert('Please enter the Google Client ID');
+            toast.error('Please enter the Google Client ID');
             return;
         }
         setSavingGoogle(true);
@@ -86,14 +87,14 @@ export default function AuthSettingsPage() {
 
             if (res.ok) {
                 setGoogleStatus('configured');
-                alert('Google OAuth credentials saved! You need to restart the server (npm run dev) for the changes to take effect.');
+                toast.success('Google OAuth credentials saved! You need to restart the server (npm run dev) for the changes to take effect.');
             } else {
                 const data = await res.json();
-                alert(data.error || 'Failed to save Google OAuth credentials');
+                toast.error(data.error || 'Failed to save Google OAuth credentials');
             }
         } catch (error) {
             console.error('Error saving Google OAuth:', error);
-            alert('An error occurred');
+            toast.error('An error occurred');
         } finally {
             setSavingGoogle(false);
         }

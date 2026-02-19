@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { initiatePayment } from '@/lib/payments';
 import { validateCoupon, applyCoupon } from '@/lib/coupons';
 import { getPricing, formatPrice, detectUserRegion } from '@/lib/pricing';
+import { toast } from 'react-hot-toast';
 
 export default function UpgradePage() {
   const router = useRouter();
@@ -63,16 +64,16 @@ export default function UpgradePage() {
           const updatedUser = getCurrentUser();
           setUser(updatedUser);
           // Show success message
-          alert('Payment successful! Your premium subscription is now active.');
+          toast.success('Payment successful! Your premium subscription is now active.');
           // Clean URL
           window.history.replaceState({}, '', '/upgrade');
         }
       } else if (canceled === 'true') {
         // Payment canceled
         if (provider === 'paypal') {
-          alert('PayPal payment was canceled. You can try again anytime.');
+          toast('PayPal payment was canceled. You can try again anytime.', { icon: '⚠️' });
         } else {
-          alert('Payment was canceled. You can try again anytime.');
+          toast('Payment was canceled. You can try again anytime.', { icon: '⚠️' });
         }
         // Clean URL
         window.history.replaceState({}, '', '/upgrade');
@@ -135,7 +136,7 @@ export default function UpgradePage() {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          alert('Payment successful! Your premium subscription is now active.');
+          toast.success('Payment successful! Your premium subscription is now active.');
           // Refresh user data
           const updatedUser = getCurrentUser();
           setUser(updatedUser);
@@ -144,15 +145,15 @@ export default function UpgradePage() {
             router.push('/dashboard?upgrade=success');
           }, 1500);
         } else {
-          alert('Payment verification failed. Please contact support if payment was deducted.');
+          toast.error('Payment verification failed. Please contact support if payment was deducted.');
         }
       } else {
         const error = await response.json().catch(() => ({ error: 'Verification failed' }));
-        alert('Payment verification failed: ' + (error.error || 'Unknown error') + '. Please contact support if payment was deducted.');
+        toast.error('Payment verification failed: ' + (error.error || 'Unknown error') + '. Please contact support if payment was deducted.');
       }
     } catch (error) {
       console.error('Error verifying PayPal payment:', error);
-      alert('Payment verification failed. Please contact support if payment was deducted.');
+      toast.error('Payment verification failed. Please contact support if payment was deducted.');
     }
 
     // Clean up URL
@@ -223,7 +224,7 @@ export default function UpgradePage() {
         }
       }
     } catch (error: any) {
-      alert('Failed to initiate payment: ' + error.message);
+      toast.error('Failed to initiate payment: ' + error.message);
       setLoading(false);
       setPaymentProvider(null);
     }

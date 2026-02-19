@@ -8,6 +8,7 @@ import { getCreditNotesAPI, deleteCreditNoteAPI } from '@/lib/api-client';
 import { currencySymbols } from '@/types/invoice';
 import { formatCurrency } from '@/lib/calculations';
 import { format } from 'date-fns';
+import { toast } from 'react-hot-toast';
 
 export default function CreditNotesPage() {
   const router = useRouter();
@@ -63,7 +64,7 @@ export default function CreditNotesPage() {
       await deleteCreditNoteAPI(id);
       loadCreditNotes();
     } catch (error: any) {
-      alert(error.message || 'Failed to delete credit note');
+      toast.error(error.message || 'Failed to delete credit note');
     }
   };
 
@@ -89,8 +90,8 @@ export default function CreditNotesPage() {
     );
   }
 
-  const filteredNotes = filter === 'all' 
-    ? creditNotes 
+  const filteredNotes = filter === 'all'
+    ? creditNotes
     : creditNotes.filter(note => note.status === filter);
 
   return (
@@ -118,41 +119,37 @@ export default function CreditNotesPage() {
           <div className="flex gap-2">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filter === 'all'
+              className={`px-4 py-2 rounded-lg transition-colors ${filter === 'all'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               All
             </button>
             <button
               onClick={() => setFilter('draft')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filter === 'draft'
+              className={`px-4 py-2 rounded-lg transition-colors ${filter === 'draft'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Draft
             </button>
             <button
               onClick={() => setFilter('issued')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filter === 'issued'
+              className={`px-4 py-2 rounded-lg transition-colors ${filter === 'issued'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Issued
             </button>
             <button
               onClick={() => setFilter('applied')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
-                filter === 'applied'
+              className={`px-4 py-2 rounded-lg transition-colors ${filter === 'applied'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Applied
             </button>

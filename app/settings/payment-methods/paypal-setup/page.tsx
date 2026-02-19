@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
+import { toast } from 'react-hot-toast';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -27,7 +28,7 @@ function PayPalSetupContent() {
       return;
     }
     setUser(currentUser);
-    
+
     const testMode = searchParams.get('testMode') === 'true';
     setIsTestMode(testMode);
   }, [router, searchParams]);
@@ -37,12 +38,12 @@ function PayPalSetupContent() {
     const paypalUrl = isTestMode
       ? 'https://www.sandbox.paypal.com/signin'
       : 'https://www.paypal.com/signin';
-    
+
     const width = 600;
     const height = 700;
     const left = (window.screen.width - width) / 2;
     const top = (window.screen.height - height) / 2;
-    
+
     const popup = window.open(
       paypalUrl,
       'PayPal Login',
@@ -65,13 +66,13 @@ function PayPalSetupContent() {
     const devUrl = isTestMode
       ? 'https://developer.paypal.com/dashboard/applications/sandbox'
       : 'https://developer.paypal.com/dashboard/applications/live';
-    
+
     window.open(devUrl, '_blank');
   };
 
   const handleSave = async () => {
     if (!formData.clientId || !formData.clientSecret) {
-      alert('Please enter both Client ID and Client Secret');
+      toast.error('Please enter both Client ID and Client Secret');
       return;
     }
 
@@ -97,14 +98,14 @@ function PayPalSetupContent() {
       });
 
       if (response.ok) {
-        alert('PayPal credentials saved successfully!');
+        toast.success('PayPal credentials saved successfully!');
         router.push('/settings/payment-methods');
       } else {
         const error = await response.json();
-        alert('Failed to save: ' + error.error);
+        toast.error('Failed to save: ' + error.error);
       }
     } catch (error: any) {
-      alert('Error: ' + error.message);
+      toast.error('Error: ' + error.message);
     } finally {
       setSaving(false);
     }
@@ -132,17 +133,14 @@ function PayPalSetupContent() {
           {/* Step Indicator */}
           <div className="mb-8">
             <div className="flex items-center">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                step === 'login' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white'
-              }`}>
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${step === 'login' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white'
+                }`}>
                 {step === 'login' ? '1' : '✓'}
               </div>
-              <div className={`flex-1 h-1 mx-4 ${
-                step === 'credentials' ? 'bg-green-600' : 'bg-gray-300'
-              }`}></div>
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                step === 'credentials' ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
-              }`}>
+              <div className={`flex-1 h-1 mx-4 ${step === 'credentials' ? 'bg-green-600' : 'bg-gray-300'
+                }`}></div>
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${step === 'credentials' ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                }`}>
                 2
               </div>
             </div>
@@ -165,7 +163,7 @@ function PayPalSetupContent() {
                   className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.451 0 5.97 0h7.976a11.1 11.1 0 0 1 2.33.237c1.941.519 3.105 1.767 3.105 3.745 0 2.268-1.841 4.142-4.604 4.142H12.19l-1.028 5.978a2.28 2.28 0 0 0 .182 1.925 2.243 2.243 0 0 0 1.87.995h8.945a.746.746 0 0 1 .735.896l-1.319 7.66a.641.641 0 0 1-.633.54h-4.846a.635.635 0 0 1-.627-.54l-.408-2.388a.635.635 0 0 0-.627-.54H9.23a2.24 2.24 0 0 1-1.87-.995 2.28 2.28 0 0 1-.182-1.925l1.028-5.978H7.076z"/>
+                    <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.451 0 5.97 0h7.976a11.1 11.1 0 0 1 2.33.237c1.941.519 3.105 1.767 3.105 3.745 0 2.268-1.841 4.142-4.604 4.142H12.19l-1.028 5.978a2.28 2.28 0 0 0 .182 1.925 2.243 2.243 0 0 0 1.87.995h8.945a.746.746 0 0 1 .735.896l-1.319 7.66a.641.641 0 0 1-.633.54h-4.846a.635.635 0 0 1-.627-.54l-.408-2.388a.635.635 0 0 0-.627-.54H9.23a2.24 2.24 0 0 1-1.87-.995 2.28 2.28 0 0 1-.182-1.925l1.028-5.978H7.076z" />
                   </svg>
                   Login to PayPal {isTestMode && '(Sandbox)'}
                 </button>
@@ -218,7 +216,7 @@ function PayPalSetupContent() {
                   <input
                     type="text"
                     value={formData.clientId}
-                    onChange={(e) => setFormData({...formData, clientId: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="Enter your PayPal Client ID"
                   />
@@ -230,7 +228,7 @@ function PayPalSetupContent() {
                   <input
                     type="password"
                     value={formData.clientSecret}
-                    onChange={(e) => setFormData({...formData, clientSecret: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, clientSecret: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="Enter your PayPal Client Secret"
                   />

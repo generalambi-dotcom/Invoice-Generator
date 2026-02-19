@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ClientLayout from '../../../../components/ClientLayout';
 import Image from 'next/image';
+import { toast } from 'react-hot-toast';
 
 export default function CreateBlogPost() {
     const router = useRouter();
@@ -48,7 +49,7 @@ export default function CreateBlogPost() {
             setFormData({ ...formData, coverImage: data.url });
         } catch (error) {
             console.error('Error uploading image:', error);
-            alert('Failed to upload image');
+            toast.error('Failed to upload image');
         } finally {
             setLoading(false);
         }
@@ -72,7 +73,7 @@ export default function CreateBlogPost() {
 
             router.push('/blog');
         } catch (error: any) {
-            alert(error.message);
+            toast.error(error.message);
         } finally {
             setLoading(false);
         }

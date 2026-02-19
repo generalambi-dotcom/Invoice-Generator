@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth';
+import { toast } from 'react-hot-toast';
 
 interface EmailTemplate {
     id: string;
@@ -527,9 +528,6 @@ export default function EmailNotificationsPage() {
                                 <button
                                     onClick={async () => {
                                         if (!editingTemplate) return;
-                                        const toastId = 'sending-test';
-                                        // Simple toast notification (you might want to use a library like react-hot-toast)
-                                        const showToast = (msg: string) => alert(msg);
 
                                         try {
                                             const res = await fetch('/api/admin/email-notifications/test', {
@@ -542,13 +540,13 @@ export default function EmailNotificationsPage() {
                                             });
                                             if (res.ok) {
                                                 const data = await res.json();
-                                                showToast(`Test email sent to ${data.sentTo}`);
+                                                toast.success(`Test email sent to ${data.sentTo}`);
                                             } else {
                                                 const err = await res.json();
-                                                showToast(`Failed to send test: ${err.error}`);
+                                                toast.error(`Failed to send test: ${err.error}`);
                                             }
                                         } catch (e: any) {
-                                            showToast(`Error: ${e.message}`);
+                                            toast.error(`Error: ${e.message}`);
                                         }
                                     }}
                                     className="px-4 py-2 text-sm text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg font-medium transition-colors border border-indigo-200"

@@ -8,6 +8,7 @@ import { loadInvoicesAPI, deleteInvoiceAPI, updateOverdueInvoicesAPI, getPayment
 import { Invoice, currencySymbols, Currency } from '@/types/invoice';
 import { formatCurrency } from '@/lib/calculations';
 import { format } from 'date-fns';
+import { toast } from 'react-hot-toast';
 import DashboardGreeting from '@/components/DashboardGreeting';
 import DashboardCharts from '@/components/DashboardCharts';
 import {
@@ -265,7 +266,7 @@ export default function DashboardPage() {
         loadInvoiceData();
       } catch (error) {
         console.error('Error restoring invoice:', error);
-        alert('Failed to restore invoice. Please try again.');
+        toast.error('Failed to restore invoice. Please try again.');
       }
     }
   };
@@ -277,7 +278,7 @@ export default function DashboardPage() {
         loadInvoiceData();
       } catch (error) {
         console.error('Error deleting invoice:', error);
-        alert('Failed to delete invoice. Please try again.');
+        toast.error('Failed to delete invoice. Please try again.');
       }
     }
   };
@@ -295,7 +296,7 @@ export default function DashboardPage() {
       await approveInvoiceAPI(invoiceId);
       loadInvoiceData();
     } catch (error: any) {
-      alert(error.message || 'Failed to approve invoice');
+      toast.error(error.message || 'Failed to approve invoice');
     } finally {
       setProcessingApproval(null);
     }
@@ -310,7 +311,7 @@ export default function DashboardPage() {
       await rejectInvoiceAPI(invoiceId, reason);
       loadInvoiceData();
     } catch (error: any) {
-      alert(error.message || 'Failed to reject invoice');
+      toast.error(error.message || 'Failed to reject invoice');
     } finally {
       setProcessingApproval(null);
     }
@@ -322,7 +323,7 @@ export default function DashboardPage() {
       await requestApprovalAPI(invoiceId);
       loadInvoiceData();
     } catch (error: any) {
-      alert(error.message || 'Failed to request approval');
+      toast.error(error.message || 'Failed to request approval');
     } finally {
       setProcessingApproval(null);
     }
@@ -336,7 +337,7 @@ export default function DashboardPage() {
       await markInvoiceSentAPI(invoiceId);
       loadInvoiceData();
     } catch (error: any) {
-      alert(error.message || 'Failed to mark invoice as sent');
+      toast.error(error.message || 'Failed to mark invoice as sent');
     } finally {
       setProcessingApproval(null);
     }
@@ -689,7 +690,7 @@ export default function DashboardPage() {
                                         });
                                         loadInvoiceData();
                                       } catch (error) {
-                                        alert('Failed to record payment');
+                                        toast.error('Failed to record payment');
                                       }
                                     }
                                   }}

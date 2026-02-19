@@ -9,6 +9,7 @@ import { Invoice, currencySymbols } from '@/types/invoice';
 import { formatCurrency } from '@/lib/calculations';
 import { format } from 'date-fns';
 import { getCurrentUser } from '@/lib/auth';
+import { toast } from 'react-hot-toast';
 
 export default function HistoryPage() {
   const router = useRouter();
@@ -85,7 +86,7 @@ export default function HistoryPage() {
 
   const handleExport = () => {
     if (invoices.length === 0) {
-      alert('No invoices to export');
+      toast.error('No invoices to export');
       return;
     }
 
@@ -126,7 +127,7 @@ export default function HistoryPage() {
       localStorage.removeItem('invoice-generator-invoices');
       setInvoices([]);
       setFilteredInvoices([]);
-      alert('All invoices have been erased.');
+      toast.success('All invoices have been erased.');
     }
   };
 

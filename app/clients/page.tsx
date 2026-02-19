@@ -10,6 +10,7 @@ import {
   updateClientAPI,
   deleteClientAPI,
 } from '@/lib/api-client';
+import { toast } from 'react-hot-toast';
 
 interface Client {
   id: string;
@@ -83,7 +84,7 @@ export default function ClientsPage() {
 
   const handleSave = async () => {
     if (!formData.name) {
-      alert('Client name is required');
+      toast.error('Client name is required');
       return;
     }
 
@@ -110,7 +111,7 @@ export default function ClientsPage() {
       });
       loadClients();
     } catch (error: any) {
-      alert('Failed to save client: ' + error.message);
+      toast.error('Failed to save client: ' + error.message);
     }
   };
 
@@ -123,7 +124,7 @@ export default function ClientsPage() {
       await deleteClientAPI(clientId);
       loadClients();
     } catch (error: any) {
-      alert('Failed to delete client: ' + error.message);
+      toast.error('Failed to delete client: ' + error.message);
     }
   };
 

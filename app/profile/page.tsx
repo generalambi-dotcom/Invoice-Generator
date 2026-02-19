@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { getCurrentUser } from '@/lib/auth';
 import { getCompanyDefaultsAPI, saveCompanyDefaultsAPI } from '@/lib/api-client';
 import { CompanyInfo, Currency, currencySymbols } from '@/types/invoice';
+import { toast } from 'react-hot-toast';
 
 export default function ProfilePage() {
     const [user, setUser] = useState<any>(null);
@@ -108,10 +109,10 @@ export default function ProfilePage() {
             // 2. TODO: Update User Name/Email via separate API if changed
             // For now, we mainly focus on the Business Info which drives the invoices
 
-            alert('Profile updated successfully!');
+            toast.success('Profile updated successfully!');
         } catch (error) {
             console.error('Error saving profile:', error);
-            alert('Failed to save profile.');
+            toast.error('Failed to save profile.');
         } finally {
             setIsSaving(false);
         }

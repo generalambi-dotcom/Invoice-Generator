@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, UserPlus, MoreVertical, Shield, Check, X, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'react-hot-toast';
 
 interface User {
     id: string;
@@ -95,14 +96,14 @@ export default function AdminUsersPage() {
                     subscriptionStatus: 'active'
                 });
                 fetchUsers();
-                alert('User created successfully');
+                toast.success('User created successfully');
             } else {
                 const error = await res.json();
-                alert(error.error || 'Failed to create user');
+                toast.error(error.error || 'Failed to create user');
             }
         } catch (error) {
             console.error(error);
-            alert('An error occurred');
+            toast.error('An error occurred');
         } finally {
             setFormLoading(false);
         }
@@ -137,14 +138,14 @@ export default function AdminUsersPage() {
                 setShowEditModal(false);
                 setSelectedUser(null);
                 fetchUsers();
-                alert('User updated successfully');
+                toast.success('User updated successfully');
             } else {
                 const error = await res.json();
-                alert(error.error || 'Failed to update user');
+                toast.error(error.error || 'Failed to update user');
             }
         } catch (error) {
             console.error(error);
-            alert('An error occurred');
+            toast.error('An error occurred');
         } finally {
             setFormLoading(false);
         }
@@ -293,8 +294,8 @@ export default function AdminUsersPage() {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.subscriptionStatus === 'cancelled' || user.subscriptionStatus === 'expired'
-                                                            ? 'bg-red-100 text-red-800'
-                                                            : 'bg-green-100 text-green-800'
+                                                        ? 'bg-red-100 text-red-800'
+                                                        : 'bg-green-100 text-green-800'
                                                         }`}>
                                                         {user.subscriptionStatus || 'Active'}
                                                     </span>

@@ -7,6 +7,7 @@ import InvoicePaper from '@/components/InvoicePaper';
 import { ArrowLeft, Download, Printer } from 'lucide-react';
 import { pdf } from '@react-pdf/renderer';
 import { InvoicePDF } from '@/lib/pdf-generator';
+import { toast } from 'react-hot-toast';
 
 export default function InvoiceViewPage() {
     const params = useParams();
@@ -52,7 +53,7 @@ export default function InvoiceViewPage() {
             URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Error generating PDF:', error);
-            alert('Error generating PDF');
+            toast.error('Error generating PDF');
         }
     };
 

@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import InvoiceFormPreview from '@/components/InvoiceFormPreview';
 import PricingSection from '@/components/PricingSection';
+import GlobalInvoiceCounter from '@/components/GlobalInvoiceCounter';
+import { Sparkles, MessageCircle } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -25,7 +27,7 @@ export default function LandingPage() {
                 <div className="w-8 h-8 rounded-full bg-emerald-200 border-2 border-white flex items-center justify-center text-xs">👨🏾</div>
               </div>
               <span className="text-sm text-gray-600">
-                <span className="font-bold text-gray-900">13,000+</span> businesses using our invoice generator
+                <GlobalInvoiceCounter /> invoices generated for modern businesses
               </span>
             </div>
 
@@ -59,6 +61,12 @@ export default function LandingPage() {
 
           {/* Interactive Invoice Form Preview */}
           <InvoiceFormPreview />
+
+          <div className="mt-8 text-center flex flex-wrap items-center justify-center gap-1.5 text-sm text-gray-500 font-medium px-4 animate-fade-in-up animation-delay-400">
+            <Link href="/upgrade" className="text-gray-900 font-bold hover:underline transition-colors decoration-2 underline-offset-2 decoration-amber-400">Try Premium 30 days free</Link>
+            <span>— create smarter invoices with <Sparkles className="w-4 h-4 inline-block text-purple-500 mb-0.5 mx-0.5" /> <span className="font-bold text-gray-700">AI</span></span>
+            <span>and send instantly via <MessageCircle className="w-4 h-4 inline-block text-[#25D366] mb-0.5 mx-0.5" /> <span className="font-bold text-[#25D366]">WhatsApp</span>.</span>
+          </div>
         </div>
       </section>
 

@@ -7,6 +7,7 @@ import { retryWithBackoff, formatErrorMessage } from './error-handler';
 import { getPasswordResetEmailHtml, getPasswordResetEmailText } from './password-reset-email';
 import { getVerificationEmailHtml, getVerificationEmailText } from './verification-email';
 import { prisma } from './db';
+import { getEmailLayout } from './email-layout';
 
 // Don't initialize Resend at module level - do it lazily in the function
 // This prevents build-time errors when RESEND_API_KEY is not set
@@ -36,57 +37,54 @@ export async function sendInvoiceEmail({
       return { success: true, emailId: 'dev-email-id' };
     }
 
-    // Initialize Resend client lazily (only when needed and API key is available)
+    // Initialize Resend client lazily
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    // Build email HTML
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #4F46E5; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
-            .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }
-            .footer { background: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280; border-radius: 0 0 8px 8px; }
-            .button { display: inline-block; padding: 12px 24px; background: #4F46E5; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-            .invoice-details { background: white; padding: 15px; border-radius: 6px; margin: 15px 0; }
-            .invoice-details p { margin: 5px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Invoice ${invoice.invoiceNumber || 'N/A'}</h1>
-            </div>
-            <div class="content">
-              ${message ? `<p>${message.replace(/\n/g, '<br>')}</p>` : ''}
+    // Build email content
+    const content = `
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h2>Invoice ${invoice.invoiceNumber || 'N/A'}</h2>
+      </div>
+
+      ${message ? `<p>${message.replace(/\n/g, '<br>')}</p>` : ''}
               
-              <div class="invoice-details">
-                <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber || 'N/A'}</p>
-                <p><strong>Date:</strong> ${new Date(invoice.invoiceDate).toLocaleDateString()}</p>
-                <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
-                <p><strong>Total Amount:</strong> ${invoice.currency || 'USD'} ${invoice.total?.toFixed(2) || '0.00'}</p>
-              </div>
+      <table class="invoice-details" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #fff; border: 1px solid #e5e7eb; border-radius: 6px;">
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;"><strong>Invoice Number:</strong></td>
+          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">${invoice.invoiceNumber || 'N/A'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;"><strong>Date:</strong></td>
+          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">${new Date(invoice.invoiceDate).toLocaleDateString()}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;"><strong>Due Date:</strong></td>
+          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">${new Date(invoice.dueDate).toLocaleDateString()}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px;"><strong>Total Amount:</strong></td>
+          <td style="padding: 10px; text-align: right; font-weight: bold;">${invoice.currency || 'USD'} ${invoice.total?.toFixed(2) || '0.00'}</td>
+        </tr>
+      </table>
 
-              ${invoice.paymentLink ? `
-                <p>You can pay this invoice online:</p>
-                <a href="${invoice.paymentLink}" class="button">Pay Invoice</a>
-              ` : ''}
+      ${invoice.paymentLink ? `
+        <p>You can pay this invoice online:</p>
+        <div style="text-align: center;">
+            <a href="${invoice.paymentLink}" class="button">Pay Invoice</a>
+        </div>
+      ` : ''}
 
-              <p>Please find the invoice PDF attached to this email.</p>
-            </div>
-            <div class="footer">
-              <p>This is an automated email from Invoice Generator.ng</p>
-              <p>If you have any questions, please contact the sender.</p>
-              <img src="https://www.invoicegenerator.ng/api/invoices/${invoice.id}/track?t=${Date.now()}" width="1" height="1" style="display:none" alt="" />
-            </div>
-          </div>
-        </body>
-      </html>
+      <p>Please find the invoice PDF attached to this email.</p>
+      
+      <img src="https://www.invoicegenerator.ng/api/invoices/${invoice.id}/track?t=${Date.now()}" width="1" height="1" style="display:none" alt="" />
     `;
+
+    // Wrap with layout
+    const emailHtml = await getEmailLayout({
+      content,
+      title: `Invoice ${invoice.invoiceNumber || 'N/A'}`,
+      previewText: `Invoice ${invoice.invoiceNumber} from InvoiceNaija`,
+    });
 
     // Prepare email data
     const emailData: any = {
@@ -155,7 +153,6 @@ export async function sendPasswordResetEmail({
   try {
     // Check if Resend API key is configured
     if (!process.env.RESEND_API_KEY) {
-      // In development, just log the email
       console.log('⚠️  RESEND_API_KEY not set. Password reset email would be sent:', {
         to,
         resetUrl: resetUrl.substring(0, 50) + '...',
@@ -166,76 +163,36 @@ export async function sendPasswordResetEmail({
       };
     }
 
-    console.log('📧 Attempting to send password reset email:', {
-      to,
-      hasApiKey: !!process.env.RESEND_API_KEY,
-      apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 10) + '...',
-    });
-
-    // Initialize Resend client lazily
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    const emailHtml = getPasswordResetEmailHtml(resetUrl, name);
+    // Await HTML generation (now async)
+    const emailHtml = await getPasswordResetEmailHtml(resetUrl, name);
     const emailText = getPasswordResetEmailText(resetUrl, name);
 
     const emailData = {
-      from: 'Invoice Generator <onboarding@resend.dev>', // Update to your verified domain for production
+      from: 'Invoice Generator <onboarding@resend.dev>',
       to,
       subject: 'Reset Your Password - Invoice Generator Nigeria',
       html: emailHtml,
       text: emailText,
     };
 
-    console.log('📤 Sending email via Resend:', {
-      from: emailData.from,
-      to: emailData.to,
-      subject: emailData.subject,
-    });
-
-    // Send email with retry logic
     const result = await retryWithBackoff(async () => {
       return await resend.emails.send(emailData);
     }, {
       maxRetries: 2,
       retryDelay: 1000,
-      retryable: (error: any) => {
-        return error.statusCode === 429 || error.code === 'ECONNABORTED';
-      },
     });
 
-    const { data, error } = result;
-
-    if (error) {
-      console.error('❌ Resend API error:', {
-        message: error.message,
-        name: error.name,
-        statusCode: (error as any).statusCode,
-        code: (error as any).code,
-        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
-      });
-      return {
-        success: false,
-        error: formatErrorMessage(error, 'sending password reset email')
-      };
+    if (result.error) {
+      console.error('❌ Resend API error:', result.error);
+      return { success: false, error: formatErrorMessage(result.error, 'sending password reset email') };
     }
 
-    console.log('✅ Email sent successfully via Resend:', {
-      emailId: data?.id,
-      to,
-    });
-
-    return { success: true, emailId: data?.id };
+    return { success: true, emailId: result.data?.id };
   } catch (error: any) {
-    console.error('❌ Exception in sendPasswordResetEmail:', {
-      message: error.message,
-      name: error.name,
-      stack: error.stack,
-      fullError: JSON.stringify(error, Object.getOwnPropertyNames(error), 2),
-    });
-    return {
-      success: false,
-      error: formatErrorMessage(error, 'sending password reset email')
-    };
+    console.error('❌ Exception in sendPasswordResetEmail:', error);
+    return { success: false, error: formatErrorMessage(error, 'sending password reset email') };
   }
 }
 
@@ -254,66 +211,41 @@ export async function sendVerificationEmail({
   verificationUrl,
 }: SendVerificationEmailParams): Promise<{ success: boolean; error?: string; emailId?: string }> {
   try {
-    // Check if Resend API key is configured
     if (!process.env.RESEND_API_KEY) {
-      // In development, just log the email
       console.log('⚠️  RESEND_API_KEY not set. Verification email would be sent:', {
         to,
-        verificationUrl: verificationUrl.substring(0, 50) + '...',
+        verificationUrl,
       });
-      return {
-        success: false,
-        error: 'RESEND_API_KEY environment variable is not configured'
-      };
+      return { success: false, error: 'RESEND_API_KEY environment variable is not configured' };
     }
 
-    // Initialize Resend client lazily
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    const emailHtml = getVerificationEmailHtml(verificationUrl, name);
+    // Await HTML generation
+    const emailHtml = await getVerificationEmailHtml(verificationUrl, name);
     const emailText = getVerificationEmailText(verificationUrl, name);
 
     const emailData = {
-      from: 'Invoice Generator <onboarding@resend.dev>', // Update to your verified domain for production
+      from: 'Invoice Generator <onboarding@resend.dev>',
       to,
       subject: 'Verify Your Email Address - Invoice Generator Nigeria',
       html: emailHtml,
       text: emailText,
     };
 
-    // Send email with retry logic
     const result = await retryWithBackoff(async () => {
       return await resend.emails.send(emailData);
-    }, {
-      maxRetries: 2,
-      retryDelay: 1000,
-      retryable: (error: any) => {
-        return error.statusCode === 429 || error.code === 'ECONNABORTED';
-      },
-    });
+    }, { maxRetries: 2 });
 
-    const { data, error } = result;
-
-    if (error) {
-      console.error('❌ Resend API error:', error);
-      return {
-        success: false,
-        error: formatErrorMessage(error, 'sending verification email')
-      };
+    if (result.error) {
+      console.error('❌ Resend API error:', result.error);
+      return { success: false, error: formatErrorMessage(result.error, 'sending verification email') };
     }
 
-    console.log('✅ Verification email sent successfully:', {
-      emailId: data?.id,
-      to,
-    });
-
-    return { success: true, emailId: data?.id };
+    return { success: true, emailId: result.data?.id };
   } catch (error: any) {
     console.error('❌ Exception in sendVerificationEmail:', error);
-    return {
-      success: false,
-      error: formatErrorMessage(error, 'sending verification email')
-    };
+    return { success: false, error: formatErrorMessage(error, 'sending verification email') };
   }
 }
 
@@ -334,60 +266,40 @@ export async function sendSupportEmail({
   message,
 }: SendSupportEmailParams): Promise<{ success: boolean; error?: string; emailId?: string }> {
   try {
-    // Check if Resend API key is configured
     if (!process.env.RESEND_API_KEY) {
-      console.log('⚠️  RESEND_API_KEY not set. Support email would be sent:', {
-        from: `${name} <${email}>`,
-        subject,
-        message: message.substring(0, 50) + '...',
-      });
-      return {
-        success: false,
-        error: 'RESEND_API_KEY environment variable is not configured'
-      };
+      console.log('⚠️  RESEND_API_KEY not set. Support email would be sent.');
+      return { success: false, error: 'RESEND_API_KEY environment variable is not configured' };
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    // HTML content for the support team
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .header { background: #f3f4f6; padding: 20px; border-bottom: 2px solid #e5e7eb; }
-            .content { padding: 20px; }
-            .field { margin-bottom: 15px; }
-            .label { font-weight: bold; color: #6b7280; font-size: 0.9em; }
-            .value { background: #f9fafb; padding: 10px; border-radius: 4px; border: 1px solid #e5e7eb; }
-            .message-box { white-space: pre-wrap; background: #fff; padding: 15px; border: 1px solid #e5e7eb; border-radius: 4px; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h2>New Contact Form Submission</h2>
-            <p>From: <strong>${name}</strong> (${email})</p>
-          </div>
-          <div class="content">
-            <div class="field">
-              <div class="label">Subject</div>
-              <div class="value">${subject}</div>
-            </div>
-            
-            <div class="field">
-              <div class="label">Message</div>
-              <div class="message-box">${message}</div>
-            </div>
+    const content = `
+        <div style="margin-bottom: 20px;">
+          <h2>New Contact Form Submission</h2>
+          <p>From: <strong>${name}</strong> (${email})</p>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+          <div style="font-weight: bold; color: #6b7280; font-size: 0.9em;">Subject</div>
+          <div style="background: #f9fafb; padding: 10px; border-radius: 4px; border: 1px solid #e5e7eb;">${subject}</div>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+          <div style="font-weight: bold; color: #6b7280; font-size: 0.9em;">Message</div>
+          <div style="white-space: pre-wrap; background: #fff; padding: 15px; border: 1px solid #e5e7eb; border-radius: 4px;">${message}</div>
+        </div>
 
-            <div style="margin-top: 30px; font-size: 0.8em; color: #888;">
-              <p>This email was sent via the contact form on Invoice Generator.</p>
-              <p>Reply to this email to contact the user directly at ${email}.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+        <div style="margin-top: 30px; font-size: 0.8em; color: #888; border-top: 1px solid #eee; padding-top: 10px;">
+          <p>This email was sent via the contact form on Invoice Generator.</p>
+          <p>Reply to this email to contact the user directly at ${email}.</p>
+        </div>
     `;
+
+    const emailHtml = await getEmailLayout({
+      content,
+      title: `Contact Form: ${subject}`,
+      previewText: `New message from ${name}`,
+    });
 
     const emailData = {
       from: 'Invoice Generator Contact <contact@resend.dev>', // Update in production
@@ -400,28 +312,16 @@ export async function sendSupportEmail({
 
     const result = await retryWithBackoff(async () => {
       return await resend.emails.send(emailData);
-    }, {
-      maxRetries: 2,
-    });
+    }, { maxRetries: 2 });
 
-    const { data, error } = result;
-
-    if (error) {
-      console.error('❌ Resend API error (Support):', error);
-      return {
-        success: false,
-        error: formatErrorMessage(error, 'sending support email')
-      };
+    if (result.error) {
+      return { success: false, error: formatErrorMessage(result.error, 'sending support email') };
     }
 
-    return { success: true, emailId: data?.id };
-    return { success: true, emailId: data?.id };
+    return { success: true, emailId: result.data?.id };
   } catch (error: any) {
     console.error('❌ Exception in sendSupportEmail:', error);
-    return {
-      success: false,
-      error: formatErrorMessage(error, 'sending support email')
-    };
+    return { success: false, error: formatErrorMessage(error, 'sending support email') };
   }
 }
 
@@ -441,22 +341,17 @@ export async function sendInvoiceReminderEmail({
 }: SendInvoiceReminderParams): Promise<{ success: boolean; error?: string; emailId?: string }> {
   try {
     if (!process.env.RESEND_API_KEY) {
-      console.log('⚠️ RESEND_API_KEY not set. Reminder would be sent:', {
-        to: invoice.clientInfo?.email,
-        type,
-        invoiceNumber: invoice.invoiceNumber,
-      });
       return { success: true, emailId: 'dev-mode' };
     }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
     const clientName = invoice.clientInfo?.name || 'Valued Client';
-    const invoiceUrl = `https://invoicegenerator.ng/invoice/${invoice.id}`; // Adjust based on your public invoice URL structure
+    const invoiceUrl = `https://invoicegenerator.ng/invoice/${invoice.id}`;
 
     let subject = '';
     let headline = '';
     let bodyText = '';
-    let color = '#4F46E5'; // Default blue
+    let infoBoType = 'info-box'; // Default style
 
     switch (type) {
       case 'due_soon':
@@ -473,66 +368,56 @@ export async function sendInvoiceReminderEmail({
         subject = `Overdue: Invoice ${invoice.invoiceNumber} is ${days} days late`;
         headline = 'Payment Overdue';
         bodyText = `We noticed that payment for Invoice ${invoice.invoiceNumber} was due on ${new Date(invoice.dueDate).toLocaleDateString()} and is now ${days} days overdue. Please make payment immediately to avoid service interruption.`;
-        color = '#DC2626'; // Red
+        infoBoType = 'warning-box';
         break;
     }
 
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: ${color}; color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }
-            .content { background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }
-            .button { display: inline-block; padding: 12px 24px; background: ${color}; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-            .details { background: white; padding: 15px; border-radius: 6px; margin: 15px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>${headline}</h1>
-            </div>
-            <div class="content">
-              <p>Dear ${clientName},</p>
-              <p>${bodyText}</p>
-              
-              <div class="details">
-                <p><strong>Invoice Number:</strong> ${invoice.invoiceNumber}</p>
-                <p><strong>Amount Due:</strong> ${invoice.currency} ${invoice.total?.toFixed(2)}</p>
-                <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
-              </div>
+    const content = `
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h2>${headline}</h2>
+      </div>
+      
+      <p>Dear ${clientName},</p>
+      
+      <div class="${infoBoType}">
+        ${bodyText}
+      </div>
+      
+      <table class="invoice-details" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #fff; border: 1px solid #e5e7eb; border-radius: 6px;">
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;"><strong>Invoice Number:</strong></td>
+          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">${invoice.invoiceNumber}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px;"><strong>Amount Due:</strong></td>
+          <td style="padding: 10px; text-align: right; font-weight: bold;">${invoice.currency} ${invoice.total?.toFixed(2)}</td>
+        </tr>
+      </table>
 
-              <div style="text-align: center;">
-                 <a href="${invoiceUrl}" class="button">View & Pay Invoice</a>
-              </div>
-              
-              <p>If you have already made payment, please disregard this email.</p>
-            </div>
-          </div>
-        </body>
-      </html>
+      <div style="text-align: center; margin: 30px 0;">
+         <a href="${invoiceUrl}" class="button">View & Pay Invoice</a>
+      </div>
+      
+      <p>If you have already made payment, please disregard this email.</p>
     `;
+
+    const emailHtml = await getEmailLayout({
+      content,
+      title: headline,
+      previewText: subject,
+    });
 
     const emailData = {
       from: 'Invoice Generator <reminders@resend.dev>',
-      to: invoice.clientInfo?.email, // Assuming client email is reachable here
+      to: invoice.clientInfo?.email,
       subject: subject,
       html: emailHtml,
     };
 
-    if (!emailData.to) {
-      return { success: false, error: 'Client email not found' };
-    }
+    if (!emailData.to) return { success: false, error: 'Client email not found' };
 
     const result = await resend.emails.send(emailData);
-
-    if (result.error) {
-      console.error('Error sending reminder:', result.error);
-      return { success: false, error: formatErrorMessage(result.error, 'sending reminder') };
-    }
+    if (result.error) return { success: false, error: formatErrorMessage(result.error, 'sending reminder') };
 
     return { success: true, emailId: result.data?.id };
 
@@ -566,10 +451,7 @@ interface SendClientStatementParams {
 
 export async function sendClientStatementEmail(params: SendClientStatementParams): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!process.env.RESEND_API_KEY) {
-      console.log('⚠️ RESEND_API_KEY not set. Statement would be sent:', { to: params.to });
-      return { success: true };
-    }
+    if (!process.env.RESEND_API_KEY) return { success: true };
 
     const resend = new Resend(process.env.RESEND_API_KEY);
     const currencySymbol = params.currency === 'NGN' ? '₦' : params.currency === 'GBP' ? '£' : params.currency === 'EUR' ? '€' : '$';
@@ -584,64 +466,65 @@ export async function sendClientStatementEmail(params: SendClientStatementParams
       </tr>
     `).join('');
 
-    const html = `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:640px;margin:0 auto;background:#ffffff;">
-      <div style="background:linear-gradient(135deg,#1F4D45,#2D6A5F);padding:32px;text-align:center;">
-        <h1 style="color:#ffffff;font-size:24px;margin:0 0 4px 0;">Account Statement</h1>
-        <p style="color:rgba(255,255,255,0.8);font-size:14px;margin:0;">From ${params.companyName}</p>
+    const content = `
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h2>Account Statement</h2>
+        <p style="color: #6b7280; font-size: 14px;">From ${params.companyName}</p>
       </div>
 
-      <div style="padding:32px;">
-        <p style="color:#475569;font-size:15px;line-height:1.6;margin:0 0 24px 0;">
-          Dear ${params.clientName},<br><br>
-          Please find below a summary of your account activity with ${params.companyName}.
-        </p>
+      <p>Dear ${params.clientName},</p>
+      <p>Please find below a summary of your account activity with ${params.companyName}.</p>
 
-        <!-- Summary Cards -->
-        <div style="display:flex;gap:12px;margin-bottom:24px;">
-          <div style="flex:1;background:#f0fdf4;border-radius:12px;padding:16px;text-align:center;">
-            <div style="font-size:12px;color:#16a34a;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Total Invoiced</div>
-            <div style="font-size:22px;font-weight:700;color:#15803d;margin-top:4px;">${currencySymbol}${params.totalInvoiced.toFixed(2)}</div>
-          </div>
-          <div style="flex:1;background:#eff6ff;border-radius:12px;padding:16px;text-align:center;">
-            <div style="font-size:12px;color:#2563eb;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Total Paid</div>
-            <div style="font-size:22px;font-weight:700;color:#1d4ed8;margin-top:4px;">${currencySymbol}${params.totalPaid.toFixed(2)}</div>
-          </div>
-          <div style="flex:1;background:${params.outstandingBalance > 0 ? '#fef2f2' : '#f0fdf4'};border-radius:12px;padding:16px;text-align:center;">
-            <div style="font-size:12px;color:${params.outstandingBalance > 0 ? '#dc2626' : '#16a34a'};font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Balance Due</div>
-            <div style="font-size:22px;font-weight:700;color:${params.outstandingBalance > 0 ? '#b91c1c' : '#15803d'};margin-top:4px;">${currencySymbol}${params.outstandingBalance.toFixed(2)}</div>
-          </div>
+      <!-- Summary Cards -->
+      <div style="display:flex; gap:12px; margin-bottom:24px;">
+        <div style="flex:1; background:#f0fdf4; border-radius:12px; padding:16px; text-align:center;">
+          <div style="font-size:10px; color:#16a34a; font-weight:600; text-transform:uppercase;">Total Invoiced</div>
+          <div style="font-size:18px; font-weight:700; color:#15803d; margin-top:4px;">${currencySymbol}${params.totalInvoiced.toFixed(2)}</div>
         </div>
-
-        <!-- Invoice Table -->
-        <table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
-          <thead>
-            <tr style="background:#f8fafc;">
-              <th style="padding:10px 12px;text-align:left;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Invoice</th>
-              <th style="padding:10px 12px;text-align:left;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Date</th>
-              <th style="padding:10px 12px;text-align:right;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Amount</th>
-              <th style="padding:10px 12px;text-align:right;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Paid</th>
-              <th style="padding:10px 12px;text-align:right;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">Balance</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${invoiceRows}
-          </tbody>
-          <tfoot>
-            <tr style="background:#f8fafc;">
-              <td colspan="2" style="padding:12px;font-size:14px;font-weight:700;color:#1e293b;">Total</td>
-              <td style="padding:12px;text-align:right;font-size:14px;font-weight:700;color:#1e293b;">${currencySymbol}${params.totalInvoiced.toFixed(2)}</td>
-              <td style="padding:12px;text-align:right;font-size:14px;font-weight:700;color:#16a34a;">${currencySymbol}${params.totalPaid.toFixed(2)}</td>
-              <td style="padding:12px;text-align:right;font-size:14px;font-weight:700;color:${params.outstandingBalance > 0 ? '#dc2626' : '#16a34a'};">${currencySymbol}${params.outstandingBalance.toFixed(2)}</td>
-            </tr>
-          </tfoot>
-        </table>
-
-        <p style="color:#94a3b8;font-size:12px;margin-top:24px;text-align:center;">
-          Statement generated on ${new Date().toLocaleDateString()} • ${params.companyName}
-        </p>
+        <div style="flex:1; background:#eff6ff; border-radius:12px; padding:16px; text-align:center;">
+          <div style="font-size:10px; color:#2563eb; font-weight:600; text-transform:uppercase;">Total Paid</div>
+          <div style="font-size:18px; font-weight:700; color:#1d4ed8; margin-top:4px;">${currencySymbol}${params.totalPaid.toFixed(2)}</div>
+        </div>
+        <div style="flex:1; background:${params.outstandingBalance > 0 ? '#fef2f2' : '#f0fdf4'}; border-radius:12px; padding:16px; text-align:center;">
+          <div style="font-size:10px; color:${params.outstandingBalance > 0 ? '#dc2626' : '#16a34a'}; font-weight:600; text-transform:uppercase;">Balance Due</div>
+          <div style="font-size:18px; font-weight:700; color:${params.outstandingBalance > 0 ? '#b91c1c' : '#15803d'}; margin-top:4px;">${currencySymbol}${params.outstandingBalance.toFixed(2)}</div>
+        </div>
       </div>
-    </div>`;
+
+      <!-- Invoice Table -->
+      <table style="width:100%; border-collapse:collapse; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
+        <thead>
+          <tr style="background:#f8fafc;">
+            <th style="padding:10px 12px; text-align:left; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase;">Invoice</th>
+            <th style="padding:10px 12px; text-align:left; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase;">Date</th>
+            <th style="padding:10px 12px; text-align:right; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase;">Amount</th>
+            <th style="padding:10px 12px; text-align:right; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase;">Paid</th>
+            <th style="padding:10px 12px; text-align:right; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase;">Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${invoiceRows}
+        </tbody>
+        <tfoot>
+          <tr style="background:#f8fafc;">
+            <td colspan="2" style="padding:12px; font-size:14px; font-weight:700; color:#1e293b;">Total</td>
+            <td style="padding:12px; text-align:right; font-size:14px; font-weight:700; color:#1e293b;">${currencySymbol}${params.totalInvoiced.toFixed(2)}</td>
+            <td style="padding:12px; text-align:right; font-size:14px; font-weight:700; color:#16a34a;">${currencySymbol}${params.totalPaid.toFixed(2)}</td>
+            <td style="padding:12px; text-align:right; font-size:14px; font-weight:700; color:${params.outstandingBalance > 0 ? '#dc2626' : '#16a34a'};">${currencySymbol}${params.outstandingBalance.toFixed(2)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <p style="color:#94a3b8; font-size:12px; margin-top:24px; text-align:center;">
+        Statement generated on ${new Date().toLocaleDateString()}
+      </p>
+    `;
+
+    const emailHtml = await getEmailLayout({
+      content,
+      title: `Account Statement - ${params.companyName}`,
+      previewText: `Account statement from ${params.companyName}`,
+    });
 
     const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
 
@@ -649,7 +532,7 @@ export async function sendClientStatementEmail(params: SendClientStatementParams
       from: `${params.companyName} <${fromEmail}>`,
       to: params.to,
       subject: `Account Statement from ${params.companyName}`,
-      html,
+      html: emailHtml,
     });
 
     return { success: true };
@@ -698,36 +581,42 @@ export async function sendWelcomeEmail({
     const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
     const userName = name || 'there';
 
-    const html = `
-    <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-      <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0;">
-        <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Welcome to InvoiceNaija! 🎉</h1>
+    const content = `
+      <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 30px;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Welcome to InvoiceNaija! 🎉</h1>
       </div>
-      <div style="padding: 30px;">
-        <p style="color: #374151; font-size: 16px;">Hi ${userName},</p>
-        <p style="color: #6b7280; font-size: 14px;">Your account is now set up and ready to go. Here are some things you can do right away:</p>
-        <ul style="color: #6b7280; font-size: 14px; padding-left: 20px;">
+      
+      <p>Hi ${userName},</p>
+      <p>Your account is now set up and ready to go. Here are some things you can do right away:</p>
+      
+      <div style="background: #f9fafb; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
+        <ul style="margin: 0; padding-left: 20px;">
           <li style="margin-bottom: 8px;">📄 Create your first invoice</li>
           <li style="margin-bottom: 8px;">🏢 Add your company details</li>
           <li style="margin-bottom: 8px;">💳 Set up payment methods</li>
           <li style="margin-bottom: 8px;">👥 Add your clients</li>
         </ul>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng'}/dashboard" 
-             style="background: #4f46e5; color: #ffffff; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;">
-            Go to Dashboard
-          </a>
-        </div>
-        <p style="color: #6b7280; font-size: 14px;">If you have any questions, feel free to reach out to our support team.</p>
-        <p style="color: #6b7280; font-size: 14px;">Happy invoicing!<br/>The InvoiceNaija Team</p>
       </div>
-    </div>`;
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng'}/dashboard" class="button">Go to Dashboard</a>
+      </div>
+      
+      <p>If you have any questions, feel free to reach out to our support team.</p>
+      <p>Happy invoicing!<br/>The InvoiceNaija Team</p>
+    `;
+
+    const emailHtml = await getEmailLayout({
+      content,
+      title: 'Welcome to InvoiceNaija',
+      previewText: 'Welcome to InvoiceNaija! Get started creating invoices.',
+    });
 
     await resend.emails.send({
       from: `InvoiceNaija <${fromEmail}>`,
       to,
       subject: 'Welcome to InvoiceNaija! 🎉',
-      html,
+      html: emailHtml,
     });
 
     return { success: true };
@@ -770,106 +659,41 @@ export async function sendPaymentReceivedEmail({
     const resend = new Resend(apiKey);
     const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
 
-    const html = `
-    <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-      <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+    const content = `
+      <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 30px;">
         <h1 style="color: #ffffff; margin: 0; font-size: 24px;">💰 Payment Received</h1>
       </div>
-      <div style="padding: 30px;">
-        <p style="color: #374151; font-size: 16px;">Hi ${userName},</p>
-        <p style="color: #6b7280; font-size: 14px;">A payment has been recorded for one of your invoices.</p>
-        <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin: 20px 0;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Invoice</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #111827;">${invoiceNumber}</td></tr>
-            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Client</td><td style="padding: 8px 0; text-align: right; color: #111827;">${clientName}</td></tr>
-            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Payment</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #059669;">${currency} ${paymentAmount}</td></tr>
-            <tr style="border-top: 1px solid #e5e7eb;"><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Invoice Total</td><td style="padding: 8px 0; text-align: right; color: #111827;">${currency} ${invoiceTotal}</td></tr>
-            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Balance</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: ${remainingBalance === '0' || remainingBalance === '0.00' ? '#059669' : '#dc2626'};">${currency} ${remainingBalance}</td></tr>
-          </table>
-        </div>
+      
+      <p>Hi ${userName},</p>
+      <p>A payment has been recorded for one of your invoices.</p>
+      
+      <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Invoice</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #111827;">${invoiceNumber}</td></tr>
+          <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Client</td><td style="padding: 8px 0; text-align: right; color: #111827;">${clientName}</td></tr>
+          <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Payment</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #059669;">${currency} ${paymentAmount}</td></tr>
+          <tr style="border-top: 1px solid #e5e7eb;"><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Invoice Total</td><td style="padding: 8px 0; text-align: right; color: #111827;">${currency} ${invoiceTotal}</td></tr>
+          <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Balance</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: ${remainingBalance === '0' || remainingBalance === '0.00' ? '#059669' : '#dc2626'};">${currency} ${remainingBalance}</td></tr>
+        </table>
       </div>
-    </div>`;
+    `;
+
+    const emailHtml = await getEmailLayout({
+      content,
+      title: `Payment Received: ${invoiceNumber}`,
+      previewText: `Payment received for Invoice ${invoiceNumber}`,
+    });
 
     await resend.emails.send({
       from: `InvoiceNaija <${fromEmail}>`,
       to,
       subject: `Payment received for Invoice ${invoiceNumber}`,
-      html,
+      html: emailHtml,
     });
 
     return { success: true };
   } catch (error: any) {
     console.error('Error sending payment received email:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * Send recurring invoice created notification
- */
-interface SendRecurringInvoiceCreatedEmailParams {
-  to: string;
-  userName: string;
-  invoiceNumber: string;
-  clientName: string;
-  amount: string;
-  currency: string;
-  dueDate: string;
-}
-
-export async function sendRecurringInvoiceCreatedEmail({
-  to,
-  userName,
-  invoiceNumber,
-  clientName,
-  amount,
-  currency,
-  dueDate,
-}: SendRecurringInvoiceCreatedEmailParams): Promise<{ success: boolean; error?: string }> {
-  try {
-    const enabled = await isNotificationEnabled('recurring_invoice_created');
-    if (!enabled) return { success: true };
-
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) return { success: false, error: 'RESEND_API_KEY not set' };
-    const resend = new Resend(apiKey);
-    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
-
-    const html = `
-    <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
-      <div style="background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">🔄 Recurring Invoice Created</h1>
-      </div>
-      <div style="padding: 30px;">
-        <p style="color: #374151; font-size: 16px;">Hi ${userName},</p>
-        <p style="color: #6b7280; font-size: 14px;">A new invoice has been automatically created from your recurring schedule.</p>
-        <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin: 20px 0;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Invoice #</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #111827;">${invoiceNumber}</td></tr>
-            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Client</td><td style="padding: 8px 0; text-align: right; color: #111827;">${clientName}</td></tr>
-            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Amount</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #111827;">${currency} ${amount}</td></tr>
-            <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Due Date</td><td style="padding: 8px 0; text-align: right; color: #111827;">${dueDate}</td></tr>
-          </table>
-        </div>
-        <div style="text-align: center; margin: 20px 0;">
-          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng'}/dashboard" 
-             style="background: #2563eb; color: #ffffff; padding: 12px 30px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;">
-            Review & Send Invoice
-          </a>
-        </div>
-      </div>
-    </div>`;
-
-    await resend.emails.send({
-      from: `InvoiceNaija <${fromEmail}>`,
-      to,
-      subject: `New recurring invoice ${invoiceNumber} created`,
-      html,
-    });
-
-    return { success: true };
-  } catch (error: any) {
-    console.error('Error sending recurring invoice email:', error);
     return { success: false, error: error.message };
   }
 }

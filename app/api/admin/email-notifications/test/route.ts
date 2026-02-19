@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { Resend } from 'resend';
+import { getEmailLayout } from '@/lib/email-layout';
 
 // POST - Send a test email for a specific template
 export async function POST(request: NextRequest) {
@@ -12,18 +13,32 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { templateId, to } = body;
+        const { templateId, templateKey, to } = body;
 
-        if (!templateId) {
-            return NextResponse.json({ error: 'Template ID required' }, { status: 400 });
+        let template;
+
+        if (templateId) {
+            template = await prisma.emailNotificationTemplate.findUnique({
+                where: { id: templateId },
+            });
+        } else if (templateKey) {
+            template = await prisma.emailNotificationTemplate.findUnique({
+                where: { key: templateKey },
+            });
         }
 
-        const template = await prisma.emailNotificationTemplate.findUnique({
-            where: { id: templateId },
-        });
-
         if (!template) {
-            return NextResponse.json({ error: 'Template not found' }, { status: 404 });
+            // Fallback for direct testing without a template ID (e.g. from design settings)
+            if (templateKey === 'welcome_email') {
+                // Mock template
+                template = {
+                    name: 'Welcome Email',
+                    subject: 'Welcome to InvoiceNaija! 🎉',
+                    body: '<p>Hi {{userName}},</p><p>Your account is now set up and ready to go.</p>'
+                };
+            } else {
+                return NextResponse.json({ error: 'Template not found' }, { status: 404 });
+            }
         }
 
         const apiKey = process.env.RESEND_API_KEY;
@@ -69,19 +84,12 @@ export async function POST(request: NextRequest) {
             testBody = testBody.replaceAll(variable, value);
         }
 
-        // Wrap body in a styled container
-        const html = `
-    <div style="font-family: 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-      <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 12px 20px; text-align: center;">
-        <span style="color: #ffffff; font-size: 12px; font-weight: 600; letter-spacing: 1px;">⚡ TEST EMAIL — ${template.name}</span>
-      </div>
-      <div style="padding: 24px;">
-        ${testBody}
-      </div>
-      <div style="background: #f9fafb; padding: 12px 20px; text-align: center; border-top: 1px solid #e5e7eb;">
-        <p style="color: #9ca3af; font-size: 11px; margin: 0;">This is a test email sent from the Admin Email Notifications panel.</p>
-      </div>
-    </div>`;
+        // Use the centralized layout
+        const html = await getEmailLayout({
+            content: testBody,
+            title: `[TEST] ${testSubject}`,
+            previewText: 'This is a test email from your Admin Dashboard.',
+        });
 
         const data = await resend.emails.send({
             from: `InvoiceNaija <${fromEmail}>`,
@@ -95,16 +103,23 @@ export async function POST(request: NextRequest) {
             console.error('Resend error:', data.error);
         }
 
-        await prisma.emailLog.create({
-            data: {
-                userId: user.userId,
-                to: recipientEmail,
-                subject: `[TEST] ${testSubject}`,
-                body: html,
-                status: data.error ? 'failed' : 'sent',
-                errorMessage: data.error ? JSON.stringify(data.error) : null,
-            },
-        });
+        // Only log to DB if we have a real user ID (local development safety)
+        if (user.userId) {
+            try {
+                await prisma.emailLog.create({
+                    data: {
+                        userId: user.userId,
+                        to: recipientEmail,
+                        subject: `[TEST] ${testSubject}`,
+                        body: html,
+                        status: data.error ? 'failed' : 'sent',
+                        errorMessage: data.error ? JSON.stringify(data.error) : null,
+                    },
+                });
+            } catch (ignore) {
+                // Ignore logging errors in test mode
+            }
+        }
 
         return NextResponse.json({ success: true, sentTo: recipientEmail });
     } catch (error: any) {

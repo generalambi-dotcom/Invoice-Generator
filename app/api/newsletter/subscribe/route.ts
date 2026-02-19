@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSystemSettings } from '@/lib/settings';
 
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -42,8 +43,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
         }
 
-        const apiKey = process.env.BREVO_API_KEY;
-        const listId = process.env.BREVO_LIST_ID;
+        const settings = await getSystemSettings(['BREVO_API_KEY', 'BREVO_LIST_ID']);
+        const apiKey = settings['BREVO_API_KEY'];
+        const listId = settings['BREVO_LIST_ID'];
 
         if (!apiKey) {
             console.error('Brevo API key not configured');
@@ -120,11 +122,19 @@ export async function POST(request: NextRequest) {
 
 // GET - Check if newsletter/popup is enabled (public, no auth needed)
 export async function GET() {
-    const apiKey = process.env.BREVO_API_KEY;
-    const popupEnabled = process.env.BREVO_POPUP_ENABLED !== 'false';
+    try {
+        const settings = await getSystemSettings(['BREVO_API_KEY', 'BREVO_POPUP_ENABLED']);
+        const apiKey = settings['BREVO_API_KEY'];
+        const popupEnabled = settings['BREVO_POPUP_ENABLED'] !== 'false';
 
-    return NextResponse.json({
-        enabled: !!apiKey,
-        popupEnabled: !!apiKey && popupEnabled,
-    });
+        return NextResponse.json({
+            enabled: !!apiKey,
+            popupEnabled: !!apiKey && popupEnabled,
+        });
+    } catch {
+        return NextResponse.json({
+            enabled: false,
+            popupEnabled: false,
+        });
+    }
 }

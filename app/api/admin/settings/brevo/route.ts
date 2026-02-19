@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
-import fs from 'fs';
-import path from 'path';
+import { getSystemSettings, saveSystemSettings } from '@/lib/settings';
 
 // GET - Read current Brevo configuration
 export async function GET(request: NextRequest) {
@@ -11,9 +10,15 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const apiKey = process.env.BREVO_API_KEY || '';
-        const listId = process.env.BREVO_LIST_ID || '';
-        const popupEnabled = process.env.BREVO_POPUP_ENABLED !== 'false'; // default true
+        const settings = await getSystemSettings([
+            'BREVO_API_KEY',
+            'BREVO_LIST_ID',
+            'BREVO_POPUP_ENABLED',
+        ]);
+
+        const apiKey = settings['BREVO_API_KEY'] || '';
+        const listId = settings['BREVO_LIST_ID'] || '';
+        const popupEnabled = settings['BREVO_POPUP_ENABLED'] !== 'false';
 
         // Mask the API key for display
         const maskedKey = apiKey
@@ -35,7 +40,7 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// POST - Save Brevo configuration to .env file
+// POST - Save Brevo configuration to database
 export async function POST(request: NextRequest) {
     try {
         const user = getAuthenticatedUser(request);
@@ -58,47 +63,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Read existing .env file
-        const envPath = path.resolve(process.cwd(), '.env');
-        let envContent = '';
-
-        try {
-            envContent = fs.readFileSync(envPath, 'utf-8');
-        } catch {
-            // .env file doesn't exist yet
-        }
-
-        // Helper to upsert an env var
-        const upsertEnvVar = (content: string, key: string, value: string): string => {
-            const line = `${key}="${value}"`;
-            const regex = new RegExp(`${key}=.*`);
-            if (regex.test(content)) {
-                return content.replace(regex, line);
-            } else {
-                return content.trimEnd() + '\n' + line + '\n';
-            }
-        };
-
-        // Add section header if none of the Brevo vars exist yet
-        if (!envContent.includes('BREVO_API_KEY=')) {
-            envContent = envContent.trimEnd() + '\n\n# Brevo (Newsletter)\n';
-        }
-
-        envContent = upsertEnvVar(envContent, 'BREVO_API_KEY', apiKey.trim());
-        envContent = upsertEnvVar(envContent, 'BREVO_LIST_ID', (listId || '').toString().trim());
-        envContent = upsertEnvVar(envContent, 'BREVO_POPUP_ENABLED', popupEnabled !== false ? 'true' : 'false');
-
-        // Write back to .env
-        fs.writeFileSync(envPath, envContent, 'utf-8');
+        // Save to database
+        await saveSystemSettings([
+            { key: 'BREVO_API_KEY', value: apiKey.trim(), description: 'Brevo API Key' },
+            { key: 'BREVO_LIST_ID', value: (listId || '').toString().trim(), description: 'Brevo Contact List ID' },
+            { key: 'BREVO_POPUP_ENABLED', value: popupEnabled !== false ? 'true' : 'false', description: 'Newsletter popup enabled' },
+        ]);
 
         return NextResponse.json({
             success: true,
-            message: 'Brevo configuration saved. Restart the server (npm run dev) for changes to take effect.',
+            message: 'Brevo configuration saved successfully!',
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error saving Brevo config:', error);
         return NextResponse.json(
-            { error: 'Failed to save Brevo configuration' },
+            { error: `Failed to save: ${error.message}` },
             { status: 500 }
         );
     }

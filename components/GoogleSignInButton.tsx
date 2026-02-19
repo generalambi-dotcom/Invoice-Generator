@@ -14,8 +14,36 @@ export default function GoogleSignInButton({ text = "Sign in with Google" }: { t
     const router = useRouter();
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [googleClientId, setGoogleClientId] = useState<string | null>(
+        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || null
+    );
 
     useEffect(() => {
+        // If client ID is not in env, fetch from API
+        if (!googleClientId) {
+            fetch('/api/admin/settings/google-oauth')
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                    if (data?.clientId && data.status === 'configured') {
+                        // The API returns a masked ID — we need the full one
+                        // So we fetch it from a dedicated public endpoint
+                        fetch('/api/auth/google-config')
+                            .then(r => r.ok ? r.json() : null)
+                            .then(cfg => {
+                                if (cfg?.clientId) {
+                                    setGoogleClientId(cfg.clientId);
+                                }
+                            })
+                            .catch(() => { });
+                    }
+                })
+                .catch(() => { });
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!googleClientId) return;
+
         // Load Google script dynamically
         const script = document.createElement('script');
         script.src = 'https://accounts.google.com/gsi/client';
@@ -26,19 +54,19 @@ export default function GoogleSignInButton({ text = "Sign in with Google" }: { t
         document.body.appendChild(script);
 
         return () => {
-            document.body.removeChild(script);
+            try { document.body.removeChild(script); } catch { }
         };
-    }, []);
+    }, [googleClientId]);
 
     const initializeGoogleSignIn = () => {
-        if (!window.google || !process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
-            console.warn("Google Sign-In not initialized: specific client ID required");
+        if (!window.google || !googleClientId) {
+            console.warn("Google Sign-In not initialized: client ID required");
             return;
         }
 
         try {
             window.google.accounts.id.initialize({
-                client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+                client_id: googleClientId,
                 callback: handleGoogleCallback,
                 auto_select: false,
                 cancel_on_tap_outside: true,
@@ -103,9 +131,9 @@ export default function GoogleSignInButton({ text = "Sign in with Google" }: { t
             <div id="google-btn-wrapper" className="w-full h-[40px] flex justify-center"></div>
 
             {/* Fallback/Loading state if script hasn't loaded or ID missing */}
-            {!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+            {!googleClientId && (
                 <div className="text-xs text-center text-gray-400 mt-2">
-                    Configure NEXT_PUBLIC_GOOGLE_CLIENT_ID to enable Google Sign-In
+                    Configure Google Client ID in Admin Settings to enable Google Sign-In
                 </div>
             )}
         </div>

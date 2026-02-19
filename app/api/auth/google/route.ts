@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generateToken } from '@/lib/auth-jwt';
 import { createRefreshToken } from '@/lib/refresh-token';
+import { getSystemSetting } from '@/lib/settings';
 import bcrypt from 'bcryptjs';
 
 // POST - Verify Google token and login/register user
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Check configuration
-        const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+        const clientId = await getSystemSetting('NEXT_PUBLIC_GOOGLE_CLIENT_ID');
         if (clientId && payload.aud !== clientId) {
             return NextResponse.json({ error: 'Invalid client ID' }, { status: 401 });
         }

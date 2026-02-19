@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
+import { getSystemSetting } from '@/lib/settings';
 
 // GET - Retrieve auth settings
 export async function GET(request: NextRequest) {
@@ -22,8 +23,8 @@ export async function GET(request: NextRequest) {
 
         const settings = setting ? JSON.parse(setting.value) : defaultSettings;
 
-        // Check Google OAuth status from env
-        const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+        // Check Google OAuth status from database (with env fallback)
+        const googleClientId = await getSystemSetting('NEXT_PUBLIC_GOOGLE_CLIENT_ID');
         const googleOAuth = {
             status: googleClientId ? 'configured' : 'not_configured',
             clientId: googleClientId ? googleClientId.substring(0, 12) + '...' : '',

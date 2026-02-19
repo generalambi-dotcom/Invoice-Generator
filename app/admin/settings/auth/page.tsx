@@ -26,9 +26,18 @@ export default function AuthSettingsPage() {
         fetchSettings();
     }, []);
 
+    const getAuthHeaders = (): HeadersInit => {
+        const headers: HeadersInit = { 'Content-Type': 'application/json' };
+        const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        return headers;
+    };
+
     const fetchSettings = async () => {
         try {
-            const res = await fetch('/api/admin/settings/auth');
+            const res = await fetch('/api/admin/settings/auth', {
+                headers: getAuthHeaders(),
+            });
             if (res.ok) {
                 const data = await res.json();
                 setSettings(data.settings);
@@ -52,7 +61,7 @@ export default function AuthSettingsPage() {
         try {
             const res = await fetch('/api/admin/settings/auth', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(settings),
             });
 
@@ -78,7 +87,7 @@ export default function AuthSettingsPage() {
         try {
             const res = await fetch('/api/admin/settings/google-oauth', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify({
                     clientId: googleClientId.trim(),
                     clientSecret: googleClientSecret.trim(),

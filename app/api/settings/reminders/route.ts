@@ -1,80 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth';
-import { z } from 'zod';
+import { getAuthenticatedUser } from '@/lib/api-auth';
 
-const settingsSchema = z.object({
-    enableEmail: z.boolean(),
-    enableWhatsApp: z.boolean(),
-    remindBeforeDue: z.number().nullable(),
-    remindOnDue: z.boolean(),
-    remindAfterDue1: z.number().nullable(),
-    remindAfterDue2: z.number().nullable(),
-});
-
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
     try {
-        const user = await getCurrentUser();
-
-        if (!user) {
+        const user = getAuthenticatedUser(request);
+        if (!user?.userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        let settings = await prisma.invoiceReminderSettings.findUnique({
-            where: { userId: user.id },
+        const settings = await prisma.invoiceReminderSettings.findUnique({
+            where: { userId: user.userId },
         });
 
         if (!settings) {
-            // Create default settings if not exists
-            settings = await prisma.invoiceReminderSettings.create({
-                data: {
-                    userId: user.id,
-                },
+            // Return defaults if none exist yet
+            return NextResponse.json({
+                enableEmail: true,
+                enableWhatsApp: false,
+                remindBeforeDue: 3,
+                remindOnDue: true,
+                remindAfterDue1: 3,
+                remindAfterDue2: 7,
             });
         }
 
         return NextResponse.json(settings);
     } catch (error) {
-        console.error('Error fetching reminder settings:', error);
+        console.error('Failed to fetch reminder settings:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch settings' },
+            { error: 'Failed to fetch reminder settings' },
             { status: 500 }
         );
     }
 }
 
-export async function PUT(req: NextRequest) {
+export async function PUT(request: NextRequest) {
     try {
-        const user = await getCurrentUser();
-
-        if (!user) {
+        const user = getAuthenticatedUser(request);
+        if (!user?.userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const body = await req.json();
-        const result = settingsSchema.safeParse(body);
-
-        if (!result.success) {
-            return NextResponse.json(
-                { error: 'Invalid input', details: result.error.format() },
-                { status: 400 }
-            );
-        }
+        const body = await request.json();
+        const {
+            enableEmail,
+            enableWhatsApp,
+            remindBeforeDue,
+            remindOnDue,
+            remindAfterDue1,
+            remindAfterDue2,
+        } = body;
 
         const settings = await prisma.invoiceReminderSettings.upsert({
-            where: { userId: user.id },
-            update: result.data,
+            where: { userId: user.userId },
+            update: {
+                enableEmail,
+                enableWhatsApp,
+                remindBeforeDue,
+                remindOnDue,
+                remindAfterDue1,
+                remindAfterDue2,
+            },
             create: {
-                userId: user.id,
-                ...result.data,
+                userId: user.userId,
+                enableEmail: enableEmail ?? true,
+                enableWhatsApp: enableWhatsApp ?? false,
+                remindBeforeDue: remindBeforeDue ?? 3,
+                remindOnDue: remindOnDue ?? true,
+                remindAfterDue1: remindAfterDue1 ?? 3,
+                remindAfterDue2: remindAfterDue2 ?? 7,
             },
         });
 
         return NextResponse.json(settings);
     } catch (error) {
-        console.error('Error updating reminder settings:', error);
+        console.error('Failed to update reminder settings:', error);
         return NextResponse.json(
-            { error: 'Failed to update settings' },
+            { error: 'Failed to update reminder settings' },
             { status: 500 }
         );
     }

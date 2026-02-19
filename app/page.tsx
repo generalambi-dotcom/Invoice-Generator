@@ -112,7 +112,7 @@ export default function LandingPage() {
                 <span className="text-xs bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full">✓ Invoice history</span>
               </div>
             </div>
-            {/* Card 3 */}
+            {/* Card 3 (Hidden temporarily)
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mb-4">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
@@ -126,6 +126,7 @@ export default function LandingPage() {
                 <span className="text-xs bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full">✓ Partial payments</span>
               </div>
             </div>
+            */}
             {/* Card 4 */}
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-10 h-10 bg-sky-100 text-sky-600 rounded-lg flex items-center justify-center mb-4">
@@ -140,7 +141,7 @@ export default function LandingPage() {
                 <span className="text-xs bg-sky-50 text-sky-700 px-2.5 py-1 rounded-full">✓ Payment reminders</span>
               </div>
             </div>
-            {/* Card 5 */}
+            {/* Card 5 (Hidden temporarily)
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center mb-4">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" /></svg>
@@ -154,6 +155,7 @@ export default function LandingPage() {
                 <span className="text-xs bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full">✓ Expiry dates</span>
               </div>
             </div>
+            */}
             {/* Card 6 */}
             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="w-10 h-10 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center mb-4">
@@ -204,6 +206,7 @@ export default function LandingPage() {
                   <p className="text-gray-500 text-sm leading-relaxed">Generate high-quality PDF invoices with custom branding, logos, and professional layouts.</p>
                 </div>
               </div>
+              {/* Hidden temporarily: Automated Reminders
               <div className="flex gap-4">
                 <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
@@ -213,6 +216,7 @@ export default function LandingPage() {
                   <p className="text-gray-500 text-sm leading-relaxed">Set up automatic payment reminders before, on, and after due dates via email or WhatsApp.</p>
                 </div>
               </div>
+              */}
               <div className="flex gap-4">
                 <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>

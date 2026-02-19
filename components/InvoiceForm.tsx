@@ -2034,7 +2034,7 @@ function InvoiceFormContent() {
                   }
 
                   {/* Activity Timeline */}
-                  {invoice.id && (emailActivity.length > 0 || invoice.sentAt || invoice.viewedAt) && (
+                  {invoice.id && (emailActivity.length > 0 || invoice.sentAt || invoice.viewedAt || (invoice.remindersSent && Object.keys(invoice.remindersSent).length > 0)) && (
                     <div className="mt-6">
                       <div className="flex items-center gap-2 mb-3 px-2">
                         <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2044,6 +2044,21 @@ function InvoiceFormContent() {
                       </div>
                       <div className="bg-white rounded-lg border border-gray-200 p-4">
                         <div className="space-y-3">
+
+                          {/* Automated Reminders */}
+                          {invoice.remindersSent && Object.entries(invoice.remindersSent).map(([trigger, timestamp]) => (
+                            <div key={`reminder-${trigger}`} className="flex items-start gap-3">
+                              <div className="mt-0.5 w-6 h-6 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+                                <span className="text-xs">🤖</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-800">Automated reminder sent</p>
+                                <p className="text-xs text-gray-500 truncate">
+                                  Trigger: {trigger.replace(/_/g, ' ')} • {format(new Date(timestamp as string), 'MMM dd, yyyy h:mm a')}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
                           {/* Sent Events */}
                           {emailActivity.map((log: any) => (
                             <div key={log.id} className="flex items-start gap-3">

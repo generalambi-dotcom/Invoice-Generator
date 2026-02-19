@@ -75,6 +75,7 @@ export interface Invoice {
   viewedAt?: string;
   sentAt?: string;
   hideWatermark?: boolean;
+  remindersSent?: Record<string, string>;
 }
 
 export interface CompanyDefaults {

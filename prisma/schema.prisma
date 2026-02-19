@@ -148,6 +148,9 @@ model Invoice {
   // Payment info
   paymentStatus String   @default("pending") // 'pending' | 'paid' | 'overdue' | 'cancelled'
   paymentLink    String?
+  
+  // Tracking
+  remindersSent Json?    // Stores records of which automated reminders have been sent and when
   paymentProvider String? // 'paypal' | 'paystack' | 'stripe'
   paidAmount    Float?   @default(0)
   paymentDate   DateTime?

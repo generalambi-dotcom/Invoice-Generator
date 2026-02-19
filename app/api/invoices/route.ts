@@ -8,20 +8,20 @@ import { autoGeneratePaymentLink } from '@/lib/auto-payment-link';
 // GET - Get user's invoices
 export async function GET(request: NextRequest) {
   const startTime = Date.now();
-  
+
   try {
     const user = getAuthenticatedUser(request);
-    
+
     // Rate limiting
     const identifier = user ? `user:${user.userId}` : getClientIdentifier(request);
     const limiter = rateLimit(rateLimitConfigs.general);
     const limitResult = limiter(identifier);
-    
+
     if (!limitResult.allowed) {
       logRequest(request, { userId: user?.userId, statusCode: 429, responseTime: Date.now() - startTime });
       return NextResponse.json(
         { error: limitResult.message },
-        { 
+        {
           status: 429,
           headers: {
             'X-RateLimit-Limit': rateLimitConfigs.general.max.toString(),
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
         }
       );
     }
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = getAuthenticatedUser(request);
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
       total,
       currency,
       theme,
+      hideWatermark,
       notes,
       bankDetails,
       terms,
@@ -156,6 +157,7 @@ export async function POST(request: NextRequest) {
           total,
           currency: currency || 'USD',
           theme: theme || 'slate',
+          hideWatermark: hideWatermark === true,
           notes: notes || null,
           bankDetails: bankDetails || null,
           terms: terms || null,

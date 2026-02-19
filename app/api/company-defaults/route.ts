@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const user = getAuthenticatedUser(request);
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -21,11 +21,11 @@ export async function GET(request: NextRequest) {
     const identifier = `user:${user.userId}`;
     const limiter = rateLimit(rateLimitConfigs.general);
     const limitResult = limiter(identifier);
-    
+
     if (!limitResult.allowed) {
       return NextResponse.json(
         { error: limitResult.message },
-        { 
+        {
           status: 429,
           headers: {
             'X-RateLimit-Limit': rateLimitConfigs.general.max.toString(),
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = getAuthenticatedUser(request);
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -69,11 +69,11 @@ export async function POST(request: NextRequest) {
     const identifier = `user:${user.userId}`;
     const limiter = rateLimit(rateLimitConfigs.general);
     const limitResult = limiter(identifier);
-    
+
     if (!limitResult.allowed) {
       return NextResponse.json(
         { error: limitResult.message },
-        { 
+        {
           status: 429,
           headers: {
             'X-RateLimit-Limit': rateLimitConfigs.general.max.toString(),
@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
       companyInfo,
       defaultCurrency,
       defaultTheme,
+      defaultHideWatermark,
       defaultTaxRate,
       defaultNotes,
       defaultBankDetails,
@@ -110,6 +111,7 @@ export async function POST(request: NextRequest) {
         companyInfo,
         defaultCurrency: defaultCurrency || 'USD',
         defaultTheme: defaultTheme || 'slate',
+        defaultHideWatermark: Boolean(defaultHideWatermark),
         defaultTaxRate: defaultTaxRate || 0,
         defaultNotes: defaultNotes || null,
         defaultBankDetails: defaultBankDetails || null,
@@ -121,6 +123,7 @@ export async function POST(request: NextRequest) {
         companyInfo,
         defaultCurrency: defaultCurrency || 'USD',
         defaultTheme: defaultTheme || 'slate',
+        defaultHideWatermark: Boolean(defaultHideWatermark),
         defaultTaxRate: defaultTaxRate || 0,
         defaultNotes: defaultNotes || null,
         defaultBankDetails: defaultBankDetails || null,
@@ -147,7 +150,7 @@ export async function POST(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const user = getAuthenticatedUser(request);
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

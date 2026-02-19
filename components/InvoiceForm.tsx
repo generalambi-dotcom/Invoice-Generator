@@ -7,6 +7,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import InvoicePaper from './InvoicePaper';
 import { pdf } from '@react-pdf/renderer';
 import { InvoicePDF } from '@/lib/pdf-generator';
+import { SendEmailModal } from './SendEmailModal';
+import { Mail } from 'lucide-react';
 import {
   Invoice,
   LineItem,
@@ -145,7 +147,11 @@ function InvoiceFormContent() {
     country: '',
   });
 
-  // Address Mode State
+  // Guest post-download flow state
+  const [showGuestPostDownloadModal, setShowGuestPostDownloadModal] = useState(false);
+  const [guestEmailStep, setGuestEmailStep] = useState<1 | 2>(1);
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestEmailLoading, setGuestEmailLoading] = useState(false);
   const [addressModes, setAddressModes] = useState<{
     company: 'simple' | 'detailed';
     client: 'simple' | 'detailed';
@@ -628,6 +634,12 @@ function InvoiceFormContent() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
+      toast.success('Invoice downloaded successfully!');
+      if (!user) {
+        setShowGuestPostDownloadModal(true);
+        setGuestEmailStep(1);
+      }
+
       // Save invoice to database
       try {
         setSavingInvoice(true);
@@ -686,6 +698,59 @@ function InvoiceFormContent() {
     } finally {
       setIsGeneratingPDF(false);
     }
+  };
+
+  // WhatsApp Share
+  const handleWhatsAppShare = async () => {
+    // If invoice isn't saved yet, save it first
+    let currentInvoiceId = invoice.id;
+    if (!currentInvoiceId) {
+      toast.loading('Saving invoice to generate shareable link...', { id: 'saving-share' });
+      try {
+        const completeInvoice: Invoice = {
+          id: Date.now().toString(),
+          invoiceNumber: invoice.invoiceNumber!,
+          invoiceDate: invoice.invoiceDate!,
+          dueDate: invoice.dueDate!,
+          purchaseOrder: invoice.purchaseOrder,
+          company: invoice.company!,
+          client: invoice.client!,
+          shipTo: invoice.shipTo,
+          lineItems: invoice.lineItems || [],
+          subtotal: invoice.subtotal || 0,
+          taxRate: invoice.taxRate || 0,
+          taxAmount: invoice.taxAmount || 0,
+          discountRate: invoice.discountRate || 0,
+          discountAmount: invoice.discountAmount || 0,
+          shipping: invoice.shipping || 0,
+          total: invoice.total || 0,
+          currency: invoice.currency || 'USD',
+          theme: invoice.theme || 'slate',
+          paymentStatus: 'pending',
+          createdAt: invoice.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        const payload = { ...completeInvoice };
+        delete (payload as any).id;
+        const result = await saveInvoiceAPI(payload);
+        if (result.invoice) {
+          currentInvoiceId = result.invoice.id;
+          setInvoice(prev => ({ ...prev, id: result.invoice.id }));
+        }
+        toast.dismiss('saving-share');
+      } catch (error) {
+        toast.dismiss('saving-share');
+        toast.error('Failed to save invoice for sharing.');
+        return;
+      }
+    }
+
+    if (!currentInvoiceId) return;
+
+    const url = `${window.location.origin}/invoice/${currentInvoiceId}`;
+    const companyName = invoice.company?.name || 'us';
+    const text = `Here is your invoice ${invoice.invoiceNumber} from ${companyName}: ${url}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   // Duplicate Invoice
@@ -1221,10 +1286,25 @@ function InvoiceFormContent() {
                 <button
                   onClick={handleDownloadPDF}
                   disabled={isGeneratingPDF}
-                  className="w-full py-3 px-4 bg-gray-900 hover:bg-black text-white font-bold rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="group w-full py-3 px-4 bg-gray-900 hover:bg-black text-white font-bold rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:-translate-y-1 hover:shadow-lg hover:shadow-gray-900/20 active:scale-95 transition-all duration-300"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  <svg className="w-4 h-4 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                   {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
+                </button>
+                <button
+                  onClick={() => setIsEmailModalOpen(true)}
+                  disabled={!invoice.id}
+                  className="w-full py-3 px-4 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold rounded-lg text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Mail className="w-4 h-4" />
+                  Send via Email
+                </button>
+                <button
+                  onClick={handleWhatsAppShare}
+                  className="w-full py-3 px-4 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                  Share via WhatsApp
                 </button>
                 <button
                   onClick={() => {
@@ -1815,6 +1895,30 @@ function InvoiceFormContent() {
                         className="w-full text-xs text-gray-500 bg-white border border-gray-200 rounded p-2 focus:ring-1 focus:ring-theme-primary focus:border-theme-primary placeholder:text-gray-300 min-h-[60px]"
                         placeholder="Add terms and conditions, late fees, etc..."
                       />
+                    </div>
+
+                    <div className="sm:col-span-2 relative flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200/60 mt-2">
+                      <div className="mb-3 sm:mb-0">
+                        <h4 className="text-sm font-bold text-gray-800">Remove PDF Watermark</h4>
+                        <p className="text-xs text-gray-500 mt-1">Hide the "Created with invoicegenerator.ng" branding from your downloaded PDFs.</p>
+                      </div>
+                      <div className="relative">
+                        <label className={`relative inline-flex items-center ${isPremium ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={invoice.hideWatermark || false}
+                            disabled={!isPremium}
+                            onChange={(e) => updateField('hideWatermark', e.target.checked)}
+                          />
+                          <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-theme-primary"></div>
+                        </label>
+                        {!isPremium && (
+                          <Link href="/pricing" className="absolute -top-6 -right-2 px-2 py-0.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[9px] font-bold rounded uppercase tracking-wider shadow-sm items-center gap-1 flex whitespace-nowrap hover:from-amber-500 hover:to-amber-600 transition-all">
+                            PRO
+                          </Link>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -2446,6 +2550,114 @@ function InvoiceFormContent() {
           </div>
         </div>
       )}
+      {/* Guest Post-Download Modal */}
+      {showGuestPostDownloadModal && !user && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4 transition-all" style={{ margin: 0 }}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+
+            {guestEmailStep === 1 ? (
+              <div className="p-8">
+                <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">Want a copy in your inbox?</h3>
+                <p className="text-sm text-gray-500 mb-6 text-center">
+                  Enter your email below and we'll send you a copy of your newly created invoice for safekeeping.
+                </p>
+
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!guestEmail) return;
+                  setGuestEmailLoading(true);
+                  try {
+                    const res = await fetch('/api/public/send-copy', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        invoiceId: invoice.id,
+                        email: guestEmail,
+                        subscribeToBrevo: true // auto-subscribe as requested by prompt
+                      })
+                    });
+                    if (res.ok) {
+                      setGuestEmailStep(2);
+                    } else {
+                      const data = await res.json();
+                      toast.error(data.error || 'Failed to send copy');
+                    }
+                  } catch (err) {
+                    toast.error('Something went wrong. Please try again.');
+                  } finally {
+                    setGuestEmailLoading(false);
+                  }
+                }}>
+                  <div className="mb-4">
+                    <input
+                      type="email"
+                      required
+                      placeholder="you@example.com"
+                      value={guestEmail}
+                      onChange={(e) => setGuestEmail(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={guestEmailLoading || !guestEmail}
+                    className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-colors disabled:opacity-50"
+                  >
+                    {guestEmailLoading ? 'Sending...' : 'Send Invoice to Email'}
+                  </button>
+                </form>
+
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => setShowGuestPostDownloadModal(false)}
+                    className="text-sm text-gray-400 hover:text-gray-600"
+                  >
+                    No thanks, I'm good
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Sent Successfully!</h3>
+                <p className="text-sm text-gray-500 mb-6">
+                  Your invoice copy is on its way to {guestEmail}.
+                  <br /><br />
+                  <span className="font-medium text-gray-800">Did you know?</span> By creating a free account, you can save clients, track payments, and never lose an invoice again.
+                </p>
+
+                <Link
+                  href="/auth/register"
+                  className="block w-full py-3 px-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl text-sm transition-colors mb-3"
+                >
+                  Create Free Account
+                </Link>
+
+                <button
+                  onClick={() => setShowGuestPostDownloadModal(false)}
+                  className="text-sm text-gray-400 hover:text-gray-600"
+                >
+                  Close
+                </button>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
+      <SendEmailModal
+        invoiceId={invoice.id || ''}
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        defaultEmail={invoice.client?.email || ''}
+      />
     </>
   );
 }

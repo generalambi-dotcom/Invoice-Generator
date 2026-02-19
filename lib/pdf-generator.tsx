@@ -446,7 +446,9 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
           </View>
         )}
 
-        <Text style={styles.watermark}>Powered by Invoice Generator</Text>
+        {!invoice.hideWatermark && (
+          <Text style={styles.watermark}>Created with invoicegenerator.ng</Text>
+        )}
       </Page>
     </Document>
   );

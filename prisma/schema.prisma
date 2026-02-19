@@ -139,6 +139,7 @@ model Invoice {
   
   currency      String   @default("USD")
   theme         String   @default("slate")
+  hideWatermark Boolean  @default(false)
   
   notes         String?
   bankDetails   String?
@@ -262,6 +263,7 @@ model CompanyDefaults {
   // Default settings
   defaultCurrency        String   @default("USD")
   defaultTheme           String   @default("slate")
+  defaultHideWatermark   Boolean  @default(false)
   defaultTaxRate         Float    @default(0)
   defaultNotes           String?
   defaultBankDetails     String?

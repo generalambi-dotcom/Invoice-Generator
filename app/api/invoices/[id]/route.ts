@@ -193,6 +193,7 @@ export async function PATCH(
         ...(body.total !== undefined && { total: body.total }),
         ...(body.currency && { currency: body.currency }),
         ...(body.theme && { theme: body.theme }),
+        ...(body.hideWatermark !== undefined && { hideWatermark: body.hideWatermark }),
         ...(body.notes !== undefined && { notes: body.notes }),
         ...(body.bankDetails !== undefined && { bankDetails: body.bankDetails }),
         ...(body.terms !== undefined && { terms: body.terms }),

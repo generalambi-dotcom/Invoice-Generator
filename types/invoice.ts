@@ -74,6 +74,7 @@ export interface Invoice {
   paidAmount?: number;
   viewedAt?: string;
   sentAt?: string;
+  hideWatermark?: boolean;
 }
 
 export interface CompanyDefaults {
@@ -84,6 +85,7 @@ export interface CompanyDefaults {
   defaultNotes?: string;
   defaultBankDetails?: string;
   defaultTerms?: string;
+  defaultHideWatermark?: boolean;
 }
 
 export const currencySymbols: Record<Currency, string> = {

@@ -21,6 +21,9 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [activeInvoices, setActiveInvoices] = useState<Invoice[]>([]);
   const [deletedInvoices, setDeletedInvoices] = useState<Invoice[]>([]);
+  const [activeEstimates, setActiveEstimates] = useState<Invoice[]>([]);
+  const [activeCreditNotes, setActiveCreditNotes] = useState<Invoice[]>([]);
+  const [activeTab, setActiveTab] = useState<'invoices' | 'estimates' | 'credit_notes'>('invoices');
   const [showDeleted, setShowDeleted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [paymentReminders, setPaymentReminders] = useState<any[]>([]);
@@ -121,6 +124,7 @@ export default function DashboardPage() {
       // Convert database format to Invoice format and separate active/deleted
       const formattedInvoices = invoices.map((inv: any) => ({
         id: inv.id,
+        type: inv.type,
         invoiceNumber: inv.invoiceNumber,
         invoiceDate: inv.invoiceDate,
         dueDate: inv.dueDate,
@@ -165,10 +169,22 @@ export default function DashboardPage() {
 
 
       // Separate active and deleted (cancelled status = deleted)
-      const active = formattedInvoices.filter(inv => inv.paymentStatus !== 'cancelled');
+      const active = formattedInvoices.filter(inv => inv.paymentStatus !== 'cancelled' && (!inv.type || inv.type === 'invoice'));
+      const activeEst = formattedInvoices.filter(inv => inv.paymentStatus !== 'cancelled' && inv.type === 'estimate');
+      const activeCn = formattedInvoices.filter(inv => inv.paymentStatus !== 'cancelled' && inv.type === 'credit_note');
       const deleted = formattedInvoices.filter(inv => inv.paymentStatus === 'cancelled');
 
       setActiveInvoices(active.sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.invoiceDate).getTime();
+        const dateB = new Date(b.createdAt || b.invoiceDate).getTime();
+        return dateB - dateA;
+      }));
+      setActiveEstimates(activeEst.sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.invoiceDate).getTime();
+        const dateB = new Date(b.createdAt || b.invoiceDate).getTime();
+        return dateB - dateA;
+      }));
+      setActiveCreditNotes(activeCn.sort((a, b) => {
         const dateA = new Date(a.createdAt || a.invoiceDate).getTime();
         const dateB = new Date(b.createdAt || b.invoiceDate).getTime();
         return dateB - dateA;
@@ -181,6 +197,8 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('Error loading invoices:', error);
       setActiveInvoices([]);
+      setActiveEstimates([]);
+      setActiveCreditNotes([]);
       setDeletedInvoices([]);
     } finally {
       setIsLoading(false);
@@ -367,7 +385,13 @@ export default function DashboardPage() {
     );
   }
 
-  const invoices = showDeleted ? deletedInvoices : activeInvoices;
+  const invoices = showDeleted
+    ? deletedInvoices
+    : activeTab === 'estimates'
+      ? activeEstimates
+      : activeTab === 'credit_notes'
+        ? activeCreditNotes
+        : activeInvoices;
 
   return (
     <div className="min-h-screen bg-gray-50/50">
@@ -505,8 +529,31 @@ export default function DashboardPage() {
 
         {/* Action Bar & List Header */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Recent Invoices</h2>
+          <h2 className="text-xl font-bold text-gray-900">Recent Documents</h2>
           <div className="flex flex-wrap gap-3 w-full md:w-auto">
+            {/* Document Type Tabs */}
+            <div className="flex bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => { setActiveTab('invoices'); setShowDeleted(false); }}
+                className={`flex-1 md:flex-none px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all ${activeTab === 'invoices' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Invoices
+              </button>
+              <button
+                onClick={() => { setActiveTab('estimates'); setShowDeleted(false); }}
+                className={`flex-1 md:flex-none px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all ${activeTab === 'estimates' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Estimates
+              </button>
+              <button
+                onClick={() => { setActiveTab('credit_notes'); setShowDeleted(false); }}
+                className={`flex-1 md:flex-none px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all ${activeTab === 'credit_notes' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Credit Notes
+              </button>
+            </div>
+
+            {/* Status Tabs */}
             <div className="flex bg-gray-100 p-1 rounded-lg">
               <button
                 onClick={() => setShowDeleted(false)}
@@ -531,7 +578,7 @@ export default function DashboardPage() {
                     className="flex-1 md:flex-none justify-center px-3 py-2 md:px-4 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-2 text-xs md:text-sm font-medium shadow-emerald-200 shadow-lg whitespace-nowrap"
                   >
                     <Plus className="w-4 h-4 md:w-5 md:h-5" />
-                    New Invoice
+                    New Document
                   </Link>
                   <Link
                     href="/reports"

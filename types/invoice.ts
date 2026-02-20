@@ -45,6 +45,7 @@ export interface ShipToInfo {
 
 export interface Invoice {
   id: string;
+  type?: 'invoice' | 'estimate' | 'credit_note';
   invoiceNumber: string;
   invoiceDate: string;
   dueDate: string;

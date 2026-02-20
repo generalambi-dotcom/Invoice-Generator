@@ -121,8 +121,16 @@ export default function InvoiceViewPage() {
                                 onClick={() => router.push(`/free-invoice-generator?invoiceId=${invoice.id}`)}
                                 className="px-4 py-2 bg-white text-emerald-600 border border-emerald-200 rounded-lg hover:bg-emerald-50 transition-colors font-medium text-sm"
                             >
-                                Edit Invoice
+                                Edit {invoice.type === 'estimate' ? 'Estimate' : invoice.type === 'credit_note' ? 'Credit Note' : 'Invoice'}
                             </button>
+                            {invoice.type === 'estimate' && (
+                                <button
+                                    onClick={() => router.push(`/free-invoice-generator?convertFrom=${invoice.id}`)}
+                                    className="px-4 py-2 bg-theme-primary text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium text-sm"
+                                >
+                                    Convert to Invoice
+                                </button>
+                            )}
                             <button
                                 onClick={handlePrint}
                                 className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"

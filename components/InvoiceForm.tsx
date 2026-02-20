@@ -326,16 +326,30 @@ function InvoiceFormContent() {
     const loadInvoiceById = async () => {
       // First check URL query parameter
       const invoiceId = searchParams.get('invoiceId');
-      if (invoiceId) {
+      const convertFrom = searchParams.get('convertFrom');
+      const targetId = invoiceId || convertFrom;
+
+      if (targetId) {
         try {
-          const loaded = await loadInvoiceAPI(invoiceId);
+          const loaded = await loadInvoiceAPI(targetId);
           if (loaded) {
+            let newInvoiceNumber = loaded.invoiceNumber;
+            if (convertFrom) {
+              try {
+                const numberResult = await getNextInvoiceNumberAPI();
+                newInvoiceNumber = numberResult.invoiceNumber;
+              } catch (e) {
+                newInvoiceNumber = `${loaded.invoiceNumber}-INV`;
+              }
+            }
+
             // Convert database format to form format
             setInvoice({
-              id: loaded.id,
-              invoiceNumber: loaded.invoiceNumber,
-              invoiceDate: new Date(loaded.invoiceDate).toISOString().split('T')[0],
-              dueDate: new Date(loaded.dueDate).toISOString().split('T')[0],
+              id: convertFrom ? undefined : loaded.id,
+              type: convertFrom ? 'invoice' : loaded.type,
+              invoiceNumber: newInvoiceNumber,
+              invoiceDate: convertFrom ? new Date().toISOString().split('T')[0] : new Date(loaded.invoiceDate).toISOString().split('T')[0],
+              dueDate: convertFrom ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : new Date(loaded.dueDate).toISOString().split('T')[0],
               purchaseOrder: loaded.purchaseOrder,
               company: loaded.companyInfo,
               client: loaded.clientInfo,
@@ -353,13 +367,13 @@ function InvoiceFormContent() {
               notes: loaded.notes,
               bankDetails: loaded.bankDetails,
               terms: loaded.terms,
-              paymentStatus: loaded.paymentStatus,
-              paymentLink: loaded.paymentLink,
-              paymentProvider: loaded.paymentProvider,
-              paidAmount: loaded.paidAmount,
-              paymentDate: loaded.paymentDate,
-              createdAt: loaded.createdAt,
-              updatedAt: loaded.updatedAt,
+              paymentStatus: convertFrom ? 'pending' : loaded.paymentStatus,
+              paymentLink: convertFrom ? undefined : loaded.paymentLink,
+              paymentProvider: convertFrom ? undefined : loaded.paymentProvider,
+              paidAmount: convertFrom ? 0 : loaded.paidAmount,
+              paymentDate: convertFrom ? undefined : loaded.paymentDate,
+              createdAt: convertFrom ? undefined : loaded.createdAt,
+              updatedAt: convertFrom ? undefined : loaded.updatedAt,
             });
 
             // Update simple address formats
@@ -377,18 +391,22 @@ function InvoiceFormContent() {
             }
 
             // Capture email activity for timeline
-            if (loaded._emailLogs) {
+            if (loaded._emailLogs && !convertFrom) {
               setEmailActivity(loaded._emailLogs);
             }
 
-            // Remove invoiceId from URL but stay on the same page
+            if (convertFrom) {
+              toast.success('Converted Document into a new Invoice. Review and save below.');
+            }
+
+            // Remove invoiceId/convertFrom from URL but stay on the same page
             const currentPath = window.location.pathname;
             router.replace(currentPath, { scroll: false });
           }
         } catch (error) {
           console.error('Error loading invoice by ID:', error);
         }
-        return; // Don't check sessionStorage if invoiceId was in URL
+        return; // Don't check sessionStorage if invoiceId or convertFrom was in URL
       }
 
       // Fallback to sessionStorage
@@ -1669,8 +1687,33 @@ function InvoiceFormContent() {
                     </div>
 
                     {/* Right: Invoice Meta & Title */}
-                    <div className="text-right flex-1 w-full">
-                      <h1 className="text-4xl font-light text-gray-300 tracking-widest uppercase mb-6">Invoice</h1>
+                    <div className="text-right flex-1 w-full relative">
+                      {/* Document Type Selector */}
+                      <div className="absolute -top-10 right-0 z-10 flex border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm text-xs font-medium">
+                        <button
+                          onClick={() => updateField('type', 'invoice')}
+                          className={`px-3 py-1.5 transition-colors ${(!invoice.type || invoice.type === 'invoice') ? 'bg-theme-primary text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+                        >
+                          Invoice
+                        </button>
+                        <button
+                          onClick={() => updateField('type', 'estimate')}
+                          className={`px-3 py-1.5 border-l border-r border-gray-200 transition-colors ${invoice.type === 'estimate' ? 'bg-amber-500 text-white border-amber-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                        >
+                          Estimate
+                        </button>
+                        <button
+                          onClick={() => updateField('type', 'credit_note')}
+                          className={`px-3 py-1.5 transition-colors ${invoice.type === 'credit_note' ? 'bg-rose-500 text-white border-rose-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                        >
+                          Credit Note
+                        </button>
+                      </div>
+
+                      <h1 className="text-4xl font-light text-gray-300 tracking-widest uppercase mb-6 mt-4">
+                        {invoice.type === 'estimate' ? 'Estimate' : invoice.type === 'credit_note' ? 'Credit Note' : 'Invoice'}
+                      </h1>
+
                       <div className="space-y-1">
                         <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
                           <label className="text-sm font-medium text-gray-500 uppercase tracking-wider">Number</label>
@@ -1693,15 +1736,19 @@ function InvoiceFormContent() {
                             className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-36"
                           />
                         </div>
-                        <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
-                          <label className="text-sm font-medium text-gray-500 uppercase tracking-wider">Due</label>
-                          <input
-                            type="date"
-                            value={invoice.dueDate || ''}
-                            onChange={(e) => updateField('dueDate', e.target.value)}
-                            className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-36"
-                          />
-                        </div>
+                        {invoice.type !== 'credit_note' && (
+                          <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
+                            <label className="text-sm font-medium text-gray-500 uppercase tracking-wider">
+                              {invoice.type === 'estimate' ? 'Valid Until' : 'Due'}
+                            </label>
+                            <input
+                              type="date"
+                              value={invoice.dueDate || ''}
+                              onChange={(e) => updateField('dueDate', e.target.value)}
+                              className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-36"
+                            />
+                          </div>
+                        )}
                         <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
                           <label className="text-sm font-medium text-gray-500 uppercase tracking-wider">PO #</label>
                           <input

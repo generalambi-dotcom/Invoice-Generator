@@ -260,7 +260,9 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
 
           {/* Right: Invoice Title & Meta */}
           <View style={styles.headerRight}>
-            <Text style={styles.invoiceTitle}>INVOICE</Text>
+            <Text style={styles.invoiceTitle}>
+              {invoice.type === 'estimate' ? 'ESTIMATE' : invoice.type === 'credit_note' ? 'CREDIT NOTE' : 'INVOICE'}
+            </Text>
 
             <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>Number</Text>
@@ -270,10 +272,12 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
               <Text style={styles.metaLabel}>Date</Text>
               <Text style={styles.metaValue}>{formatDate(invoice.invoiceDate || '')}</Text>
             </View>
-            <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Due</Text>
-              <Text style={styles.metaValue}>{formatDate(invoice.dueDate || '')}</Text>
-            </View>
+            {invoice.type !== 'credit_note' && (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>{invoice.type === 'estimate' ? 'Valid Until' : 'Due'}</Text>
+                <Text style={styles.metaValue}>{formatDate(invoice.dueDate || '')}</Text>
+              </View>
+            )}
             {invoice.purchaseOrder && (
               <View style={styles.metaRow}>
                 <Text style={styles.metaLabel}>PO #</Text>

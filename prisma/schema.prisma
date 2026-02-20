@@ -111,6 +111,7 @@ model PaymentCredential {
 
 model Invoice {
   id            String   @id @default(cuid())
+  type          String   @default("invoice") // 'invoice' | 'estimate' | 'credit_note'
   userId        String
   invoiceNumber String
   invoiceDate   DateTime

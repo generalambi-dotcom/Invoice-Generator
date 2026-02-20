@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const {
+      type,
       invoiceNumber,
       invoiceDate,
       dueDate,
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Input validation
-    if (!invoiceNumber || !invoiceDate || !dueDate) {
+    if (!invoiceNumber || !invoiceDate || (type !== 'credit_note' && !dueDate)) {
       return NextResponse.json(
         { error: 'Invoice number, date, and due date are required' },
         { status: 400 }
@@ -140,9 +141,10 @@ export async function POST(request: NextRequest) {
       const invoice = await prisma.invoice.create({
         data: {
           userId: user.userId,
+          type: type || 'invoice',
           invoiceNumber,
           invoiceDate: new Date(invoiceDate),
-          dueDate: new Date(dueDate),
+          dueDate: new Date(dueDate || new Date()), // Fallback for credit notes without due dates
           purchaseOrder: purchaseOrder || null,
           companyInfo,
           clientInfo,

@@ -127,6 +127,13 @@ export default function Header() {
           {/* Desktop Navigation Links - Centered */}
           <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
             <Link
+              href="/invoice-generator-ai"
+              className="text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+              AI Generator
+            </Link>
+            <Link
               href="/blog"
               className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
@@ -230,6 +237,14 @@ export default function Header() {
         mobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 relative z-50">
             <nav className="px-4 py-4 space-y-3">
+              <Link
+                href="/invoice-generator-ai"
+                onClick={closeMenus}
+                className="flex items-center gap-2 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium transition-colors py-2"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                AI Generator
+              </Link>
               <Link
                 href="/blog"
                 onClick={closeMenus}

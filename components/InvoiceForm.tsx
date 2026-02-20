@@ -432,6 +432,22 @@ function InvoiceFormContent() {
     loadInvoiceById();
   }, [searchParams, router]);
 
+  // AI Auto-trigger from URL Prompt
+  useEffect(() => {
+    const urlPrompt = searchParams.get('prompt');
+    if (urlPrompt && typeof urlPrompt === 'string') {
+      setShowAIPrompt(true);
+      setAiPrompt(urlPrompt);
+
+      // Clean up the URL parameter immediately to prevent re-triggering
+      const currentPath = window.location.pathname;
+      router.replace(currentPath, { scroll: false });
+
+      // Trigger generation immediately with the URL string
+      handleAIGenerate(urlPrompt);
+    }
+  }, [searchParams, router]);
+
   // Recalculate totals when line items, tax, discount, or shipping change
   useEffect(() => {
     const subtotal = calculateSubtotal(invoice.lineItems || []);
@@ -610,8 +626,10 @@ function InvoiceFormContent() {
   };
 
   // Generate Invoice via AI
-  const handleAIGenerate = async () => {
-    if (!aiPrompt.trim()) return;
+  const handleAIGenerate = async (overridePrompt?: string | React.MouseEvent) => {
+    // If called from a UI event, overridePrompt will be an event object. We only want a string.
+    const promptToUse = typeof overridePrompt === 'string' ? overridePrompt : aiPrompt;
+    if (!promptToUse.trim()) return;
 
     setIsGeneratingAI(true);
     try {
@@ -620,7 +638,7 @@ function InvoiceFormContent() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: aiPrompt }),
+        body: JSON.stringify({ prompt: promptToUse }),
       });
 
       const data = await res.json();

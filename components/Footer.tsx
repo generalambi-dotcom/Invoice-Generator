@@ -66,8 +66,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Left Column - Invoicing Guide */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Column 1 - Invoicing Guide */}
           <div>
             <h3 className="text-sm font-semibold text-gray-800 uppercase mb-4">
               INVOICING GUIDE
@@ -140,7 +140,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Middle Column - Resources */}
+          {/* Column 2 - Resources */}
           <div>
             <h3 className="text-sm font-semibold text-gray-800 uppercase mb-4">
               RESOURCES
@@ -197,7 +197,72 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Right Column - Copyright, Social Media, Legal */}
+          {/* Column 3 - Contextual SEO Links */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-800 uppercase mb-4 flex items-center gap-1">
+              <span role="img" aria-label="point">👉</span> INVOICE GENERATORS
+            </h3>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="/invoice-generator-nigeria"
+                  className="text-gray-700 hover:text-gray-900 transition-colors text-sm"
+                >
+                  Invoice Generator Nigeria
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/invoice-template-nigeria"
+                  className="text-gray-700 hover:text-gray-900 transition-colors text-sm"
+                >
+                  Free Invoice Template Nigeria
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/naira-invoice-generator"
+                  className="text-gray-700 hover:text-gray-900 transition-colors text-sm"
+                >
+                  Naira Invoice Generator
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/ai-invoice-generator-nigeria"
+                  className="text-gray-700 hover:text-gray-900 transition-colors text-sm"
+                >
+                  AI Invoice Generator
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/send-invoice-via-whatsapp-nigeria"
+                  className="text-gray-700 hover:text-gray-900 transition-colors text-sm"
+                >
+                  WhatsApp Invoice Sender
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/freelance-invoice-template-ngn"
+                  className="text-gray-700 hover:text-gray-900 transition-colors text-sm"
+                >
+                  Freelance Invoice Generator
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/create-invoice-online-ngn"
+                  className="text-gray-700 hover:text-gray-900 transition-colors text-sm"
+                >
+                  Online Invoice Creator
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 4 - Copyright, Social Media, Legal */}
           <div>
             <p className="text-sm text-gray-700 mb-4">
               © 2012-2025 Invoice-Generator.ng

@@ -144,7 +144,7 @@ export default function AILandingPage() {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
                         <div>
-                            <h2 className="text-3xl font-bold text-slate-900 mb-4">Designed for freelancers and modern agencies.</h2>
+                            <h2 className="text-3xl font-bold text-slate-900 mb-4">Designed for freelancers and businesses.</h2>
                             <p className="text-gray-500 text-sm leading-relaxed mb-8">
                                 Your time is money. AI doesn't just save you minutes per invoice—it reduces human error in calculations and ensures you never forget to add your standard late fee terms again.
                             </p>

@@ -162,6 +162,11 @@ function InvoiceFormContent() {
     shipTo: 'simple'
   });
 
+  // AI Generation State
+  const [showAIPrompt, setShowAIPrompt] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState<string>('');
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+
 
 
   // Check premium status and load user
@@ -601,6 +606,70 @@ function InvoiceFormContent() {
       toast.error('Failed to save invoice: ' + (error.message || 'Please try again.'));
     } finally {
       setSavingInvoice(false);
+    }
+  };
+
+  // Generate Invoice via AI
+  const handleAIGenerate = async () => {
+    if (!aiPrompt.trim()) return;
+
+    setIsGeneratingAI(true);
+    try {
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: aiPrompt }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to generate invoice data.');
+      }
+
+      // Merge the generated data into the current invoice state
+      setInvoice((prev) => {
+        let newDueDate = prev.dueDate;
+
+        // Calculate new due date if offset is provided
+        if (data.dueDateOffsetDays !== undefined) {
+          const d = new Date();
+          d.setDate(d.getDate() + data.dueDateOffsetDays);
+          newDueDate = format(d, 'yyyy-MM-dd');
+        }
+
+        return {
+          ...prev,
+          client: {
+            ...prev.client!,
+            name: data.clientName || prev.client?.name || '',
+            email: data.clientEmail || prev.client?.email || '',
+            address: data.clientAddress || prev.client?.address || '',
+          },
+          lineItems: data.lineItems && data.lineItems.length > 0
+            ? data.lineItems.map((item: any, i: number) => ({
+              id: Date.now().toString() + i,
+              description: item.description || '',
+              quantity: item.quantity || 1,
+              rate: item.rate || 0,
+              amount: (item.quantity || 1) * (item.rate || 0),
+            }))
+            : prev.lineItems,
+          notes: data.notes || prev.notes || '',
+          dueDate: newDueDate,
+        };
+      });
+
+      toast.success('Invoice drafted successfully with AI!');
+      setShowAIPrompt(false);
+      setAiPrompt('');
+    } catch (error: any) {
+      console.error('AI error:', error);
+      toast.error(error.message);
+    } finally {
+      setIsGeneratingAI(false);
     }
   };
 
@@ -1101,14 +1170,90 @@ function InvoiceFormContent() {
           {/* Page Header */}
           <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Invoice Generator</h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">Create professional invoices in minutes</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                {invoice.type === 'estimate' ? 'Estimate Generator' : invoice.type === 'credit_note' ? 'Credit Note Generator' : 'Invoice Generator'}
+              </h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">Create professional documents in minutes</p>
             </div>
-            <div className="hidden xl:flex text-right flex-col items-end">
-              <span className="text-sm font-medium text-gray-400 uppercase tracking-widest">Draft</span>
-              <span className="text-xs text-gray-300">Edited just now</span>
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              <button
+                onClick={() => setShowAIPrompt(true)}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0"
+              >
+                <span className="text-lg leading-none">✨</span>
+                Create with AI
+              </button>
+              <div className="hidden xl:flex text-right flex-col items-end border-l border-gray-200 pl-4">
+                <span className="text-sm font-medium text-gray-400 uppercase tracking-widest">Draft</span>
+                <span className="text-xs text-gray-300">Edited just now</span>
+              </div>
             </div>
           </div>
+
+          {/* AI Prompt Modal */}
+          {showAIPrompt && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4 transition-all" style={{ margin: 0 }}>
+              <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-indigo-100">
+                <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-50/50 to-purple-50/50">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <span className="text-xl">✨</span> Draft with AI
+                  </h3>
+                  <button
+                    onClick={() => setShowAIPrompt(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-white p-1"
+                    disabled={isGeneratingAI}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+                <div className="p-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Describe the invoice you want to create:
+                  </label>
+                  <textarea
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    placeholder="e.g., 'I need to bill Acme Corp $1500 for the April Marketing Campaign. Also add a $200 setup fee. Make it due in 15 days.'"
+                    className="w-full h-32 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-inner resize-none mb-4"
+                    disabled={isGeneratingAI}
+                    autoFocus
+                  />
+                  <div className="flex items-start gap-3 bg-blue-50/50 text-blue-800 text-xs p-4 rounded-xl">
+                    <span className="text-blue-500 mt-0.5">ℹ️</span>
+                    <p className="leading-relaxed">
+                      The AI will read your prompt and automatically fill out the Client details, Line Items, Rates, and Due Date. You can review and edit everything before saving.
+                    </p>
+                  </div>
+                </div>
+                <div className="p-6 border-t border-gray-100 bg-gray-50/50 flex gap-3">
+                  <button
+                    onClick={() => setShowAIPrompt(false)}
+                    className="flex-1 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                    disabled={isGeneratingAI}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAIGenerate}
+                    disabled={!aiPrompt.trim() || isGeneratingAI}
+                    className="flex-[2] flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isGeneratingAI ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Generating Draft...
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-lg leading-none">✨</span>
+                        Generate Draft
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Invoice History */}
           {showHistory && (

@@ -42,7 +42,7 @@ const InvoiceFormPreview = () => {
             tabIndex={0}
             onKeyDown={(e) => { if (e.key === 'Enter') handleClick(); }}
         >
-            <div className="relative max-w-5xl mx-auto mt-12">
+            <div className="relative w-full max-w-5xl mx-auto mt-8 sm:mt-12 px-2 sm:px-0">
                 {/* Fade out at bottom */}
                 <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-gray-50 to-transparent z-20 pointer-events-none"></div>
 
@@ -60,8 +60,8 @@ const InvoiceFormPreview = () => {
                     </div>
 
                     {/* Invoice Form Body */}
-                    <div className="p-6 md:p-8">
-                        <div className="flex flex-col md:flex-row gap-8">
+                    <div className="p-4 sm:p-6 md:p-8 overflow-hidden">
+                        <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full max-w-full">
                             {/* Left Column - Form */}
                             <div className="flex-1">
                                 <div className="flex items-center justify-between mb-4">
@@ -142,8 +142,8 @@ const InvoiceFormPreview = () => {
                                 </div>
                             </div>
 
-                            {/* Right Column - Action Buttons & Settings */}
-                            <div className="w-full md:w-56 shrink-0">
+                            {/* Right Column - Action Buttons & Settings (Hidden on very small screens to avoid overflow) */}
+                            <div className="hidden sm:block w-full md:w-56 shrink-0">
                                 {/* Action buttons */}
                                 <div className="bg-white p-4 rounded-xl border border-gray-200 mb-4 space-y-2.5">
                                     <div className="group h-10 bg-gray-900 rounded-lg flex items-center justify-center gap-2 hover:-translate-y-1 hover:shadow-lg hover:shadow-gray-900/20 active:scale-95 transition-all duration-300 cursor-pointer">

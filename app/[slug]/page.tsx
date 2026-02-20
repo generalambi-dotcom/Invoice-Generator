@@ -90,10 +90,25 @@ export default function SeoLandingPage({ params }: PageProps) {
         }))
     };
 
+    // Generate JSON-LD for Software Application (Rich Snippets)
+    const softwareSchema = {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Invoice Generator Nigeria",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "WebBrowser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "NGN"
+        },
+        "description": pageData.meta.description
+    };
+
     return (
         <div className="min-h-screen bg-white">
-            {/* Inject FAQ Schema for Rich Snippets */}
-            <Script id={`faq-schema-${pageData.slug}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+            {/* Inject FAQ and Software Schema for Rich Snippets */}
+            <Script id={`schema-${pageData.slug}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify([faqSchema, softwareSchema]) }} />
 
             {/* 0. SEO Breadcrumb Structure */}
             <nav className="bg-gray-50 border-b border-gray-100 py-3 hidden sm:block">
@@ -139,7 +154,7 @@ export default function SeoLandingPage({ params }: PageProps) {
 
                         <div className="flex justify-center animate-fade-in-up animation-delay-300">
                             <Link
-                                href="/free-invoice-generator"
+                                href={`/free-invoice-generator?source=seo&slug=${pageData.slug}`}
                                 className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-full bg-teal-800 text-white hover:bg-teal-700 transition-all shadow-sm hover:shadow-md"
                             >
                                 {pageData.hero.cta}
@@ -247,12 +262,25 @@ export default function SeoLandingPage({ params }: PageProps) {
                 <div className="container mx-auto px-4">
                     <h2 className="text-3xl font-bold mb-6">Ready to generate your first document?</h2>
                     <p className="text-teal-100 mb-8 max-w-2xl mx-auto">No credit card required. No hidden fees. Start billing your clients professionally today.</p>
-                    <Link href="/free-invoice-generator" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-teal-900 font-bold rounded-full hover:bg-teal-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
+                    <Link
+                        href={`/free-invoice-generator?source=seo&slug=${pageData.slug}`}
+                        className="inline-flex items-center gap-2 px-8 py-4 bg-white text-teal-900 font-bold rounded-full hover:bg-teal-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
+                    >
                         {pageData.hero.cta}
                         <ArrowRight className="w-5 h-5" />
                     </Link>
                 </div>
             </section>
+
+            {/* 7. Mobile Sticky CTA (Floating Action Button) */}
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] sm:hidden z-50 animate-fade-in-up">
+                <Link
+                    href={`/free-invoice-generator?source=seo&slug=${pageData.slug}`}
+                    className="flex items-center justify-center w-full py-3.5 px-4 bg-teal-800 text-white font-bold rounded-xl shadow-lg active:scale-[0.98] transition-all"
+                >
+                    {pageData.hero.cta}
+                </Link>
+            </div>
         </div>
     );
 }

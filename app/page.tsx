@@ -33,13 +33,13 @@ export default function LandingPage() {
 
             <h1 className="font-bold tracking-tight text-slate-900 mb-4 leading-[1.2] animate-fade-in-up animation-delay-100" style={{ fontSize: '2.5rem' }}>
               Create Professional &{' '}
-              <span className="italic text-teal-800">Free Invoices</span>
+              <Link href="/free-invoice-generator-nigeria" className="italic text-teal-800 hover:text-teal-600 transition-colors underline underline-offset-4 decoration-teal-300/50">Free Invoices</Link>
               <br className="hidden md:block" />
               in Seconds
             </h1>
 
             <p className="text-gray-500 mb-8 max-w-xl mx-auto animate-fade-in-up animation-delay-200" style={{ fontSize: '0.9rem', lineHeight: '1.6' }}>
-              Simple, fast, and 100% free invoice generator for Nigerian businesses. No sign-up required to get started.
+              Simple, fast, and 100% free <Link href="/invoice-generator-nigeria" className="text-teal-700 hover:text-teal-900 font-medium underline underline-offset-2 transition-colors">invoice generator for Nigerian businesses</Link>. No sign-up required to get started.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-in-up animation-delay-300">
@@ -64,8 +64,8 @@ export default function LandingPage() {
 
           <div className="mt-8 text-center flex flex-wrap items-center justify-center gap-1.5 text-sm text-gray-500 font-medium px-4 animate-fade-in-up animation-delay-400">
             <Link href="/upgrade" className="text-gray-900 font-bold hover:underline transition-colors decoration-2 underline-offset-2 decoration-amber-400">Try Premium 30 days free</Link>
-            <span>— create smarter invoices with <Sparkles className="w-4 h-4 inline-block text-purple-500 mb-0.5 mx-0.5" /> <span className="font-bold text-gray-700">AI</span></span>
-            <span>and send instantly via <MessageCircle className="w-4 h-4 inline-block text-[#25D366] mb-0.5 mx-0.5" /> <span className="font-bold text-[#25D366]">WhatsApp</span>.</span>
+            <span>— create smarter invoices with <Sparkles className="w-4 h-4 inline-block text-purple-500 mb-0.5 mx-0.5" /> <Link href="/ai-invoice-generator-nigeria" className="font-bold text-gray-700 hover:text-purple-600 transition-colors underline underline-offset-2">AI</Link></span>
+            <span>and send instantly via <MessageCircle className="w-4 h-4 inline-block text-[#25D366] mb-0.5 mx-0.5" /> <Link href="/send-invoice-via-whatsapp-nigeria" className="font-bold text-[#25D366] hover:text-[#1EBE5A] transition-colors underline underline-offset-2">WhatsApp</Link>.</span>
           </div>
         </div>
       </section>

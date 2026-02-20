@@ -5,8 +5,12 @@ export interface FAQ {
     answer: string;
 }
 
+export type SeoCategory = 'Nigeria Core' | 'Industry & Freelance' | 'AI & Features' | 'Templates' | 'Expansion';
+
 export interface SeoPageData {
     slug: string;
+    category: SeoCategory;
+    relatedLinks: Array<{ text: string; url: string }>;
     meta: {
         title: string;
         description: string;
@@ -32,6 +36,21 @@ export const seoPages: Record<string, SeoPageData> = {
     // ==========================================
     "invoice-generator-nigeria": {
         slug: "invoice-generator-nigeria",
+        category: "Nigeria Core",
+        relatedLinks: [
+          {
+                    "text": "AI Invoice Generator",
+                    "url": "/ai-invoice-generator-nigeria"
+          },
+          {
+                    "text": "Freelance Invoice Generator",
+                    "url": "/freelance-invoice-template-ngn"
+          },
+          {
+                    "text": "WhatsApp Invoice Sender",
+                    "url": "/send-invoice-via-whatsapp-nigeria"
+          }
+],
         meta: {
             title: "Invoice Generator Nigeria - Free Online Invoice Maker",
             description: "Create professional Naira invoices in seconds. The #1 free invoice generator for Nigerian businesses and freelancers. No sign-up required.",
@@ -57,6 +76,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "naira-invoice-generator": {
         slug: "naira-invoice-generator",
+        category: "Nigeria Core",
+        relatedLinks: [
+          {
+                    "text": "AI Invoice Generator",
+                    "url": "/ai-invoice-generator-nigeria"
+          },
+          {
+                    "text": "Freelance Invoice Generator",
+                    "url": "/freelance-invoice-template-ngn"
+          },
+          {
+                    "text": "WhatsApp Invoice Sender",
+                    "url": "/send-invoice-via-whatsapp-nigeria"
+          }
+],
         meta: {
             title: "Naira Invoice Generator (₦) - Create Invoices Easily",
             description: "Generate beautiful Naira (₦) invoices online instantly. Free, professional invoice maker tailored for transactions in Nigeria.",
@@ -81,6 +115,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "free-invoice-generator-nigeria": {
         slug: "free-invoice-generator-nigeria",
+        category: "Nigeria Core",
+        relatedLinks: [
+          {
+                    "text": "AI Invoice Generator",
+                    "url": "/ai-invoice-generator-nigeria"
+          },
+          {
+                    "text": "Freelance Invoice Generator",
+                    "url": "/freelance-invoice-template-ngn"
+          },
+          {
+                    "text": "WhatsApp Invoice Sender",
+                    "url": "/send-invoice-via-whatsapp-nigeria"
+          }
+],
         meta: {
             title: "Free Invoice Generator Nigeria - No Sign Up Needed",
             description: "The fastest free invoice generator in Nigeria. Add your logo, calculate VAT, and download unlimited PDFs with zero hidden fees.",
@@ -105,6 +154,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "invoice-template-nigeria": {
         slug: "invoice-template-nigeria",
+        category: "Nigeria Core",
+        relatedLinks: [
+          {
+                    "text": "AI Invoice Generator",
+                    "url": "/ai-invoice-generator-nigeria"
+          },
+          {
+                    "text": "Freelance Invoice Generator",
+                    "url": "/freelance-invoice-template-ngn"
+          },
+          {
+                    "text": "WhatsApp Invoice Sender",
+                    "url": "/send-invoice-via-whatsapp-nigeria"
+          }
+],
         meta: {
             title: "Professional Invoice Template Nigeria | Download Free PDF",
             description: "Get access to beautiful, customizable invoice templates designed for Nigerian businesses. Fill online and download instantly.",
@@ -129,6 +193,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "invoice-format-nigeria": {
         slug: "invoice-format-nigeria",
+        category: "Nigeria Core",
+        relatedLinks: [
+          {
+                    "text": "AI Invoice Generator",
+                    "url": "/ai-invoice-generator-nigeria"
+          },
+          {
+                    "text": "Freelance Invoice Generator",
+                    "url": "/freelance-invoice-template-ngn"
+          },
+          {
+                    "text": "WhatsApp Invoice Sender",
+                    "url": "/send-invoice-via-whatsapp-nigeria"
+          }
+],
         meta: {
             title: "Standard Invoice Format Nigeria - Best Practices & Generator",
             description: "Learn the standard invoice format for Nigerian businesses and generate compliant, professional invoices instantly.",
@@ -157,6 +236,21 @@ export const seoPages: Record<string, SeoPageData> = {
     // ==========================================
     "invoice-generator-for-designers-nigeria": {
         slug: "invoice-generator-for-designers-nigeria",
+        category: "Industry & Freelance",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "Naira Invoice Generator",
+                    "url": "/naira-invoice-generator"
+          },
+          {
+                    "text": "Freelance Invoice Template NGN",
+                    "url": "/freelance-invoice-template-ngn"
+          }
+],
         meta: {
             title: "Invoice Generator for Nigerian Designers | Professional Billing",
             description: "The perfect invoice generator for Nigerian UI/UX designers, graphic artists, and creatives. Send beautiful invoices that reflect your design quality.",
@@ -181,6 +275,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "invoice-generator-for-developers-nigeria": {
         slug: "invoice-generator-for-developers-nigeria",
+        category: "Industry & Freelance",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "Naira Invoice Generator",
+                    "url": "/naira-invoice-generator"
+          },
+          {
+                    "text": "Freelance Invoice Template NGN",
+                    "url": "/freelance-invoice-template-ngn"
+          }
+],
         meta: {
             title: "Invoice Generator for Developers in Nigeria",
             description: "A fast, automated invoice generator for Nigerian software developers, engineers, and tech agencies. Bill for sprints and hours easily.",
@@ -205,6 +314,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "invoice-generator-for-photographers-nigeria": {
         slug: "invoice-generator-for-photographers-nigeria",
+        category: "Industry & Freelance",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "Naira Invoice Generator",
+                    "url": "/naira-invoice-generator"
+          },
+          {
+                    "text": "Freelance Invoice Template NGN",
+                    "url": "/freelance-invoice-template-ngn"
+          }
+],
         meta: {
             title: "Invoice Generator for Nigerian Photographers",
             description: "The best invoice generator for events, weddings, and commercial photographers in Nigeria. Itemize your shoots, edits, and travel costs.",
@@ -229,6 +353,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "invoice-generator-for-agencies-nigeria": {
         slug: "invoice-generator-for-agencies-nigeria",
+        category: "Industry & Freelance",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "Naira Invoice Generator",
+                    "url": "/naira-invoice-generator"
+          },
+          {
+                    "text": "Freelance Invoice Template NGN",
+                    "url": "/freelance-invoice-template-ngn"
+          }
+],
         meta: {
             title: "Invoice Generator for Nigerian Agencies",
             description: "Robust invoice generation for marketing, PR, and creative agencies in Nigeria. Bill massive retainers with absolute professionalism.",
@@ -253,6 +392,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "invoice-generator-for-consultants-nigeria": {
         slug: "invoice-generator-for-consultants-nigeria",
+        category: "Industry & Freelance",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "Naira Invoice Generator",
+                    "url": "/naira-invoice-generator"
+          },
+          {
+                    "text": "Freelance Invoice Template NGN",
+                    "url": "/freelance-invoice-template-ngn"
+          }
+],
         meta: {
             title: "Invoice Generator for Nigerian Consultants",
             description: "Professional invoice maker for business, management, and legal consultants in Nigeria. Secure payments for your expert advice.",
@@ -281,6 +435,21 @@ export const seoPages: Record<string, SeoPageData> = {
     // ==========================================
     "ai-invoice-generator-nigeria": {
         slug: "ai-invoice-generator-nigeria",
+        category: "AI & Features",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "WhatsApp Invoice Generator",
+                    "url": "/whatsapp-invoice-generator"
+          },
+          {
+                    "text": "Premium Invoice Generator Nigeria",
+                    "url": "/premium-invoice-generator-nigeria"
+          }
+],
         meta: {
             title: "AI Invoice Generator Nigeria | Draft Invoices with Text",
             description: "The first AI-powerd invoice generator for Nigerian businesses. Just type what you want to bill, and our AI builds the perfect invoice instantly.",
@@ -305,6 +474,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "whatsapp-invoice-generator": {
         slug: "whatsapp-invoice-generator",
+        category: "AI & Features",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "WhatsApp Invoice Generator",
+                    "url": "/whatsapp-invoice-generator"
+          },
+          {
+                    "text": "Premium Invoice Generator Nigeria",
+                    "url": "/premium-invoice-generator-nigeria"
+          }
+],
         meta: {
             title: "WhatsApp Invoice Generator | Send Invoices Directly",
             description: "Create an invoice and send it directly to your client's WhatsApp. The fastest way to bill and get paid in Nigeria.",
@@ -329,6 +513,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "send-invoice-via-whatsapp-nigeria": {
         slug: "send-invoice-via-whatsapp-nigeria",
+        category: "AI & Features",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "WhatsApp Invoice Generator",
+                    "url": "/whatsapp-invoice-generator"
+          },
+          {
+                    "text": "Premium Invoice Generator Nigeria",
+                    "url": "/premium-invoice-generator-nigeria"
+          }
+],
         meta: {
             title: "Send Invoices via WhatsApp in Nigeria | Free Generator",
             description: "Learn how to instantly send professional PDF invoices to your clients through WhatsApp. Increase your payment speeds significantly.",
@@ -353,6 +552,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "smart-ai-invoice-creator": {
         slug: "smart-ai-invoice-creator",
+        category: "AI & Features",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "WhatsApp Invoice Generator",
+                    "url": "/whatsapp-invoice-generator"
+          },
+          {
+                    "text": "Premium Invoice Generator Nigeria",
+                    "url": "/premium-invoice-generator-nigeria"
+          }
+],
         meta: {
             title: "Smart AI Invoice Creator | Automated Billing Software",
             description: "Experience the next generation of billing. Our Smart AI Creator builds, calculates, and formats professional invoices simply from your text prompts.",
@@ -377,6 +591,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "premium-invoice-generator-nigeria": {
         slug: "premium-invoice-generator-nigeria",
+        category: "AI & Features",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "WhatsApp Invoice Generator",
+                    "url": "/whatsapp-invoice-generator"
+          },
+          {
+                    "text": "Premium Invoice Generator Nigeria",
+                    "url": "/premium-invoice-generator-nigeria"
+          }
+],
         meta: {
             title: "Premium Invoice Generator Nigeria | Advanced Features",
             description: "Upgrade to the best premium invoice generator in Nigeria. Unlock automated reminders, client management, and detailed financial reports.",
@@ -405,6 +634,21 @@ export const seoPages: Record<string, SeoPageData> = {
     // ==========================================
     "freelance-invoice-template-ngn": {
         slug: "freelance-invoice-template-ngn",
+        category: "Templates",
+        relatedLinks: [
+          {
+                    "text": "Free Invoice Template Nigeria",
+                    "url": "/invoice-template-nigeria"
+          },
+          {
+                    "text": "Invoice Format Nigeria",
+                    "url": "/invoice-format-nigeria"
+          },
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          }
+],
         meta: {
             title: "Freelance Invoice Template NGN | Free Download",
             description: "Get the perfect NGN (Naira) invoice template for Nigerian freelancers. Easy to fill online, calculates automatically, and free to download.",
@@ -429,6 +673,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "simple-invoice-template-nigeria": {
         slug: "simple-invoice-template-nigeria",
+        category: "Templates",
+        relatedLinks: [
+          {
+                    "text": "Free Invoice Template Nigeria",
+                    "url": "/invoice-template-nigeria"
+          },
+          {
+                    "text": "Invoice Format Nigeria",
+                    "url": "/invoice-format-nigeria"
+          },
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          }
+],
         meta: {
             title: "Simple Invoice Template Nigeria | Clean & Minimalist",
             description: "Download a clean, simple, and clutter-free invoice template suitable for any small transaction in Nigeria. Fast and easy to use.",
@@ -453,6 +712,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "blank-invoice-template-ngn": {
         slug: "blank-invoice-template-ngn",
+        category: "Templates",
+        relatedLinks: [
+          {
+                    "text": "Free Invoice Template Nigeria",
+                    "url": "/invoice-template-nigeria"
+          },
+          {
+                    "text": "Invoice Format Nigeria",
+                    "url": "/invoice-format-nigeria"
+          },
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          }
+],
         meta: {
             title: "Blank Invoice Template NGN | Fill and Print",
             description: "A blank invoice template in Naira (NGN) ready for you to fill in your data. Instantly generates a structured, professional document.",
@@ -477,6 +751,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "professional-invoice-template-nigeria": {
         slug: "professional-invoice-template-nigeria",
+        category: "Templates",
+        relatedLinks: [
+          {
+                    "text": "Free Invoice Template Nigeria",
+                    "url": "/invoice-template-nigeria"
+          },
+          {
+                    "text": "Invoice Format Nigeria",
+                    "url": "/invoice-format-nigeria"
+          },
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          }
+],
         meta: {
             title: "Professional Invoice Template Nigeria | Corporate Standard",
             description: "Generate corporate-approved invoices. The professional invoice template designed specifically to meet Nigerian corporate standards.",
@@ -501,6 +790,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "invoice-sample-nigeria-pdf": {
         slug: "invoice-sample-nigeria-pdf",
+        category: "Templates",
+        relatedLinks: [
+          {
+                    "text": "Free Invoice Template Nigeria",
+                    "url": "/invoice-template-nigeria"
+          },
+          {
+                    "text": "Invoice Format Nigeria",
+                    "url": "/invoice-format-nigeria"
+          },
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          }
+],
         meta: {
             title: "Invoice Sample Nigeria PDF | Best Examples & Generator",
             description: "View samples of standard Nigerian invoices and use our tool to instantly generate your own compliant PDF document.",
@@ -529,6 +833,21 @@ export const seoPages: Record<string, SeoPageData> = {
     // ==========================================
     "invoice-generator-africa": {
         slug: "invoice-generator-africa",
+        category: "Expansion",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "Online Invoice Creator",
+                    "url": "/create-invoice-online-ngn"
+          },
+          {
+                    "text": "Smart AI Invoice Creator",
+                    "url": "/smart-ai-invoice-creator"
+          }
+],
         meta: {
             title: "Invoice Generator Africa | Bill Across the Continent",
             description: "The most robust invoice generator for African businesses. Support for NGN, KES, ZAR, GHS, and global currencies like USD.",
@@ -553,6 +872,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "invoice-generator-for-small-business": {
         slug: "invoice-generator-for-small-business",
+        category: "Expansion",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "Online Invoice Creator",
+                    "url": "/create-invoice-online-ngn"
+          },
+          {
+                    "text": "Smart AI Invoice Creator",
+                    "url": "/smart-ai-invoice-creator"
+          }
+],
         meta: {
             title: "Online Invoice Generator for Small Businesses",
             description: "Streamline your small business operations. Create, track, and manage invoices easily with our dedicated tools for SMEs.",
@@ -577,6 +911,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "online-invoice-generator-free": {
         slug: "online-invoice-generator-free",
+        category: "Expansion",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "Online Invoice Creator",
+                    "url": "/create-invoice-online-ngn"
+          },
+          {
+                    "text": "Smart AI Invoice Creator",
+                    "url": "/smart-ai-invoice-creator"
+          }
+],
         meta: {
             title: "Online Invoice Generator - 100% Free & No Download",
             description: "Create invoices directly in your browser. Our online invoice generator is 100% free, requires no app downloads, and no credit cards.",
@@ -601,6 +950,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "create-invoice-online-ngn": {
         slug: "create-invoice-online-ngn",
+        category: "Expansion",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "Online Invoice Creator",
+                    "url": "/create-invoice-online-ngn"
+          },
+          {
+                    "text": "Smart AI Invoice Creator",
+                    "url": "/smart-ai-invoice-creator"
+          }
+],
         meta: {
             title: "Create Invoice Online NGN | Fast Naira Billing",
             description: "Create professional NGN invoices online in under a minute. The fastest web application for Nigerian businesses to bill clients.",
@@ -625,6 +989,21 @@ export const seoPages: Record<string, SeoPageData> = {
     },
     "best-invoice-generator-nigeria": {
         slug: "best-invoice-generator-nigeria",
+        category: "Expansion",
+        relatedLinks: [
+          {
+                    "text": "Invoice Generator Nigeria",
+                    "url": "/invoice-generator-nigeria"
+          },
+          {
+                    "text": "Online Invoice Creator",
+                    "url": "/create-invoice-online-ngn"
+          },
+          {
+                    "text": "Smart AI Invoice Creator",
+                    "url": "/smart-ai-invoice-creator"
+          }
+],
         meta: {
             title: "The Best Invoice Generator in Nigeria | Rated #1",
             description: "Discover why thousands rate us as the best invoice generator in Nigeria. Unmatched speed, beautiful templates, AI tools, and full Naira support.",

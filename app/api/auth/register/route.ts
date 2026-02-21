@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { generateToken } from '@/lib/auth-jwt';
 import { createRefreshToken } from '@/lib/refresh-token';
+import { sendSequenceEmail } from '@/lib/email';
 
 // POST - Register new user
 export async function POST(request: NextRequest) {
@@ -141,6 +142,23 @@ export async function POST(request: NextRequest) {
       });
 
       const refreshToken = await createRefreshToken(user.id);
+
+      // Trigger Welcome Sequence Step 1
+      sendSequenceEmail({ to: user.email, name: user.name, step: 1 })
+        .then(async (result) => {
+          if (result.success) {
+            await prisma.emailLog.create({
+              data: {
+                userId: user.id,
+                to: user.email,
+                subject: 'welcome_step_1',
+                body: 'Sequence Step 1',
+                status: 'sent',
+              }
+            });
+          }
+        })
+        .catch(console.error);
 
       responseData.token = accessToken;
       responseData.refreshToken = refreshToken;

@@ -697,3 +697,144 @@ export async function sendPaymentReceivedEmail({
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * Send Drip Sequence Email (Welcome Flow)
+ */
+interface SendSequenceEmailParams {
+  to: string;
+  name?: string;
+  step: 1 | 2 | 3 | 4 | 5;
+}
+
+export async function sendSequenceEmail({
+  to,
+  name,
+  step,
+}: SendSequenceEmailParams): Promise<{ success: boolean; error?: string }> {
+  try {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.log(`⚠️ RESEND_API_KEY not set. Would have sent sequence step ${step} to ${to}`);
+      return { success: false, error: 'RESEND_API_KEY not set' };
+    }
+    const resend = new Resend(apiKey);
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
+    const userName = name || 'there';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng';
+
+    let subject = '';
+    let headline = '';
+    let bodyContent = '';
+    let buttonText = 'Go to Dashboard';
+    let buttonUrl = `${appUrl}/dashboard`;
+
+    switch (step) {
+      case 1:
+        subject = '👉 Your invoice tool is ready 🇳🇬';
+        headline = 'Welcome to InvoiceGenerator';
+        bodyContent = `
+          <p>Hi ${userName},</p>
+          <p>Welcome to InvoiceGenerator.</p>
+          <p>You can now:</p>
+          <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
+            <li>✔ Create professional invoices in Naira or USD</li>
+            <li>✔ Send invoices via email or WhatsApp</li>
+            <li>✔ Use AI to write faster invoice descriptions</li>
+          </ul>
+          <p style="margin-top: 20px;">Start your first invoice here:</p>
+        `;
+        buttonText = 'Create Invoice';
+        buttonUrl = `${appUrl}/invoices/new`;
+        break;
+
+      case 2:
+        subject = '👉 Most Nigerian freelancers forget this…';
+        headline = 'Look more professional';
+        bodyContent = `
+          <p>Hi ${userName},</p>
+          <p>Adding your company name and logo makes your invoices look more professional to clients.</p>
+          <p>Finish setting up your first invoice here:</p>
+        `;
+        buttonText = 'Go to Dashboard';
+        buttonUrl = `${appUrl}/dashboard`;
+        break;
+
+      case 3:
+        subject = '👉 Send invoices via WhatsApp in seconds';
+        headline = 'Did you know?';
+        bodyContent = `
+          <p>Hi ${userName},</p>
+          <p>Many Nigerian freelancers send invoices through WhatsApp.</p>
+          <p>With Premium, you can send invoices instantly without downloading PDFs.</p>
+          <p>See how it works:</p>
+        `;
+        buttonText = 'View Premium Features';
+        buttonUrl = `${appUrl}/pricing`; // Adjust to appropriate URL
+        break;
+
+      case 4:
+        subject = '👉 Let AI write your invoice descriptions';
+        headline = 'Write smarter, not harder';
+        bodyContent = `
+          <p>Hi ${userName},</p>
+          <p>Not sure how to describe your services?</p>
+          <p>Use AI suggestions to create clear, professional invoice items in seconds.</p>
+          <p>Try it here:</p>
+        `;
+        buttonText = 'Create Invoice';
+        buttonUrl = `${appUrl}/invoices/new`;
+        break;
+
+      case 5:
+        subject = '👉 Look more professional to your clients';
+        headline = 'Upgrade to Premium';
+        bodyContent = `
+          <p>Hi ${userName},</p>
+          <p>Upgrade to Premium to:</p>
+          <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
+            <li>✔ Remove branding</li>
+            <li>✔ Send invoices via WhatsApp</li>
+            <li>✔ Use AI tools</li>
+          </ul>
+          <p style="margin-top: 20px;">Start your 30-day trial:</p>
+        `;
+        buttonText = 'Upgrade Now';
+        buttonUrl = `${appUrl}/pricing`;
+        break;
+    }
+
+    const content = `
+      <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 30px;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">${headline}</h1>
+      </div>
+      
+      ${bodyContent}
+      
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${buttonUrl}" class="button" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">${buttonText}</a>
+      </div>
+      
+      <p>Happy invoicing!<br/>The InvoiceGenerator Team</p>
+    `;
+
+    const emailHtml = await getEmailLayout({
+      content,
+      title: headline,
+      previewText: subject,
+    });
+
+    await resend.emails.send({
+      from: `InvoiceGenerator <${fromEmail}>`,
+      to,
+      subject,
+      html: emailHtml,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error(`Error sending sequence email step ${step}:`, error);
+    return { success: false, error: error.message };
+  }
+}
+

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { generateToken } from '@/lib/auth-jwt';
 import { createRefreshToken } from '@/lib/refresh-token';
 import { getSystemSetting } from '@/lib/settings';
+import { sendSequenceEmail } from '@/lib/email';
 import bcrypt from 'bcryptjs';
 
 // POST - Verify Google token and login/register user
@@ -75,6 +76,29 @@ export async function POST(request: NextRequest) {
                     emailVerified: true
                 }
             });
+
+            const newUser = user;
+            // Trigger Welcome Sequence Step 1 for new google users
+            sendSequenceEmail({ to: newUser.email, name: newUser.name, step: 1 })
+                .then(async (result) => {
+                    if (result.success) {
+                        await prisma.emailLog.create({
+                            data: {
+                                userId: newUser.id,
+                                to: newUser.email,
+                                subject: 'welcome_step_1',
+                                body: 'Sequence Step 1',
+                                status: 'sent',
+                            }
+                        });
+                    }
+                })
+                .catch(console.error);
+        }
+
+        // Ensure user is not null for TypeScript
+        if (!user) {
+            return NextResponse.json({ error: 'Failed to process user' }, { status: 500 });
         }
 
         // Check if account is locked

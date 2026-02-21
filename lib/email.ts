@@ -6,8 +6,8 @@ import { Resend } from 'resend';
 import { retryWithBackoff, formatErrorMessage } from './error-handler';
 import { getPasswordResetEmailHtml, getPasswordResetEmailText } from './password-reset-email';
 import { getVerificationEmailHtml, getVerificationEmailText } from './verification-email';
-import { prisma } from './db';
 import { getEmailLayout } from './email-layout';
+import { prisma } from '@/lib/db';
 
 // Don't initialize Resend at module level - do it lazily in the function
 // This prevents build-time errors when RESEND_API_KEY is not set
@@ -729,97 +729,128 @@ export async function sendSequenceEmail({
     let buttonText = 'Go to Dashboard';
     let buttonUrl = `${appUrl}/dashboard`;
 
-    switch (step) {
-      case 1:
-        subject = '👉 Your invoice tool is ready 🇳🇬';
-        headline = 'Welcome to InvoiceGenerator';
-        bodyContent = `
-          <p>Hi ${userName},</p>
-          <p>Welcome to InvoiceGenerator.</p>
-          <p>You can now:</p>
-          <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
-            <li>✔ Create professional invoices in Naira or USD</li>
-            <li>✔ Send invoices via email or WhatsApp</li>
-            <li>✔ Use AI to write faster invoice descriptions</li>
-          </ul>
-          <p style="margin-top: 20px;">Start your first invoice here:</p>
-        `;
-        buttonText = 'Create Invoice';
-        buttonUrl = `${appUrl}/invoices/new`;
-        break;
+    // Try to fetch custom template from the database first
+    const templateKey = `welcome_step_${step}`;
+    const customTemplate = await prisma.emailNotificationTemplate.findUnique({
+      where: { key: templateKey },
+    });
 
-      case 2:
-        subject = '👉 Most Nigerian freelancers forget this…';
-        headline = 'Look more professional';
-        bodyContent = `
-          <p>Hi ${userName},</p>
-          <p>Adding your company name and logo makes your invoices look more professional to clients.</p>
-          <p>Finish setting up your first invoice here:</p>
-        `;
-        buttonText = 'Go to Dashboard';
-        buttonUrl = `${appUrl}/dashboard`;
-        break;
+    if (customTemplate && customTemplate.enabled) {
+      subject = customTemplate.subject;
+      bodyContent = customTemplate.body.replace(/\{\{userName\}\}/g, userName);
 
-      case 3:
-        subject = '👉 Send invoices via WhatsApp in seconds';
-        headline = 'Did you know?';
-        bodyContent = `
-          <p>Hi ${userName},</p>
-          <p>Many Nigerian freelancers send invoices through WhatsApp.</p>
-          <p>With Premium, you can send invoices instantly without downloading PDFs.</p>
-          <p>See how it works:</p>
-        `;
-        buttonText = 'View Premium Features';
-        buttonUrl = `${appUrl}/pricing`; // Adjust to appropriate URL
-        break;
+      // Derive headline from the generic structure for the custom template (simpler display)
+      headline = customTemplate.name.replace('Welcome Sequence: ', '');
 
-      case 4:
-        subject = '👉 Let AI write your invoice descriptions';
-        headline = 'Write smarter, not harder';
-        bodyContent = `
-          <p>Hi ${userName},</p>
-          <p>Not sure how to describe your services?</p>
-          <p>Use AI suggestions to create clear, professional invoice items in seconds.</p>
-          <p>Try it here:</p>
-        `;
-        buttonText = 'Create Invoice';
-        buttonUrl = `${appUrl}/invoices/new`;
-        break;
+      // If the user manually added our expected wrapper UI string into the custom body or we provided a wrapper,
+      // we will omit the hardcoded layout blocks in favor of user design. We'll check if they want the standard wrapper.
+      // For backwards compatibility and smooth integration with the Email Layout wrapper, we inject their custom body 
+      // into the same layout mechanism we use for hardcoded items.
+      // Users might add `{{buttonUrl}}` to their custom template layout if they choose, so let's set it.
+      bodyContent = bodyContent.replace(/\{\{buttonUrl\}\}/g, `${appUrl}/dashboard`);
+      // If step 1 or 4, standard interaction points to new invoice
+      if (step === 1 || step === 4) {
+        bodyContent = bodyContent.replace(/\{\{buttonUrl\}\}/g, `${appUrl}/invoices/new`);
+      }
+      if (step === 3 || step === 5) {
+        bodyContent = bodyContent.replace(/\{\{buttonUrl\}\}/g, `${appUrl}/pricing`);
+      }
+    } else {
+      // Fallback to Hardcoded Templates
+      switch (step) {
+        case 1:
+          subject = '👉 Your invoice tool is ready 🇳🇬';
+          headline = 'Welcome to InvoiceGenerator';
+          bodyContent = `
+              <p>Hi ${userName},</p>
+              <p>Welcome to InvoiceGenerator.</p>
+              <p>You can now:</p>
+              <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
+                <li>✔ Create professional invoices in Naira or USD</li>
+                <li>✔ Send invoices via email or WhatsApp</li>
+                <li>✔ Use AI to write faster invoice descriptions</li>
+              </ul>
+              <p style="margin-top: 20px;">Start your first invoice here:</p>
+            `;
+          buttonText = 'Create Invoice';
+          buttonUrl = `${appUrl}/invoices/new`;
+          break;
 
-      case 5:
-        subject = '👉 Look more professional to your clients';
-        headline = 'Upgrade to Premium';
-        bodyContent = `
-          <p>Hi ${userName},</p>
-          <p>Upgrade to Premium to:</p>
-          <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
-            <li>✔ Remove branding</li>
-            <li>✔ Send invoices via WhatsApp</li>
-            <li>✔ Use AI tools</li>
-          </ul>
-          <p style="margin-top: 20px;">Start your 30-day trial:</p>
+        case 2:
+          subject = '👉 Most Nigerian freelancers forget this…';
+          headline = 'Look more professional';
+          bodyContent = `
+              <p>Hi ${userName},</p>
+              <p>Adding your company name and logo makes your invoices look more professional to clients.</p>
+              <p>Finish setting up your first invoice here:</p>
+            `;
+          buttonText = 'Go to Dashboard';
+          buttonUrl = `${appUrl}/dashboard`;
+          break;
+
+        case 3:
+          subject = '👉 Send invoices via WhatsApp in seconds';
+          headline = 'Did you know?';
+          bodyContent = `
+              <p>Hi ${userName},</p>
+              <p>Many Nigerian freelancers send invoices through WhatsApp.</p>
+              <p>With Premium, you can send invoices instantly without downloading PDFs.</p>
+              <p>See how it works:</p>
+            `;
+          buttonText = 'View Premium Features';
+          buttonUrl = `${appUrl}/pricing`;
+          break;
+
+        case 4:
+          subject = '👉 Let AI write your invoice descriptions';
+          headline = 'Write smarter, not harder';
+          bodyContent = `
+              <p>Hi ${userName},</p>
+              <p>Not sure how to describe your services?</p>
+              <p>Use AI suggestions to create clear, professional invoice items in seconds.</p>
+              <p>Try it here:</p>
+            `;
+          buttonText = 'Create Invoice';
+          buttonUrl = `${appUrl}/invoices/new`;
+          break;
+
+        case 5:
+          subject = '👉 Look more professional to your clients';
+          headline = 'Upgrade to Premium';
+          bodyContent = `
+              <p>Hi ${userName},</p>
+              <p>Upgrade to Premium to:</p>
+              <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
+                <li>✔ Remove branding</li>
+                <li>✔ Send invoices via WhatsApp</li>
+                <li>✔ Use AI tools</li>
+              </ul>
+              <p style="margin-top: 20px;">Start your 30-day trial:</p>
+            `;
+          buttonText = 'Upgrade Now';
+          buttonUrl = `${appUrl}/pricing`;
+          break;
+      }
+
+      // Add standard styled wrapper specific to the drip campaign hardcoded format
+      const hardcodedWrapper = `
+          <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 30px;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">${headline}</h1>
+          </div>
+          
+          ${bodyContent}
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${buttonUrl}" class="button" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">${buttonText}</a>
+          </div>
+          
+          <p>Happy invoicing!<br/>The InvoiceGenerator Team</p>
         `;
-        buttonText = 'Upgrade Now';
-        buttonUrl = `${appUrl}/pricing`;
-        break;
+      bodyContent = hardcodedWrapper;
     }
 
-    const content = `
-      <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 30px;">
-        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">${headline}</h1>
-      </div>
-      
-      ${bodyContent}
-      
-      <div style="text-align: center; margin: 30px 0;">
-        <a href="${buttonUrl}" class="button" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">${buttonText}</a>
-      </div>
-      
-      <p>Happy invoicing!<br/>The InvoiceGenerator Team</p>
-    `;
-
     const emailHtml = await getEmailLayout({
-      content,
+      content: bodyContent,
       title: headline,
       previewText: subject,
     });

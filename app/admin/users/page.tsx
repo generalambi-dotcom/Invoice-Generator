@@ -310,7 +310,13 @@ export default function AdminUsersPage() {
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {format(new Date(user.createdAt), 'MMM d, yyyy')}
                                                 </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
+                                                    <button
+                                                        onClick={() => router.push(`/admin/users/${user.id}`)}
+                                                        className="text-green-600 hover:text-green-900"
+                                                    >
+                                                        View Activity
+                                                    </button>
                                                     <button
                                                         onClick={() => openEditModal(user)}
                                                         className="text-indigo-600 hover:text-indigo-900"

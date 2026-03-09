@@ -1,8 +1,11 @@
 import { MetadataRoute } from 'next';
 import { seoPages } from '@/data/seo-pages';
+import { prisma } from '@/lib/db';
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://invoicegenerator.ng';
+export const revalidate = 3600; // Revalidate hourly
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = 'https://www.invoicegenerator.ng';
 
   const seoUrls: MetadataRoute.Sitemap = Object.keys(seoPages).map((slug) => ({
     url: `${baseUrl}/${slug}`,
@@ -10,6 +13,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: 'weekly',
     priority: 0.9,
   }));
+
+  // Fetch published blog posts for sitemap
+  let blogUrls: MetadataRoute.Sitemap = [];
+  try {
+    const posts = await prisma.blogPost.findMany({
+      where: { published: true },
+      select: { slug: true, updatedAt: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    blogUrls = posts.map((post) => ({
+      url: `${baseUrl}/blog/${post.slug}`,
+      lastModified: post.updatedAt ?? post.createdAt,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    }));
+  } catch {
+    // DB unavailable during static build — blog URLs omitted
+  }
 
   return [
     {
@@ -19,6 +40,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     ...seoUrls,
+    {
+      url: `${baseUrl}/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    ...blogUrls,
     {
       url: `${baseUrl}/guide`,
       lastModified: new Date(),
@@ -36,24 +64,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/history`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/signin`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/signup`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.5,
     },
     {
       url: `${baseUrl}/terms`,

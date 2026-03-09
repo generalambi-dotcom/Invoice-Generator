@@ -28,7 +28,7 @@ export function generateMetadata({ params }: PageProps): Metadata {
     }
 
     return {
-        title: pageData.meta.title,
+        title: { absolute: pageData.meta.title },
         description: pageData.meta.description,
         keywords: pageData.meta.keywords,
         alternates: {

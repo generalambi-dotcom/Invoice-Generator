@@ -53,7 +53,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Invoice Generator Nigeria - Free Online Invoice Maker",
-            description: "Create professional Naira invoices in seconds. The #1 free invoice generator for Nigerian businesses and freelancers. No sign-up required.",
+            description: "Create professional Naira invoices in seconds. The #1 free invoice generator for Nigerian businesses and freelancers. Download PDF instantly or send via WhatsApp.",
             keywords: ["invoice generator nigeria", "create invoice nigeria", "naira invoice", "free invoice maker"]
         },
         hero: {
@@ -93,7 +93,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Naira Invoice Generator (₦) - Create Invoices Easily",
-            description: "Generate beautiful Naira (₦) invoices online instantly. Free, professional invoice maker tailored for transactions in Nigeria.",
+            description: "Generate beautiful Naira (₦) invoices online instantly. Free, professional invoice maker tailored for Nigerian businesses, freelancers, and SMEs with full VAT support.",
             keywords: ["naira invoice generator", "naira invoice template", "invoice in naira", "nigerian currency invoice"]
         },
         hero: {
@@ -132,7 +132,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Free Invoice Generator Nigeria - No Sign Up Needed",
-            description: "The fastest free invoice generator in Nigeria. Add your logo, calculate VAT, and download unlimited PDFs with zero hidden fees.",
+            description: "The fastest free invoice generator in Nigeria. Add your logo, calculate VAT at 7.5%, and download unlimited PDFs with zero sign-up requirements or hidden fees.",
             keywords: ["free invoice generator nigeria", "free invoice maker", "no sign up invoice maker", "nigeria free billing tool"]
         },
         hero: {
@@ -171,7 +171,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Professional Invoice Template Nigeria | Download Free PDF",
-            description: "Get access to beautiful, customizable invoice templates designed for Nigerian businesses. Fill online and download instantly.",
+            description: "Get access to beautiful, customizable invoice templates designed for Nigerian businesses. Fill them online with automatic VAT calculations and download as professional PDF.",
             keywords: ["invoice template nigeria", "nigerian invoice template", "naira invoice design", "download invoice template"]
         },
         hero: {
@@ -210,7 +210,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Standard Invoice Format Nigeria - Best Practices & Generator",
-            description: "Learn the standard invoice format for Nigerian businesses and generate compliant, professional invoices instantly.",
+            description: "Learn the standard invoice format for Nigerian businesses. FIRS-compliant layouts with TIN, VAT at 7.5%, and sequential numbering. Generate professional invoices instantly.",
             keywords: ["invoice format nigeria", "standard invoice in nigeria", "how to write invoice nigeria"]
         },
         hero: {
@@ -253,7 +253,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Invoice Generator for Nigerian Designers | Professional Billing",
-            description: "The perfect invoice generator for Nigerian UI/UX designers, graphic artists, and creatives. Send beautiful invoices that reflect your design quality.",
+            description: "The perfect invoice generator for Nigerian UI/UX designers, graphic artists, and creatives. Send beautiful, branded invoices that reflect your design quality.",
             keywords: ["invoice generator for designers", "freelance designer invoice nigeria", "graphic design invoice template", "ui ux invoice"]
         },
         hero: {
@@ -292,7 +292,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Invoice Generator for Developers in Nigeria",
-            description: "A fast, automated invoice generator for Nigerian software developers, engineers, and tech agencies. Bill for sprints and hours easily.",
+            description: "A fast, automated invoice generator for Nigerian software developers, engineers, and tech agencies. Bill for sprints, retainers, and hourly contracts with ease.",
             keywords: ["invoice generator for developers", "software engineer invoice nigeria", "freelance developer invoice", "tech agency billing"]
         },
         hero: {
@@ -331,7 +331,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Invoice Generator for Nigerian Photographers",
-            description: "The best invoice generator for events, weddings, and commercial photographers in Nigeria. Itemize your shoots, edits, and travel costs.",
+            description: "The best invoice generator for events, weddings, and commercial photographers in Nigeria. Itemize your shoots, editing sessions, and travel costs in Naira.",
             keywords: ["invoice generator for photographers", "wedding photography invoice nigeria", "freelance photographer billing", "photography invoice template"]
         },
         hero: {
@@ -370,7 +370,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Invoice Generator for Nigerian Agencies",
-            description: "Robust invoice generation for marketing, PR, and creative agencies in Nigeria. Bill massive retainers with absolute professionalism.",
+            description: "Robust invoice generation for marketing, PR, and creative agencies in Nigeria. Bill retainers, project fees, and recurring contracts with complete professionalism.",
             keywords: ["invoice generator for agencies", "marketing agency invoice nigeria", "pr agency billing", "retainer invoice maker"]
         },
         hero: {
@@ -409,7 +409,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Invoice Generator for Nigerian Consultants",
-            description: "Professional invoice maker for business, management, and legal consultants in Nigeria. Secure payments for your expert advice.",
+            description: "Professional invoice maker for business, management, and legal consultants in Nigeria. Create FIRS-compliant invoices and get paid faster for your expert advice.",
             keywords: ["invoice generator for consultants", "consulting invoice template nigeria", "advisory billing tool", "business consultant invoice"]
         },
         hero: {
@@ -452,7 +452,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "AI Invoice Generator Nigeria | Draft Invoices with Text",
-            description: "The first AI-powerd invoice generator for Nigerian businesses. Just type what you want to bill, and our AI builds the perfect invoice instantly.",
+            description: "The first AI-powered invoice generator for Nigerian businesses. Just describe what you want to bill, and our AI builds a professional Naira invoice instantly.",
             keywords: ["ai invoice generator", "smart invoice maker nigeria", "automated invoicing", "draft invoice with ai"]
         },
         hero: {
@@ -491,7 +491,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "WhatsApp Invoice Generator | Send Invoices Directly",
-            description: "Create an invoice and send it directly to your client's WhatsApp. The fastest way to bill and get paid in Nigeria.",
+            description: "Create a professional invoice and send it directly to your client's WhatsApp in seconds. The fastest, most convenient way to bill and get paid in Nigeria.",
             keywords: ["whatsapp invoice generator", "send invoice to whatsapp", "mobile invoice maker", "whatsapp billing tool"]
         },
         hero: {
@@ -530,7 +530,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Send Invoices via WhatsApp in Nigeria | Free Generator",
-            description: "Learn how to instantly send professional PDF invoices to your clients through WhatsApp. Increase your payment speeds significantly.",
+            description: "Learn how to instantly send professional PDF invoices to your Nigerian clients via WhatsApp. Speed up payment collection and improve your business cash flow.",
             keywords: ["send invoice via whatsapp nigeria", "how to send invoice on whatsapp", "whatsapp invoice link", "nigeria fast invoicing"]
         },
         hero: {
@@ -569,7 +569,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Smart AI Invoice Creator | Automated Billing Software",
-            description: "Experience the next generation of billing. Our Smart AI Creator builds, calculates, and formats professional invoices simply from your text prompts.",
+            description: "Experience the next generation of billing in Nigeria. Our Smart AI Creator builds, calculates, and formats professional Naira invoices directly from your text prompts.",
             keywords: ["smart ai invoice creator", "ai billing software", "automated invoice generator", "smart invoice maker"]
         },
         hero: {
@@ -608,7 +608,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Premium Invoice Generator Nigeria | Advanced Features",
-            description: "Upgrade to the best premium invoice generator in Nigeria. Unlock automated reminders, client management, and detailed financial reports.",
+            description: "Upgrade to the best premium invoice generator in Nigeria. Unlock automated payment reminders, advanced client management, detailed reports, and WhatsApp delivery.",
             keywords: ["premium invoice generator nigeria", "best invoice software nigeria", "pro invoice maker", "advanced billing app"]
         },
         hero: {
@@ -651,7 +651,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Freelance Invoice Template NGN | Free Download",
-            description: "Get the perfect NGN (Naira) invoice template for Nigerian freelancers. Easy to fill online, calculates automatically, and free to download.",
+            description: "Get the perfect NGN (Naira) invoice template for Nigerian freelancers. Easy to fill online, automatically calculates VAT and totals, completely free to download.",
             keywords: ["freelance invoice template ngn", "naira freelance invoice", "nigerian freelance billing", "pdf freelance invoice"]
         },
         hero: {
@@ -690,7 +690,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Simple Invoice Template Nigeria | Clean & Minimalist",
-            description: "Download a clean, simple, and clutter-free invoice template suitable for any small transaction in Nigeria. Fast and easy to use.",
+            description: "Download a clean, simple, and clutter-free Naira invoice template suitable for any small business transaction in Nigeria. Fast to fill online and free to download.",
             keywords: ["simple invoice template nigeria", "basic invoice generator", "minimalist invoice", "easy invoice maker"]
         },
         hero: {
@@ -729,7 +729,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Blank Invoice Template NGN | Fill and Print",
-            description: "A blank invoice template in Naira (NGN) ready for you to fill in your data. Instantly generates a structured, professional document.",
+            description: "A blank Naira (NGN) invoice template ready for your business data. Instantly generates a clean, structured, and professional PDF invoice document for free.",
             keywords: ["blank invoice template ngn", "empty invoice nigeria", "fillable invoice template", "create blank invoice"]
         },
         hero: {
@@ -768,7 +768,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Professional Invoice Template Nigeria | Corporate Standard",
-            description: "Generate corporate-approved invoices. The professional invoice template designed specifically to meet Nigerian corporate standards.",
+            description: "Generate corporate-approved invoices in Nigeria. Our professional template meets FIRS standards with dedicated fields for TIN, VAT, and detailed business information.",
             keywords: ["professional invoice template nigeria", "corporate invoice generator", "formal billing template nigeria", "business invoice template"]
         },
         hero: {
@@ -807,7 +807,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Invoice Sample Nigeria PDF | Best Examples & Generator",
-            description: "View samples of standard Nigerian invoices and use our tool to instantly generate your own compliant PDF document.",
+            description: "View samples of FIRS-compliant Nigerian invoices with VAT and TIN fields. Use our free tool to instantly generate and download your own professional PDF invoice.",
             keywords: ["invoice sample nigeria pdf", "nigerian invoice example", "sample invoice generator", "download invoice sample"]
         },
         hero: {
@@ -850,7 +850,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Invoice Generator Africa | Bill Across the Continent",
-            description: "The most robust invoice generator for African businesses. Support for NGN, KES, ZAR, GHS, and global currencies like USD.",
+            description: "Complete invoice generator for African businesses. Supports NGN, KES, ZAR, GHS, USD, and more. Generate professional, compliant invoices from anywhere in Africa.",
             keywords: ["invoice generator africa", "african business invoicing", "multi currency invoice generator", "cross border billing"]
         },
         hero: {
@@ -889,7 +889,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Online Invoice Generator for Small Businesses",
-            description: "Streamline your small business operations. Create, track, and manage invoices easily with our dedicated tools for SMEs.",
+            description: "Streamline Nigerian small business invoicing. Create, track, and manage Naira invoices with automatic VAT calculations, PDF export, and WhatsApp delivery.",
             keywords: ["invoice generator for small business", "sme invoicing tool", "small business billing nigeria", "manage invoices online"]
         },
         hero: {
@@ -928,7 +928,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Online Invoice Generator - 100% Free & No Download",
-            description: "Create invoices directly in your browser. Our online invoice generator is 100% free, requires no app downloads, and no credit cards.",
+            description: "Create professional Naira invoices directly in your browser. Our 100% free online invoice generator needs no app download, no credit card, and no sign-up.",
             keywords: ["online invoice generator free", "create invoice online", "no download invoice maker", "free web invoice generator"]
         },
         hero: {
@@ -967,7 +967,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "Create Invoice Online NGN | Fast Naira Billing",
-            description: "Create professional NGN invoices online in under a minute. The fastest web application for Nigerian businesses to bill clients.",
+            description: "Create professional NGN (Naira) invoices online in under a minute. The fastest web application for Nigerian businesses and freelancers to bill clients and get paid.",
             keywords: ["create invoice online ngn", "make nigeria invoice web", "online naira billing", "web app invoice nigeria"]
         },
         hero: {
@@ -1006,7 +1006,7 @@ export const seoPages: Record<string, SeoPageData> = {
 ],
         meta: {
             title: "The Best Invoice Generator in Nigeria | Rated #1",
-            description: "Discover why thousands rate us as the best invoice generator in Nigeria. Unmatched speed, beautiful templates, AI tools, and full Naira support.",
+            description: "Discover why thousands of Nigerian businesses rate us the best invoice generator. Unmatched speed, professional templates, AI-powered tools, and complete Naira support.",
             keywords: ["best invoice generator nigeria", "top invoicing software nigeria", "nigeria number one billing app", "highly rated invoice maker"]
         },
         hero: {

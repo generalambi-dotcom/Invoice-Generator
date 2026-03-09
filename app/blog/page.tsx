@@ -6,11 +6,14 @@ import { prisma } from '../../lib/db';
 export const revalidate = 60; // Revalidate every minute
 
 export const metadata: Metadata = {
-    title: 'Blog - Invoice Generator',
-    description: 'Insights, updates, and resources to help you manage your business better. Learn about invoicing, tax compliance, and freelancing in Nigeria.',
+    title: { absolute: 'Nigerian Business & Invoicing Blog | InvoiceGenerator.ng' },
+    description: 'Guides, insights, and resources to help Nigerian businesses manage invoicing better. Learn about FIRS compliance, VAT, freelancing, and tax best practices.',
+    alternates: {
+        canonical: '/blog',
+    },
     openGraph: {
-        title: 'Blog - Invoice Generator',
-        description: 'Insights, updates, and resources to help you manage your business better.',
+        title: 'Nigerian Business & Invoicing Blog | InvoiceGenerator.ng',
+        description: 'Guides, insights, and resources to help Nigerian businesses manage invoicing better.',
         type: 'website',
     },
 };
@@ -36,7 +39,7 @@ export default async function BlogPage() {
                         '@type': 'Blog',
                         name: 'Invoice Generator Blog',
                         description: 'Insights, updates, and resources to help you manage your business better.',
-                        url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://invoicenaija.com'}/blog`,
+                        url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.invoicegenerator.ng'}/blog`,
                         blogPost: posts.map((post) => ({
                             '@type': 'BlogPosting',
                             headline: post.title,
@@ -47,7 +50,7 @@ export default async function BlogPage() {
                                 '@type': 'Person',
                                 name: post.author.name,
                             },
-                            url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://invoicenaija.com'}/blog/${post.slug}`,
+                            url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.invoicegenerator.ng'}/blog/${post.slug}`,
                         })),
                     }),
                 }}

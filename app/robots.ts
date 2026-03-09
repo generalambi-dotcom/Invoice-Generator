@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/dashboard', '/api/'],
     },
-    sitemap: 'https://invoicegenerator.ng/sitemap.xml',
+    sitemap: 'https://www.invoicegenerator.ng/sitemap.xml',
   };
 }
 

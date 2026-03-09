@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Script from 'next/script';
 import InvoiceFormPreview from '@/components/InvoiceFormPreview';
 import PricingSection from '@/components/PricingSection';
 import GlobalInvoiceCounter from '@/components/GlobalInvoiceCounter';
@@ -6,13 +7,50 @@ import { Sparkles, MessageCircle } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Invoice Generator - Create Professional Invoices in Seconds',
-  description: ' The #1 free invoice generator for Nigerian businesses. Create, send, and manage professional invoices effortlessly.',
+  title: { absolute: 'Free Invoice Generator Nigeria | InvoiceGenerator.ng' },
+  description: 'The #1 free invoice generator for Nigerian businesses and freelancers. Create professional Naira invoices, calculate VAT, and send via WhatsApp or email.',
+  alternates: {
+    canonical: '/',
+  },
 };
+
+const homepageSchema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'InvoiceGenerator.ng',
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Web',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'NGN' },
+    description: 'Free online invoice generator for Nigerian businesses with Naira support, WhatsApp delivery, and Paystack payments.',
+    featureList: ['Naira invoicing', 'WhatsApp delivery', 'Paystack integration', 'VAT 7.5% calculation', 'FIRS compliance'],
+    url: 'https://www.invoicegenerator.ng',
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'InvoiceGenerator.ng',
+    url: 'https://www.invoicegenerator.ng',
+    logo: 'https://www.invoicegenerator.ng/logo.png',
+    sameAs: ['https://www.invoicegenerator.ng'],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'InvoiceGenerator.ng',
+    url: 'https://www.invoicegenerator.ng',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: { '@type': 'EntryPoint', urlTemplate: 'https://www.invoicegenerator.ng/blog?q={search_term_string}' },
+      'query-input': 'required name=search_term_string',
+    },
+  },
+];
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
+      <Script id="homepage-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageSchema) }} />
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">

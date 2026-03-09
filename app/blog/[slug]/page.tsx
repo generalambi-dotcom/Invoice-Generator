@@ -26,9 +26,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             };
         }
 
+        // Trim excerpt to 150-160 chars for meta description
+        const description = post.excerpt && post.excerpt.length > 160
+            ? post.excerpt.substring(0, 157) + '...'
+            : post.excerpt ?? undefined;
+
         return {
-            title: post.title,
-            description: post.excerpt,
+            title: { absolute: `${post.title} | InvoiceGenerator.ng` },
+            description,
+            alternates: {
+                canonical: `/blog/${post.slug}`,
+            },
             openGraph: {
                 images: post.coverImage ? [post.coverImage] : [],
             },
@@ -98,12 +106,12 @@ export default async function BlogPostPage({ params }: PageProps) {
                             name: 'Invoice Generator',
                             logo: {
                                 '@type': 'ImageObject',
-                                url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://invoicenaija.com'}/logo.png`, // Placeholder or actual logo
+                                url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.invoicegenerator.ng'}/logo.png`, // Placeholder or actual logo
                             },
                         },
                         mainEntityOfPage: {
                             '@type': 'WebPage',
-                            '@id': `${process.env.NEXT_PUBLIC_APP_URL || 'https://invoicenaija.com'}/blog/${post.slug}`,
+                            '@id': `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.invoicegenerator.ng'}/blog/${post.slug}`,
                         },
                     }),
                 }}

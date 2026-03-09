@@ -1,13 +1,59 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
-  title: 'Invoicing Guide - Comprehensive Guide to Invoicing in Nigeria',
-  description: 'Learn everything about invoicing in Nigeria: essential elements, types of invoices, payment terms, VAT compliance, and best practices.',
+  title: { absolute: 'Nigerian Invoicing Guide: VAT, FIRS & Best Practices | InvoiceGenerator.ng' },
+  description: 'The complete guide to invoicing in Nigeria: essential elements, FIRS compliance, VAT at 7.5%, invoice types, payment terms, record-keeping, and best practices for businesses.',
+  alternates: {
+    canonical: '/guide',
+  },
 };
+
+const guideSchema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name: 'How to Create a Professional Invoice in Nigeria',
+    description: 'Step-by-step guide to creating FIRS-compliant invoices for Nigerian businesses.',
+    step: [
+      { '@type': 'HowToStep', name: 'Choose an invoicing tool', text: 'Select dedicated invoicing software like InvoiceGenerator.ng or a word processor.' },
+      { '@type': 'HowToStep', name: 'Add your company details', text: 'Include your business name, address, TIN, VAT number, and logo.' },
+      { '@type': 'HowToStep', name: 'Insert client details', text: 'Record the recipient\'s name, address, and contact information.' },
+      { '@type': 'HowToStep', name: 'Assign a unique invoice number', text: 'Use sequential numbers to satisfy FIRS requirements.' },
+      { '@type': 'HowToStep', name: 'Set invoice and due dates', text: 'Align due dates with your payment terms (Net 7, Net 15, or Net 30).' },
+      { '@type': 'HowToStep', name: 'List goods or services', text: 'Include item names, quantities, unit prices, and line totals.' },
+      { '@type': 'HowToStep', name: 'Calculate totals and VAT', text: 'Apply 7.5% VAT where applicable, show subtotal and final total.' },
+      { '@type': 'HowToStep', name: 'Add payment details', text: 'Provide bank account details, Paystack link, or mobile money number.' },
+      { '@type': 'HowToStep', name: 'Review and send', text: 'Verify all information and send via email, WhatsApp, or download as PDF.' },
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What is the VAT rate in Nigeria?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Nigeria\'s Value Added Tax (VAT) rate is 7.5% for most goods and services, as set by FIRS.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'Do I need a TIN on my invoices in Nigeria?',
+        acceptedAnswer: { '@type': 'Answer', text: 'Yes, VAT-registered businesses must include their Tax Identification Number (TIN) and VAT registration number on invoices.' },
+      },
+      {
+        '@type': 'Question',
+        name: 'How long should I keep invoice records in Nigeria?',
+        acceptedAnswer: { '@type': 'Answer', text: 'FIRS requires VAT-registered businesses to keep invoicing records for at least 10 years to support tax audits and compliance.' },
+      },
+    ],
+  },
+];
 
 export default function InvoicingGuidePage() {
   return (
     <div className="bg-gray-50 py-12">
+      <Script id="guide-schema" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(guideSchema) }} />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-12">

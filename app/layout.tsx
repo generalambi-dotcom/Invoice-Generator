@@ -14,11 +14,11 @@ export const metadata: Metadata = {
   authors: [{ name: 'Invoice Generator Nigeria' }],
   creator: 'Invoice Generator Nigeria',
   publisher: 'Invoice Generator Nigeria',
-  metadataBase: new URL('https://invoicegenerator.ng'),
+  metadataBase: new URL('https://www.invoicegenerator.ng'),
   openGraph: {
     type: 'website',
     locale: 'en_NG',
-    url: 'https://invoicegenerator.ng',
+    url: 'https://www.invoicegenerator.ng',
     siteName: 'Invoice Generator Nigeria',
     title: 'Invoice Generator Nigeria - Free Online Invoice Creator',
     description: 'Generate professional invoices in Nigeria. Free online invoice generator with PDF export. Supports Nigerian Naira (₦), VAT compliance, and FIRS requirements.',

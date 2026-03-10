@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Script from 'next/script';
 import { seoPages } from '@/data/seo-pages';
 import InvoiceFormPreview from '@/components/InvoiceFormPreview';
-import { Sparkles, ArrowRight, CheckCircle2, ChevronRight, Link as LinkIcon } from 'lucide-react';
+import { Sparkles, ArrowRight, CheckCircle2, ChevronRight, Link as LinkIcon, BookOpen } from 'lucide-react';
 
 interface PageProps {
     params: {
@@ -257,7 +257,37 @@ export default function SeoLandingPage({ params }: PageProps) {
                 </div>
             </section>
 
-            {/* 6. Final CTA */}
+            {/* 6. Related Blog Posts */}
+            {pageData.relatedPosts && pageData.relatedPosts.length > 0 && (
+                <section className="py-16 bg-white border-t border-gray-100">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center text-teal-700">
+                                <BookOpen className="w-5 h-5" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-slate-900">From Our Nigerian Invoicing Blog</h2>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                            {pageData.relatedPosts.map((post, i) => (
+                                <Link
+                                    key={i}
+                                    href={post.url}
+                                    className="group flex flex-col p-6 bg-gray-50 rounded-xl border border-gray-200 hover:border-teal-500 hover:shadow-md transition-all"
+                                >
+                                    <span className="font-semibold text-slate-900 group-hover:text-teal-700 transition-colors mb-3 leading-snug">
+                                        {post.text}
+                                    </span>
+                                    <span className="text-teal-600 text-sm font-medium flex items-center gap-1 mt-auto">
+                                        Read article <ArrowRight className="w-4 h-4" />
+                                    </span>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {/* 8. Final CTA */}
             <section className="py-20 bg-teal-800 text-center text-white">
                 <div className="container mx-auto px-4">
                     <h2 className="text-3xl font-bold mb-6">Ready to generate your first document?</h2>
@@ -272,7 +302,7 @@ export default function SeoLandingPage({ params }: PageProps) {
                 </div>
             </section>
 
-            {/* 7. Mobile Sticky CTA (Floating Action Button) */}
+            {/* 9. Mobile Sticky CTA (Floating Action Button) */}
             <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] sm:hidden z-50 animate-fade-in-up">
                 <Link
                     href={`/free-invoice-generator?source=seo&slug=${pageData.slug}`}

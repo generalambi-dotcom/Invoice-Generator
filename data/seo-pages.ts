@@ -11,6 +11,7 @@ export interface SeoPageData {
     slug: string;
     category: SeoCategory;
     relatedLinks: Array<{ text: string; url: string }>;
+    relatedPosts?: Array<{ text: string; url: string }>;
     meta: {
         title: string;
         description: string;
@@ -51,6 +52,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/send-invoice-via-whatsapp-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'FIRS Invoice Requirements Nigeria 2026', url: '/blog/firs-invoice-requirements-nigeria-2026' },
+            { text: 'What Is a Tax Invoice in Nigeria', url: '/blog/what-is-a-tax-invoice-nigeria' },
+            { text: 'How to Register for VAT in Nigeria', url: '/blog/how-to-register-for-vat-nigeria-firs-guide' },
+        ],
         meta: {
             title: "Invoice Generator Nigeria - Free Online Invoice Maker",
             description: "Create professional Naira invoices in seconds. The #1 free invoice generator for Nigerian businesses and freelancers. Download PDF instantly or send via WhatsApp.",
@@ -91,6 +97,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/send-invoice-via-whatsapp-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'VAT Invoice Format Nigeria', url: '/blog/vat-invoice-format-nigeria' },
+            { text: 'Invoice Number Format Nigeria', url: '/blog/invoice-number-format-nigeria' },
+            { text: 'How to Write an Invoice for Services Rendered in Nigeria', url: '/blog/how-to-write-invoice-for-services-rendered-nigeria' },
+        ],
         meta: {
             title: "Naira Invoice Generator (₦) - Create Invoices Easily",
             description: "Generate beautiful Naira (₦) invoices online instantly. Free, professional invoice maker tailored for Nigerian businesses, freelancers, and SMEs with full VAT support.",
@@ -130,6 +141,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/send-invoice-via-whatsapp-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'Best Invoice App for Small Businesses in Nigeria', url: '/blog/best-invoice-app-small-businesses-nigeria' },
+            { text: 'Nigerian Invoice Template for Sole Traders', url: '/blog/invoice-template-sole-trader-nigeria' },
+            { text: 'How to Write an Invoice for Services Rendered in Nigeria', url: '/blog/how-to-write-invoice-for-services-rendered-nigeria' },
+        ],
         meta: {
             title: "Free Invoice Generator Nigeria - No Sign Up Needed",
             description: "The fastest free invoice generator in Nigeria. Add your logo, calculate VAT at 7.5%, and download unlimited PDFs with zero sign-up requirements or hidden fees.",
@@ -169,6 +185,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/send-invoice-via-whatsapp-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'Invoice Templates for Nigerian SMEs', url: '/blog/invoice-templates-nigerian-smes' },
+            { text: 'Nigerian Invoice Template for Sole Traders', url: '/blog/invoice-template-sole-trader-nigeria' },
+            { text: 'Invoice Number Format Nigeria', url: '/blog/invoice-number-format-nigeria' },
+        ],
         meta: {
             title: "Professional Invoice Template Nigeria | Download Free PDF",
             description: "Get access to beautiful, customizable invoice templates designed for Nigerian businesses. Fill them online with automatic VAT calculations and download as professional PDF.",
@@ -208,6 +229,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/send-invoice-via-whatsapp-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'Invoice Number Format Nigeria', url: '/blog/invoice-number-format-nigeria' },
+            { text: 'FIRS Invoice Requirements Nigeria 2026', url: '/blog/firs-invoice-requirements-nigeria-2026' },
+            { text: 'What Is a Tax Invoice in Nigeria', url: '/blog/what-is-a-tax-invoice-nigeria' },
+        ],
         meta: {
             title: "Standard Invoice Format Nigeria - Best Practices & Generator",
             description: "Learn the standard invoice format for Nigerian businesses. FIRS-compliant layouts with TIN, VAT at 7.5%, and sequential numbering. Generate professional invoices instantly.",
@@ -251,6 +277,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/freelance-invoice-template-ngn"
           }
 ],
+        relatedPosts: [
+            { text: 'Graphic Designer Invoice Template Nigeria', url: '/blog/graphic-designer-invoice-template-nigeria' },
+            { text: 'Digital Marketing Invoice Template Nigeria', url: '/blog/digital-marketing-invoice-template-nigeria' },
+            { text: 'How to Invoice as a Freelancer in Nigeria', url: '/blog/invoice-generator-freelancers-nigeria' },
+        ],
         meta: {
             title: "Invoice Generator for Nigerian Designers | Professional Billing",
             description: "The perfect invoice generator for Nigerian UI/UX designers, graphic artists, and creatives. Send beautiful, branded invoices that reflect your design quality.",
@@ -290,6 +321,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/freelance-invoice-template-ngn"
           }
 ],
+        relatedPosts: [
+            { text: 'How to Invoice as a Web Developer in Nigeria', url: '/blog/how-to-invoice-as-a-web-developer-nigeria' },
+            { text: 'How to Create a Recurring Invoice in Nigeria', url: '/blog/how-to-create-a-recurring-invoice-nigeria' },
+            { text: 'How to Add a Payment Link to an Invoice in Nigeria', url: '/blog/how-to-add-payment-link-to-invoice-nigeria' },
+        ],
         meta: {
             title: "Invoice Generator for Developers in Nigeria",
             description: "A fast, automated invoice generator for Nigerian software developers, engineers, and tech agencies. Bill for sprints, retainers, and hourly contracts with ease.",
@@ -329,6 +365,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/freelance-invoice-template-ngn"
           }
 ],
+        relatedPosts: [
+            { text: 'How to Invoice as a Photographer in Nigeria', url: '/blog/how-to-invoice-as-a-photographer-nigeria' },
+            { text: 'Graphic Designer Invoice Template Nigeria', url: '/blog/graphic-designer-invoice-template-nigeria' },
+            { text: 'Late Payment Penalty Nigeria', url: '/blog/late-payment-penalty-nigeria-interest-on-overdue-invoices' },
+        ],
         meta: {
             title: "Invoice Generator for Nigerian Photographers",
             description: "The best invoice generator for events, weddings, and commercial photographers in Nigeria. Itemize your shoots, editing sessions, and travel costs in Naira.",
@@ -368,6 +409,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/freelance-invoice-template-ngn"
           }
 ],
+        relatedPosts: [
+            { text: 'Digital Marketing Invoice Template Nigeria', url: '/blog/digital-marketing-invoice-template-nigeria' },
+            { text: 'How to Invoice as a Consultant in Nigeria', url: '/blog/how-to-invoice-as-a-consultant-nigeria' },
+            { text: 'How to Create a Recurring Invoice in Nigeria', url: '/blog/how-to-create-a-recurring-invoice-nigeria' },
+        ],
         meta: {
             title: "Invoice Generator for Nigerian Agencies",
             description: "Robust invoice generation for marketing, PR, and creative agencies in Nigeria. Bill retainers, project fees, and recurring contracts with complete professionalism.",
@@ -407,6 +453,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/freelance-invoice-template-ngn"
           }
 ],
+        relatedPosts: [
+            { text: 'How to Invoice as a Consultant in Nigeria', url: '/blog/how-to-invoice-as-a-consultant-nigeria' },
+            { text: 'Invoice Payment Terms Nigeria', url: '/blog/invoice-payment-terms-nigeria' },
+            { text: 'How to Get Paid Faster in Nigeria', url: '/blog/how-to-get-paid-faster-nigeria' },
+        ],
         meta: {
             title: "Invoice Generator for Nigerian Consultants",
             description: "Professional invoice maker for business, management, and legal consultants in Nigeria. Create FIRS-compliant invoices and get paid faster for your expert advice.",
@@ -450,6 +501,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/premium-invoice-generator-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'Best Invoice App for Small Businesses in Nigeria', url: '/blog/best-invoice-app-small-businesses-nigeria' },
+            { text: 'How to Add a Payment Link to an Invoice in Nigeria', url: '/blog/how-to-add-payment-link-to-invoice-nigeria' },
+            { text: 'Paystack Invoice Nigeria', url: '/blog/paystack-invoice-nigeria' },
+        ],
         meta: {
             title: "AI Invoice Generator Nigeria | Draft Invoices with Text",
             description: "The first AI-powered invoice generator for Nigerian businesses. Just describe what you want to bill, and our AI builds a professional Naira invoice instantly.",
@@ -489,6 +545,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/premium-invoice-generator-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'How to Send an Invoice via WhatsApp in Nigeria', url: '/blog/how-to-send-invoice-via-whatsapp-nigeria' },
+            { text: 'How to Add a Payment Link to an Invoice in Nigeria', url: '/blog/how-to-add-payment-link-to-invoice-nigeria' },
+            { text: 'Paystack Invoice Nigeria', url: '/blog/paystack-invoice-nigeria' },
+        ],
         meta: {
             title: "WhatsApp Invoice Generator | Send Invoices Directly",
             description: "Create a professional invoice and send it directly to your client's WhatsApp in seconds. The fastest, most convenient way to bill and get paid in Nigeria.",
@@ -528,6 +589,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/premium-invoice-generator-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'How to Send an Invoice via WhatsApp in Nigeria', url: '/blog/how-to-send-invoice-via-whatsapp-nigeria' },
+            { text: 'Paystack Invoice Nigeria', url: '/blog/paystack-invoice-nigeria' },
+            { text: 'How to Write an Invoice for Services Rendered in Nigeria', url: '/blog/how-to-write-invoice-for-services-rendered-nigeria' },
+        ],
         meta: {
             title: "Send Invoices via WhatsApp in Nigeria | Free Generator",
             description: "Learn how to instantly send professional PDF invoices to your Nigerian clients via WhatsApp. Speed up payment collection and improve your business cash flow.",
@@ -567,6 +633,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/premium-invoice-generator-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'Best Invoice App for Small Businesses in Nigeria', url: '/blog/best-invoice-app-small-businesses-nigeria' },
+            { text: 'How to Create a Recurring Invoice in Nigeria', url: '/blog/how-to-create-a-recurring-invoice-nigeria' },
+            { text: 'How to Invoice as a Consultant in Nigeria', url: '/blog/how-to-invoice-as-a-consultant-nigeria' },
+        ],
         meta: {
             title: "Smart AI Invoice Creator | Automated Billing Software",
             description: "Experience the next generation of billing in Nigeria. Our Smart AI Creator builds, calculates, and formats professional Naira invoices directly from your text prompts.",
@@ -606,6 +677,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/premium-invoice-generator-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'What Is a Tax Invoice in Nigeria', url: '/blog/what-is-a-tax-invoice-nigeria' },
+            { text: 'FIRS Invoice Requirements Nigeria 2026', url: '/blog/firs-invoice-requirements-nigeria-2026' },
+            { text: 'VAT Invoice Format Nigeria', url: '/blog/vat-invoice-format-nigeria' },
+        ],
         meta: {
             title: "Premium Invoice Generator Nigeria | Advanced Features",
             description: "Upgrade to the best premium invoice generator in Nigeria. Unlock automated payment reminders, advanced client management, detailed reports, and WhatsApp delivery.",
@@ -649,6 +725,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/invoice-generator-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'How to Invoice as a Freelancer in Nigeria', url: '/blog/invoice-generator-freelancers-nigeria' },
+            { text: 'Graphic Designer Invoice Template Nigeria', url: '/blog/graphic-designer-invoice-template-nigeria' },
+            { text: 'Late Payment Penalty Nigeria', url: '/blog/late-payment-penalty-nigeria-interest-on-overdue-invoices' },
+        ],
         meta: {
             title: "Freelance Invoice Template NGN | Free Download",
             description: "Get the perfect NGN (Naira) invoice template for Nigerian freelancers. Easy to fill online, automatically calculates VAT and totals, completely free to download.",
@@ -688,6 +769,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/invoice-generator-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'Nigerian Invoice Template for Sole Traders', url: '/blog/invoice-template-sole-trader-nigeria' },
+            { text: 'How to Write an Invoice for Services Rendered in Nigeria', url: '/blog/how-to-write-invoice-for-services-rendered-nigeria' },
+            { text: 'Invoice Number Format Nigeria', url: '/blog/invoice-number-format-nigeria' },
+        ],
         meta: {
             title: "Simple Invoice Template Nigeria | Clean & Minimalist",
             description: "Download a clean, simple, and clutter-free Naira invoice template suitable for any small business transaction in Nigeria. Fast to fill online and free to download.",
@@ -727,6 +813,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/invoice-generator-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'Nigerian Invoice Template for Sole Traders', url: '/blog/invoice-template-sole-trader-nigeria' },
+            { text: 'How to Write an Invoice for Services Rendered in Nigeria', url: '/blog/how-to-write-invoice-for-services-rendered-nigeria' },
+            { text: 'How to Write a Receipt in Nigeria', url: '/blog/how-to-write-a-receipt-nigeria' },
+        ],
         meta: {
             title: "Blank Invoice Template NGN | Fill and Print",
             description: "A blank Naira (NGN) invoice template ready for your business data. Instantly generates a clean, structured, and professional PDF invoice document for free.",
@@ -766,6 +857,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/invoice-generator-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'What Is a Tax Invoice in Nigeria', url: '/blog/what-is-a-tax-invoice-nigeria' },
+            { text: 'FIRS Invoice Requirements Nigeria 2026', url: '/blog/firs-invoice-requirements-nigeria-2026' },
+            { text: 'Invoice Number Format Nigeria', url: '/blog/invoice-number-format-nigeria' },
+        ],
         meta: {
             title: "Professional Invoice Template Nigeria | Corporate Standard",
             description: "Generate corporate-approved invoices in Nigeria. Our professional template meets FIRS standards with dedicated fields for TIN, VAT, and detailed business information.",
@@ -805,6 +901,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/invoice-generator-nigeria"
           }
 ],
+        relatedPosts: [
+            { text: 'How to Write an Invoice for Services Rendered in Nigeria', url: '/blog/how-to-write-invoice-for-services-rendered-nigeria' },
+            { text: 'Nigerian Invoice Template for Sole Traders', url: '/blog/invoice-template-sole-trader-nigeria' },
+            { text: 'What Is a Tax Invoice in Nigeria', url: '/blog/what-is-a-tax-invoice-nigeria' },
+        ],
         meta: {
             title: "Invoice Sample Nigeria PDF | Best Examples & Generator",
             description: "View samples of FIRS-compliant Nigerian invoices with VAT and TIN fields. Use our free tool to instantly generate and download your own professional PDF invoice.",
@@ -848,6 +949,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/smart-ai-invoice-creator"
           }
 ],
+        relatedPosts: [
+            { text: 'How to Invoice International Clients from Nigeria', url: '/blog/how-to-invoice-international-clients-nigeria' },
+            { text: 'Business Invoice vs Commercial Invoice Nigeria', url: '/blog/business-invoice-vs-commercial-invoice-nigeria' },
+            { text: 'FIRS Invoice Requirements Nigeria 2026', url: '/blog/firs-invoice-requirements-nigeria-2026' },
+        ],
         meta: {
             title: "Invoice Generator Africa | Bill Across the Continent",
             description: "Complete invoice generator for African businesses. Supports NGN, KES, ZAR, GHS, USD, and more. Generate professional, compliant invoices from anywhere in Africa.",
@@ -887,6 +993,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/smart-ai-invoice-creator"
           }
 ],
+        relatedPosts: [
+            { text: 'Invoice Templates for Nigerian SMEs', url: '/blog/invoice-templates-nigerian-smes' },
+            { text: 'Best Invoice App for Small Businesses in Nigeria', url: '/blog/best-invoice-app-small-businesses-nigeria' },
+            { text: 'Nigerian Invoice Template for Sole Traders', url: '/blog/invoice-template-sole-trader-nigeria' },
+        ],
         meta: {
             title: "Online Invoice Generator for Small Businesses",
             description: "Streamline Nigerian small business invoicing. Create, track, and manage Naira invoices with automatic VAT calculations, PDF export, and WhatsApp delivery.",
@@ -926,6 +1037,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/smart-ai-invoice-creator"
           }
 ],
+        relatedPosts: [
+            { text: 'Best Invoice App for Small Businesses in Nigeria', url: '/blog/best-invoice-app-small-businesses-nigeria' },
+            { text: 'How to Write an Invoice for Services Rendered in Nigeria', url: '/blog/how-to-write-invoice-for-services-rendered-nigeria' },
+            { text: 'How to Add a Payment Link to an Invoice in Nigeria', url: '/blog/how-to-add-payment-link-to-invoice-nigeria' },
+        ],
         meta: {
             title: "Online Invoice Generator - 100% Free & No Download",
             description: "Create professional Naira invoices directly in your browser. Our 100% free online invoice generator needs no app download, no credit card, and no sign-up.",
@@ -965,6 +1081,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/smart-ai-invoice-creator"
           }
 ],
+        relatedPosts: [
+            { text: 'How to Write an Invoice for Services Rendered in Nigeria', url: '/blog/how-to-write-invoice-for-services-rendered-nigeria' },
+            { text: 'How to Add a Payment Link to an Invoice in Nigeria', url: '/blog/how-to-add-payment-link-to-invoice-nigeria' },
+            { text: 'How to Create a Recurring Invoice in Nigeria', url: '/blog/how-to-create-a-recurring-invoice-nigeria' },
+        ],
         meta: {
             title: "Create Invoice Online NGN | Fast Naira Billing",
             description: "Create professional NGN (Naira) invoices online in under a minute. The fastest web application for Nigerian businesses and freelancers to bill clients and get paid.",
@@ -1004,6 +1125,11 @@ export const seoPages: Record<string, SeoPageData> = {
                     "url": "/smart-ai-invoice-creator"
           }
 ],
+        relatedPosts: [
+            { text: 'Best Invoice App for Small Businesses in Nigeria', url: '/blog/best-invoice-app-small-businesses-nigeria' },
+            { text: 'What Is a Tax Invoice in Nigeria', url: '/blog/what-is-a-tax-invoice-nigeria' },
+            { text: 'FIRS Invoice Requirements Nigeria 2026', url: '/blog/firs-invoice-requirements-nigeria-2026' },
+        ],
         meta: {
             title: "The Best Invoice Generator in Nigeria | Rated #1",
             description: "Discover why thousands of Nigerian businesses rate us the best invoice generator. Unmatched speed, professional templates, AI-powered tools, and complete Naira support.",

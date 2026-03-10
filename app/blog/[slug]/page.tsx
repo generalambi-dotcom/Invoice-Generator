@@ -91,27 +91,30 @@ export default async function BlogPostPage({ params }: PageProps) {
                 dangerouslySetInnerHTML={{
                     __html: JSON.stringify({
                         '@context': 'https://schema.org',
-                        '@type': 'BlogPosting',
+                        '@type': 'Article',
                         headline: post.title,
                         description: post.excerpt,
                         image: post.coverImage ? [post.coverImage] : undefined,
                         datePublished: post.createdAt.toISOString(),
-                        dateModified: post.createdAt.toISOString(), // Assuming modified is same for now, or add updatedAt if available
+                        dateModified: post.updatedAt.toISOString(),
+                        url: `https://www.invoicegenerator.ng/blog/${post.slug}`,
                         author: {
-                            '@type': 'Person',
-                            name: post.author.name,
+                            '@type': 'Organization',
+                            name: 'InvoiceGenerator.ng',
+                            url: 'https://www.invoicegenerator.ng',
                         },
                         publisher: {
                             '@type': 'Organization',
-                            name: 'Invoice Generator',
+                            name: 'InvoiceGenerator.ng',
+                            url: 'https://www.invoicegenerator.ng',
                             logo: {
                                 '@type': 'ImageObject',
-                                url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.invoicegenerator.ng'}/logo.png`, // Placeholder or actual logo
+                                url: 'https://www.invoicegenerator.ng/logo.png',
                             },
                         },
                         mainEntityOfPage: {
                             '@type': 'WebPage',
-                            '@id': `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.invoicegenerator.ng'}/blog/${post.slug}`,
+                            '@id': `https://www.invoicegenerator.ng/blog/${post.slug}`,
                         },
                     }),
                 }}

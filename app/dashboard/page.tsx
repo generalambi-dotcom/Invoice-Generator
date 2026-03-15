@@ -573,7 +573,7 @@ export default function DashboardPage() {
               {!showDeleted && (
                 <>
                   <Link
-                    href="/"
+                    href="/free-invoice-generator"
                     id="new-invoice-btn"
                     className="flex-1 md:flex-none justify-center px-3 py-2 md:px-4 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-2 text-xs md:text-sm font-medium shadow-emerald-200 shadow-lg whitespace-nowrap"
                   >
@@ -609,7 +609,7 @@ export default function DashboardPage() {
             </p>
             {!showDeleted && (
               <Link
-                href="/"
+                href="/free-invoice-generator"
                 className="inline-flex px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-medium shadow-lg shadow-emerald-200 items-center gap-2"
               >
                 <Plus className="w-5 h-5" />

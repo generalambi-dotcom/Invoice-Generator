@@ -62,6 +62,7 @@ export default function BrevoSettingsPage() {
             if (res.ok) {
                 const data = await res.json();
                 setStatus(data.status);
+                setApiKey(data.apiKey || '');
                 setListId(data.listId || '');
                 setPopupEnabled(data.popupEnabled);
                 // Populate popup customization

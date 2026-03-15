@@ -75,8 +75,10 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Brevo API Key is required' }, { status: 400 });
         }
 
+        const isMaskedKey = apiKey.includes('••••••••');
+
         // Validate API key format (Brevo keys start with "xkeysib-")
-        if (!apiKey.startsWith('xkeysib-')) {
+        if (!isMaskedKey && !apiKey.startsWith('xkeysib-')) {
             return NextResponse.json(
                 { error: 'Invalid API Key format. Brevo API keys start with "xkeysib-"' },
                 { status: 400 }
@@ -85,10 +87,14 @@ export async function POST(request: NextRequest) {
 
         // Build settings to save
         const settingsToSave: Array<{ key: string; value: string; description?: string }> = [
-            { key: 'BREVO_API_KEY', value: apiKey.trim(), description: 'Brevo API Key' },
             { key: 'BREVO_LIST_ID', value: (listId || '').toString().trim(), description: 'Brevo Contact List ID' },
             { key: 'BREVO_POPUP_ENABLED', value: popupEnabled !== false ? 'true' : 'false', description: 'Newsletter popup enabled' },
         ];
+
+        // Only save the API key if it wasn't masked
+        if (!isMaskedKey) {
+            settingsToSave.push({ key: 'BREVO_API_KEY', value: apiKey.trim(), description: 'Brevo API Key' });
+        }
 
         // Save popup customization settings if provided
         if (popup && typeof popup === 'object') {

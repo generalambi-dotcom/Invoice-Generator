@@ -45,7 +45,7 @@ export default function ClientLayout({
             >
                 <div className={`
           flex-grow p-4 sm:p-6 lg:p-8 
-          ${showSidebar ? 'mt-16 lg:mt-0' : ''}
+          ${showSidebar ? 'mt-16 lg:mt-0' : 'pt-24 sm:pt-28'}
           ${isAuthPage ? '!p-0' : ''}
         `}>
                     {children}

@@ -1763,7 +1763,7 @@ function InvoiceFormContent() {
                 </div>
 
                 {/* Invoice Paper */}
-                <div className="bg-white rounded-lg shadow-xl ring-1 ring-black/5 p-4 sm:p-10 min-h-[600px] relative transition-all duration-300">
+                <div className="bg-white rounded-lg shadow-xl ring-1 ring-black/5 p-2 sm:p-10 min-h-[600px] relative transition-all duration-300">
                   {/* Ribbon/Accent Top (Optional - adds nice touch based on theme) */}
                   <div className="absolute top-0 left-0 w-full h-2 bg-theme-primary rounded-t-lg opacity-80"></div>
 

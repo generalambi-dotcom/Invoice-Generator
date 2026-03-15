@@ -834,6 +834,17 @@ function InvoiceFormContent() {
 
   // WhatsApp Share
   const handleWhatsAppShare = async () => {
+    const companyName = invoice.company?.name || 'us';
+
+    // For guest users, share invoice details as text (no save needed)
+    if (!user) {
+      const currSymbol = currencySymbols[invoice.currency || 'NGN'];
+      const totalFormatted = `${currSymbol}${formatCurrency(invoice.total || 0, invoice.currency || 'NGN')}`;
+      const text = `Invoice ${invoice.invoiceNumber || 'N/A'} from ${companyName}\nTotal: ${totalFormatted}\nDate: ${invoice.invoiceDate || 'N/A'}\nDue: ${invoice.dueDate || 'N/A'}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+      return;
+    }
+
     // If invoice isn't saved yet, save it first
     let currentInvoiceId = invoice.id;
     if (!currentInvoiceId) {
@@ -880,7 +891,6 @@ function InvoiceFormContent() {
     if (!currentInvoiceId) return;
 
     const url = `${window.location.origin}/invoice/${currentInvoiceId}`;
-    const companyName = invoice.company?.name || 'us';
     const text = `Here is your invoice ${invoice.invoiceNumber} from ${companyName}: ${url}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };

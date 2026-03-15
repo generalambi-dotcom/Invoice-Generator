@@ -533,9 +533,14 @@ function InvoiceFormContent() {
 
   // Save invoice to database (without generating PDF)
   const handleSaveInvoice = async () => {
-    // Basic validation
-    if (!invoice.invoiceNumber || !invoice.company?.name || !invoice.client?.name) {
-      toast.error('Please fill in required fields: Invoice Number, Company Name, and Client Name');
+    // Dynamic validation
+    const missingFields: string[] = [];
+    if (!invoice.invoiceNumber) missingFields.push('Invoice Number');
+    if (!invoice.company?.name) missingFields.push('Company Name');
+    if (!invoice.client?.name) missingFields.push('Client Name');
+
+    if (missingFields.length > 0) {
+      toast.error(`Please fill in required fields: ${missingFields.join(', ')}`);
       return;
     }
 
@@ -693,8 +698,20 @@ function InvoiceFormContent() {
 
   // Generate and download PDF
   const handleDownloadPDF = async () => {
-    if (!invoice.invoiceNumber || !invoice.company?.name || !invoice.client?.name) {
-      toast.error('Please fill in required fields: Invoice Number, Company Name, and Client Name');
+    // Auto-generate invoice number if missing on download
+    let currentInvoiceNumber = invoice.invoiceNumber;
+    if (!currentInvoiceNumber) {
+      currentInvoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
+      setInvoice((prev) => ({ ...prev, invoiceNumber: currentInvoiceNumber }));
+    }
+
+    // Dynamic validation for company and client
+    const missingFields: string[] = [];
+    if (!invoice.company?.name) missingFields.push('Company Name');
+    if (!invoice.client?.name) missingFields.push('Client Name');
+
+    if (missingFields.length > 0) {
+      toast.error(`Please fill in required fields: ${missingFields.join(', ')}`);
       return;
     }
 
@@ -702,7 +719,7 @@ function InvoiceFormContent() {
     try {
       const completeInvoice: Invoice = {
         id: invoice.id || Date.now().toString(),
-        invoiceNumber: invoice.invoiceNumber!,
+        invoiceNumber: currentInvoiceNumber!,
         invoiceDate: invoice.invoiceDate!,
         dueDate: invoice.dueDate!,
         purchaseOrder: invoice.purchaseOrder,
@@ -741,61 +758,71 @@ function InvoiceFormContent() {
 
       toast.success('Invoice downloaded successfully!');
       if (!user) {
+        // Track guest invoice download in Google Analytics
+        if (typeof window !== 'undefined' && 'gtag' in window) {
+          (window as any).gtag('event', 'generate_invoice', {
+            event_category: 'engagement',
+            event_label: 'guest_invoice_download',
+          });
+        }
+        
         setShowGuestPostDownloadModal(true);
         setGuestEmailStep(1);
       }
 
-      // Save invoice to database
-      try {
-        setSavingInvoice(true);
-        const payload = { ...completeInvoice };
-        if (!invoice.id) {
-          delete (payload as any).id;
+      // Skip saving for guests to prevent "Failed to save" error
+      if (user) {
+        try {
+          setSavingInvoice(true);
+          const payload = { ...completeInvoice };
+          if (!invoice.id) {
+            delete (payload as any).id;
+          }
+          const result = await saveInvoiceAPI(payload);
+          // Update invoice with database ID
+          if (result.invoice) {
+            setInvoice(prev => ({ ...prev, id: result.invoice.id }));
+          }
+          // Reload history
+          const invoices = await loadInvoicesAPI();
+          // Convert database format to Invoice format
+          const formattedInvoices = invoices.map((inv: any) => ({
+            id: inv.id,
+            invoiceNumber: inv.invoiceNumber,
+            invoiceDate: inv.invoiceDate,
+            dueDate: inv.dueDate,
+            purchaseOrder: inv.purchaseOrder,
+            company: inv.companyInfo,
+            client: inv.clientInfo,
+            shipTo: inv.shipToInfo,
+            lineItems: inv.lineItems,
+            subtotal: inv.subtotal,
+            taxRate: inv.taxRate,
+            taxAmount: inv.taxAmount,
+            discountRate: inv.discountRate,
+            discountAmount: inv.discountAmount,
+            shipping: inv.shipping,
+            total: inv.total,
+            currency: inv.currency,
+            theme: inv.theme,
+            notes: inv.notes,
+            bankDetails: inv.bankDetails,
+            terms: inv.terms,
+            paymentStatus: inv.paymentStatus,
+            paymentLink: inv.paymentLink,
+            paymentProvider: inv.paymentProvider,
+            paidAmount: inv.paidAmount,
+            paymentDate: inv.paymentDate,
+            createdAt: inv.createdAt,
+            updatedAt: inv.updatedAt,
+          }));
+          setInvoiceHistory(formattedInvoices);
+        } catch (error: any) {
+          console.error('Error saving invoice:', error);
+          toast.error('Failed to save invoice. Please try again.');
+        } finally {
+          setSavingInvoice(false);
         }
-        const result = await saveInvoiceAPI(payload);
-        // Update invoice with database ID
-        if (result.invoice) {
-          setInvoice(prev => ({ ...prev, id: result.invoice.id }));
-        }
-        // Reload history
-        const invoices = await loadInvoicesAPI();
-        // Convert database format to Invoice format
-        const formattedInvoices = invoices.map((inv: any) => ({
-          id: inv.id,
-          invoiceNumber: inv.invoiceNumber,
-          invoiceDate: inv.invoiceDate,
-          dueDate: inv.dueDate,
-          purchaseOrder: inv.purchaseOrder,
-          company: inv.companyInfo,
-          client: inv.clientInfo,
-          shipTo: inv.shipToInfo,
-          lineItems: inv.lineItems,
-          subtotal: inv.subtotal,
-          taxRate: inv.taxRate,
-          taxAmount: inv.taxAmount,
-          discountRate: inv.discountRate,
-          discountAmount: inv.discountAmount,
-          shipping: inv.shipping,
-          total: inv.total,
-          currency: inv.currency,
-          theme: inv.theme,
-          notes: inv.notes,
-          bankDetails: inv.bankDetails,
-          terms: inv.terms,
-          paymentStatus: inv.paymentStatus,
-          paymentLink: inv.paymentLink,
-          paymentProvider: inv.paymentProvider,
-          paidAmount: inv.paidAmount,
-          paymentDate: inv.paymentDate,
-          createdAt: inv.createdAt,
-          updatedAt: inv.updatedAt,
-        }));
-        setInvoiceHistory(formattedInvoices);
-      } catch (error: any) {
-        console.error('Error saving invoice:', error);
-        toast.error('Failed to save invoice. Please try again.');
-      } finally {
-        setSavingInvoice(false);
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -1184,7 +1211,7 @@ function InvoiceFormContent() {
   return (
     <>
       <div className="bg-white py-4 sm:py-8">
-        <div className="max-w-[100rem] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[100rem] mx-auto px-0 sm:px-6 lg:px-8">
           {/* Page Header */}
           <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -1736,7 +1763,7 @@ function InvoiceFormContent() {
                 </div>
 
                 {/* Invoice Paper */}
-                <div className="bg-white rounded-lg shadow-xl ring-1 ring-black/5 p-8 sm:p-10 min-h-[600px] relative transition-all duration-300">
+                <div className="bg-white rounded-lg shadow-xl ring-1 ring-black/5 p-4 sm:p-10 min-h-[600px] relative transition-all duration-300">
                   {/* Ribbon/Accent Top (Optional - adds nice touch based on theme) */}
                   <div className="absolute top-0 left-0 w-full h-2 bg-theme-primary rounded-t-lg opacity-80"></div>
 
@@ -2787,7 +2814,7 @@ function InvoiceFormContent() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">Want a copy in your inbox?</h3>
                 <p className="text-sm text-gray-500 mb-6 text-center">
-                  Enter your email below and we'll send you a copy of your newly created invoice for safekeeping.
+                  Your invoice has been downloaded, but <strong>not saved</strong>. Enter your email to get a copy, or <Link href="/signup" className="text-blue-600 hover:text-blue-800 font-medium">create an account</Link> to save, track, and manage all your invoices in one place!
                 </p>
 
                 <form onSubmit={async (e) => {

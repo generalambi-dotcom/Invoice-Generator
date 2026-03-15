@@ -2161,7 +2161,7 @@ function InvoiceFormContent() {
 
                   {/* Payment History Section (Outside the paper) */}
                   {
-                    invoice.id && (
+                    !!invoice.id && (
                       <div className="mt-6">
                         <div className="flex items-center justify-between mb-3 px-2">
                           <h3 className="text-sm font-semibold text-gray-700">Payment History</h3>
@@ -2225,7 +2225,7 @@ function InvoiceFormContent() {
                             )}
 
                             {/* Record Payment Button */}
-                            {invoice.paymentStatus !== 'paid' && invoice.id && invoice.total && (
+                            {invoice.paymentStatus !== 'paid' && !!invoice.id && !!invoice.total && (
                               <button
                                 onClick={async () => {
                                   const total = invoice.total || 0;
@@ -2271,7 +2271,7 @@ function InvoiceFormContent() {
                   }
 
                   {/* Activity Timeline */}
-                  {invoice.id && (emailActivity.length > 0 || invoice.sentAt || invoice.viewedAt || (invoice.remindersSent && Object.keys(invoice.remindersSent).length > 0)) && (
+                  {!!invoice.id && (emailActivity.length > 0 || invoice.sentAt || invoice.viewedAt || (invoice.remindersSent && Object.keys(invoice.remindersSent).length > 0)) && (
                     <div className="mt-6">
                       <div className="flex items-center gap-2 mb-3 px-2">
                         <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -86,9 +86,13 @@ export async function sendInvoiceEmail({
       previewText: `Invoice ${invoice.invoiceNumber} from InvoiceNaija`,
     });
 
+    // Prep From Email
+    const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+    const fromName = 'Invoice Generator';
+
     // Prepare email data
     const emailData: any = {
-      from: 'Invoice Generator <onboarding@resend.dev>', // Use Resend's test domain, update to your verified domain for production
+      from: `${fromName} <${fromEmail}>`,
       to,
       subject: `Invoice ${invoice.invoiceNumber || 'N/A'}`,
       html: emailHtml,
@@ -169,8 +173,10 @@ export async function sendPasswordResetEmail({
     const emailHtml = await getPasswordResetEmailHtml(resetUrl, name);
     const emailText = getPasswordResetEmailText(resetUrl, name);
 
+    const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+
     const emailData = {
-      from: 'Invoice Generator <onboarding@resend.dev>',
+      from: `Invoice Generator <${fromEmail}>`,
       to,
       subject: 'Reset Your Password - Invoice Generator Nigeria',
       html: emailHtml,
@@ -225,8 +231,10 @@ export async function sendVerificationEmail({
     const emailHtml = await getVerificationEmailHtml(verificationUrl, name);
     const emailText = getVerificationEmailText(verificationUrl, name);
 
+    const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+
     const emailData = {
-      from: 'Invoice Generator <onboarding@resend.dev>',
+      from: `Invoice Generator <${fromEmail}>`,
       to,
       subject: 'Verify Your Email Address - Invoice Generator Nigeria',
       html: emailHtml,

@@ -4,6 +4,7 @@ import { generateToken } from '@/lib/auth-jwt';
 import { createRefreshToken } from '@/lib/refresh-token';
 import { getSystemSetting } from '@/lib/settings';
 import { sendSequenceEmail } from '@/lib/email';
+import { syncContactToBrevo } from '@/lib/brevo';
 import bcrypt from 'bcryptjs';
 
 // POST - Verify Google token and login/register user
@@ -76,6 +77,9 @@ export async function POST(request: NextRequest) {
                     emailVerified: true
                 }
             });
+
+            // Sync new Google user to Brevo active customer list (fire-and-forget)
+            syncContactToBrevo(user.email, user.name, 'free').catch(console.error);
 
             const newUser = user;
             // Trigger Welcome Sequence Step 1 for new google users

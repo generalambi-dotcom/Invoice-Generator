@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import Stripe from 'stripe';
+import { syncContactToBrevo } from '@/lib/brevo';
 
 // POST - Handle Stripe webhook
 export async function POST(request: NextRequest) {
@@ -59,6 +60,12 @@ export async function POST(request: NextRequest) {
         });
 
         console.log(`✅ Subscription activated for user ${userId} via Stripe: ${session.id}`);
+
+        // Update Brevo contact to premium (fire-and-forget)
+        const updatedUser = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } });
+        if (updatedUser) {
+          syncContactToBrevo(updatedUser.email, updatedUser.name, 'premium').catch(console.error);
+        }
 
         // Note: Payment model requires invoiceId, but subscriptions don't have invoices
         // The subscription status is already updated above, which is the important part

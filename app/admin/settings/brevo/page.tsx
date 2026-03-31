@@ -32,7 +32,9 @@ export default function BrevoSettingsPage() {
 
     const [apiKey, setApiKey] = useState('');
     const [listId, setListId] = useState('');
+    const [customerListId, setCustomerListId] = useState('2');
     const [popupEnabled, setPopupEnabled] = useState(true);
+    const [syncing, setSyncing] = useState(false);
 
     // Popup customization
     const [popupHeading, setPopupHeading] = useState('Stay in the Loop!');
@@ -64,6 +66,7 @@ export default function BrevoSettingsPage() {
                 setStatus(data.status);
                 setApiKey(data.apiKey || '');
                 setListId(data.listId || '');
+                setCustomerListId(data.customerListId || '2');
                 setPopupEnabled(data.popupEnabled);
                 // Populate popup customization
                 if (data.popup) {
@@ -98,6 +101,7 @@ export default function BrevoSettingsPage() {
                 body: JSON.stringify({
                     apiKey: apiKey.trim(),
                     listId: listId.trim(),
+                    customerListId: customerListId.trim(),
                     popupEnabled,
                     popup: {
                         heading: popupHeading,
@@ -125,6 +129,31 @@ export default function BrevoSettingsPage() {
             toast.error('An error occurred');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleSyncAll = async () => {
+        if (!confirm('This will sync all registered users to the Customer List ID in Brevo. Continue?')) {
+            return;
+        }
+        setSyncing(true);
+        try {
+            const res = await fetch('/api/admin/brevo-sync', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                toast.success(`Successfully queued ${data.synced} users for sync!`);
+            } else {
+                toast.error(data.error || 'Failed to trigger sync');
+            }
+        } catch (error) {
+            console.error('Error triggering sync:', error);
+            toast.error('An error occurred while syncing');
+        } finally {
+            setSyncing(false);
         }
     };
 
@@ -254,19 +283,34 @@ export default function BrevoSettingsPage() {
                             <p className="text-xs text-gray-400 mt-1">Starts with <code className="bg-gray-100 px-1 rounded">xkeysib-</code></p>
                         </div>
 
-                        {/* List ID */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Contact List ID <span className="text-gray-400">(optional)</span>
-                            </label>
-                            <input
-                                type="text"
-                                value={listId}
-                                onChange={(e) => setListId(e.target.value)}
-                                placeholder="e.g. 2"
-                                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                            <p className="text-xs text-gray-400 mt-1">Subscribers will be added to this list.</p>
+                        {/* List IDs */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Newsletter List ID <span className="text-gray-400">(optional)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={listId}
+                                    onChange={(e) => setListId(e.target.value)}
+                                    placeholder="e.g. 1"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <p className="text-xs text-gray-400 mt-1">Newsletter popup subscribers.</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                    Customer List ID <span className="text-gray-400"></span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={customerListId}
+                                    onChange={(e) => setCustomerListId(e.target.value)}
+                                    placeholder="e.g. 2"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <p className="text-xs text-gray-400 mt-1">Platform users (tagged free/premium).</p>
+                            </div>
                         </div>
                     </div>
 
@@ -497,6 +541,38 @@ export default function BrevoSettingsPage() {
                         {saving ? 'Saving...' : 'Save All Settings'}
                     </button>
                 </div>
+
+                {/* ── Active Customer Sync ── */}
+                {status === 'configured' && (
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div>
+                            <h2 className="text-lg font-medium text-gray-900">Sync All Users</h2>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Manually trigger a bulk sync of all registered platform users to the Customer List above. Users are tagged with <strong>MEMBERSHIP</strong> (FREE or PREMIUM).
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                                Note: New users and upgrades are synced automatically. Use this to sync existing users.
+                            </p>
+                        </div>
+                        <button
+                            onClick={handleSyncAll}
+                            disabled={syncing}
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 flex-shrink-0"
+                        >
+                            {syncing ? (
+                                <>
+                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Syncing...
+                                </>
+                            ) : (
+                                'Sync All Users Now'
+                            )}
+                        </button>
+                    </div>
+                )}
 
                 {/* Info Banner */}
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">

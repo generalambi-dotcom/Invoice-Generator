@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import { generateToken } from '@/lib/auth-jwt';
 import { createRefreshToken } from '@/lib/refresh-token';
 import { sendSequenceEmail } from '@/lib/email';
+import { syncContactToBrevo } from '@/lib/brevo';
 
 // POST - Register new user
 export async function POST(request: NextRequest) {
@@ -92,6 +93,9 @@ export async function POST(request: NextRequest) {
         emailVerificationExpiry: verificationExpiry,
       },
     });
+
+    // Sync new user to Brevo active customer list (fire-and-forget)
+    syncContactToBrevo(user.email, user.name, 'free').catch(console.error);
 
     // Send verification email only if required
     if (emailVerificationRequired) {

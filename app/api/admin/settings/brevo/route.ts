@@ -23,10 +23,12 @@ export async function GET(request: NextRequest) {
             'BREVO_POPUP_DELAY',
             'BREVO_POPUP_COOLDOWN_DAYS',
             'BREVO_POPUP_SHOW_NAME',
+            'BREVO_CUSTOMER_LIST_ID',
         ]);
 
         const apiKey = settings['BREVO_API_KEY'] || '';
         const listId = settings['BREVO_LIST_ID'] || '';
+        const customerListId = settings['BREVO_CUSTOMER_LIST_ID'] || '2';
         const popupEnabled = settings['BREVO_POPUP_ENABLED'] !== 'false';
 
         // Mask the API key for display
@@ -38,6 +40,7 @@ export async function GET(request: NextRequest) {
             status: apiKey ? 'configured' : 'not_configured',
             apiKey: maskedKey,
             listId,
+            customerListId,
             popupEnabled,
             popup: {
                 heading: settings['BREVO_POPUP_HEADING'] || '',
@@ -69,7 +72,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { apiKey, listId, popupEnabled, popup } = body;
+        const { apiKey, listId, customerListId, popupEnabled, popup } = body;
 
         if (!apiKey || typeof apiKey !== 'string') {
             return NextResponse.json({ error: 'Brevo API Key is required' }, { status: 400 });
@@ -88,6 +91,7 @@ export async function POST(request: NextRequest) {
         // Build settings to save
         const settingsToSave: Array<{ key: string; value: string; description?: string }> = [
             { key: 'BREVO_LIST_ID', value: (listId || '').toString().trim(), description: 'Brevo Contact List ID' },
+            { key: 'BREVO_CUSTOMER_LIST_ID', value: (customerListId || '2').toString().trim(), description: 'Brevo Active Customer List ID' },
             { key: 'BREVO_POPUP_ENABLED', value: popupEnabled !== false ? 'true' : 'false', description: 'Newsletter popup enabled' },
         ];
 

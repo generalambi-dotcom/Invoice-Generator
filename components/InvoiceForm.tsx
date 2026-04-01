@@ -1515,7 +1515,7 @@ function InvoiceFormContent() {
             {/* Right Sidebar - Tools & Settings */}
             <div className="w-full xl:w-80 shrink-0 space-y-6 xl:sticky xl:top-8 order-2 xl:order-2 h-fit">
               {/* Action Buttons - Hidden on mobile (sticky bar replaces this) */}
-              <div className="hidden lg:flex bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex-col gap-3">
+              <div className="hidden lg:flex bg-white p-5 rounded-xl border border-gray-200 flex-col gap-3">
                 <button
                   onClick={handleDownloadPDF}
                   disabled={isGeneratingPDF}
@@ -1625,7 +1625,7 @@ function InvoiceFormContent() {
               </div>
 
               {/* Settings */}
-              <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 space-y-5">
+              <div className="bg-white p-5 rounded-xl border border-gray-200 space-y-5">
                 <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
                   <div className="p-1.5 bg-purple-50 rounded text-purple-600">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -1685,7 +1685,7 @@ function InvoiceFormContent() {
                     </button>
                   </div>
                   <div
-                    className="w-full aspect-[210/297] bg-white rounded border border-gray-200 shadow-sm relative overflow-hidden p-3 flex flex-col gap-2 cursor-pointer hover:ring-2 hover:ring-blue-100 transition-all"
+                    className="w-full aspect-[210/297] bg-white rounded border border-gray-200 relative overflow-hidden p-3 flex flex-col gap-2 cursor-pointer hover:ring-2 hover:ring-blue-100 transition-all"
                     onClick={() => setIsPreviewModalOpen(true)}
                   >
                     {/* Brand Stripe */}
@@ -1788,10 +1788,8 @@ function InvoiceFormContent() {
                 </div>
 
                 {/* Invoice Paper */}
-                <div className="bg-white rounded-lg shadow-xl ring-1 ring-black/5 p-2 sm:p-10 min-h-[600px] relative transition-all duration-300">
-                  {/* Ribbon/Accent Top (Optional - adds nice touch based on theme) */}
-                  <div className="absolute top-0 left-0 w-full h-2 bg-theme-primary rounded-t-lg opacity-80"></div>
-
+                <div className="bg-white rounded-lg ring-1 ring-black/5 p-2 sm:p-10 min-h-[600px] relative transition-all duration-300">
+                  {/* Ribbon/Accent Top Removed */}
                   {/* Header Section - Split Layout */}
                   <div className="flex flex-col sm:flex-row justify-between items-start gap-8 mb-12 mt-2">
                     {/* Left: Company BRAND */}
@@ -1835,7 +1833,7 @@ function InvoiceFormContent() {
                           type="text"
                           value={invoice.company?.name || ''}
                           onChange={(e) => updateField('company.name', e.target.value)}
-                          className="w-full text-xl font-bold text-gray-900 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300 mb-4 transition-all"
+                          className="w-full text-base font-bold text-gray-900 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-300 mb-4 transition-all"
                           placeholder="Your Company Name"
                         />
 
@@ -1845,7 +1843,7 @@ function InvoiceFormContent() {
                             onChange={(e) => {
                               updateField('company.address', e.target.value);
                             }}
-                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-400 text-[15px] min-h-[100px] transition-all"
+                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-400 text-[15px] min-h-[100px] transition-all"
                             placeholder="Address, City, State, Zip, Country..."
                           />
                         ) : (
@@ -1854,7 +1852,7 @@ function InvoiceFormContent() {
                               type="text"
                               value={invoice.company?.address || ''}
                               onChange={(e) => updateField('company.address', e.target.value)}
-                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-400 transition-all"
+                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-400 transition-all"
                               placeholder="Address Line 1"
                             />
                             <div className="flex gap-2">
@@ -1862,21 +1860,21 @@ function InvoiceFormContent() {
                                 type="text"
                                 value={invoice.company?.city || ''}
                                 onChange={(e) => updateField('company.city', e.target.value)}
-                                className="min-w-0 flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-400 transition-all"
+                                className="min-w-0 flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-400 transition-all"
                                 placeholder="City"
                               />
                               <input
                                 type="text"
                                 value={invoice.company?.state || ''}
                                 onChange={(e) => updateField('company.state', e.target.value)}
-                                className="min-w-0 flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-400 transition-all"
+                                className="min-w-0 flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-400 transition-all"
                                 placeholder="State"
                               />
                               <input
                                 type="text"
                                 value={invoice.company?.zip || ''}
                                 onChange={(e) => updateField('company.zip', e.target.value)}
-                                className="min-w-0 w-24 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-400 transition-all"
+                                className="min-w-0 w-24 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-400 transition-all"
                                 placeholder="Zip"
                               />
                             </div>
@@ -1884,7 +1882,7 @@ function InvoiceFormContent() {
                               type="text"
                               value={invoice.company?.country || ''}
                               onChange={(e) => updateField('company.country', e.target.value)}
-                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-400 transition-all"
+                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-400 transition-all"
                               placeholder="Country"
                             />
                           </div>
@@ -1895,7 +1893,7 @@ function InvoiceFormContent() {
                     {/* Right: Invoice Meta & Title */}
                     <div className="text-right flex-1 w-full relative">
                       {/* Document Type Selector */}
-                      <div className="absolute -top-10 right-0 z-10 flex border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm text-xs font-medium">
+                      <div className="absolute -top-10 right-0 z-10 flex border border-gray-200 rounded-lg overflow-hidden bg-white text-xs font-medium">
                         <button
                           onClick={() => updateField('type', 'invoice')}
                           className={`px-3 py-1.5 transition-colors ${(!invoice.type || invoice.type === 'invoice') ? 'bg-theme-primary text-white' : 'text-gray-600 hover:bg-gray-50'}`}
@@ -1927,7 +1925,7 @@ function InvoiceFormContent() {
                             type="text"
                             value={invoice.invoiceNumber || ''}
                             onChange={(e) => updateField('invoiceNumber', e.target.value)}
-                            className="font-mono bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full placeholder:text-gray-300 transition-all text-[15px]"
+                            className="font-mono bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary w-full placeholder:text-gray-300 transition-all text-[15px]"
                             placeholder="#INV-001"
                           />
                         </div>
@@ -1939,7 +1937,7 @@ function InvoiceFormContent() {
                               type="date"
                               value={invoice.invoiceDate || ''}
                               onChange={(e) => updateField('invoiceDate', e.target.value)}
-                              className="bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full transition-all text-[15px]"
+                              className="bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary w-full transition-all text-[15px]"
                             />
                           </div>
                           {invoice.type !== 'credit_note' && (
@@ -1951,7 +1949,7 @@ function InvoiceFormContent() {
                                 type="date"
                                 value={invoice.dueDate || ''}
                                 onChange={(e) => updateField('dueDate', e.target.value)}
-                                className="bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full transition-all text-[15px]"
+                                className="bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary w-full transition-all text-[15px]"
                               />
                             </div>
                           )}
@@ -1963,7 +1961,7 @@ function InvoiceFormContent() {
                             type="text"
                             value={invoice.purchaseOrder || ''}
                             onChange={(e) => updateField('purchaseOrder', e.target.value)}
-                            className="bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full placeholder:text-gray-300 transition-all text-[15px]"
+                            className="bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary w-full placeholder:text-gray-300 transition-all text-[15px]"
                             placeholder="Optional"
                           />
                         </div>
@@ -1988,7 +1986,7 @@ function InvoiceFormContent() {
                           type="text"
                           value={invoice.client?.name || ''}
                           onChange={(e) => updateField('client.name', e.target.value)}
-                          className="w-full text-lg font-bold text-gray-900 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300 mb-4 transition-all"
+                          className="w-full text-lg font-bold text-gray-900 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-300 mb-4 transition-all"
                           placeholder="Client Name"
                         />
 
@@ -1996,7 +1994,7 @@ function InvoiceFormContent() {
                           <textarea
                             value={invoice.client?.address || ''}
                             onChange={(e) => updateField('client.address', e.target.value)}
-                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-400 text-[15px] min-h-[100px] transition-all"
+                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-400 text-[15px] min-h-[100px] transition-all"
                             placeholder="Address, City, State, Zip, Country..."
                           />
                         ) : (
@@ -2006,28 +2004,28 @@ function InvoiceFormContent() {
                               value={invoice.client?.city || ''}
                               onChange={(e) => updateField('client.city', e.target.value)}
                               placeholder="City"
-                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] placeholder:text-gray-400 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm transition-all"
+                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] placeholder:text-gray-400 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
                             />
                             <input
                               type="text"
                               value={invoice.client?.state || ''}
                               onChange={(e) => updateField('client.state', e.target.value)}
                               placeholder="State/Province"
-                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] placeholder:text-gray-400 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm transition-all"
+                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] placeholder:text-gray-400 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
                             />
                             <input
                               type="text"
                               value={invoice.client?.zip || ''}
                               onChange={(e) => updateField('client.zip', e.target.value)}
                               placeholder="Zip/Postal"
-                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] placeholder:text-gray-400 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm transition-all"
+                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] placeholder:text-gray-400 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
                             />
                             <input
                               type="text"
                               value={invoice.client?.country || ''}
                               onChange={(e) => updateField('client.country', e.target.value)}
                               placeholder="Country"
-                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] placeholder:text-gray-400 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm transition-all"
+                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] placeholder:text-gray-400 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
                             />
                           </div>
                         )}
@@ -2064,7 +2062,7 @@ function InvoiceFormContent() {
                             type="number"
                             value={invoice.discountRate || 0}
                             onChange={(e) => updateField('discountRate', parseFloat(e.target.value) || 0)}
-                            className="w-20 text-right bg-white border border-gray-200 rounded-xl px-3 py-2 text-[15px] focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm transition-all"
+                            className="w-20 text-right bg-white border border-gray-200 rounded-xl px-3 py-2 text-[15px] focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
                             placeholder="0"
                             min="0"
                           />
@@ -2083,7 +2081,7 @@ function InvoiceFormContent() {
                             type="number"
                             value={invoice.taxRate || 0}
                             onChange={(e) => updateField('taxRate', parseFloat(e.target.value) || 0)}
-                            className="w-20 text-right bg-white border border-gray-200 rounded-xl px-3 py-2 text-[15px] focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm transition-all"
+                            className="w-20 text-right bg-white border border-gray-200 rounded-xl px-3 py-2 text-[15px] focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
                             placeholder="0"
                             min="0"
                           />
@@ -2105,7 +2103,7 @@ function InvoiceFormContent() {
                             type="number"
                             value={invoice.shipping || 0}
                             onChange={(e) => updateField('shipping', parseFloat(e.target.value) || 0)}
-                            className="w-28 text-right bg-white border border-gray-200 rounded-xl px-3 py-2 text-[15px] focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm transition-all"
+                            className="w-28 text-right bg-white border border-gray-200 rounded-xl px-3 py-2 text-[15px] focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
                             placeholder="0"
                             min="0"
                           />
@@ -2142,7 +2140,7 @@ function InvoiceFormContent() {
                         <textarea
                           value={invoice.bankDetails || ''}
                           onChange={(e) => updateField('bankDetails', e.target.value)}
-                          className="w-full text-[15px] text-gray-800 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300 min-h-[100px] transition-all"
+                          className="w-full text-[15px] text-gray-800 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-300 min-h-[100px] transition-all"
                           placeholder="Add bank details, payment instructions..."
                         />
                       </div>
@@ -2166,7 +2164,7 @@ function InvoiceFormContent() {
                         <textarea
                           value={invoice.notes || ''}
                           onChange={(e) => updateField('notes', e.target.value)}
-                          className="w-full text-[15px] text-gray-800 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300 min-h-[100px] transition-all"
+                          className="w-full text-[15px] text-gray-800 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-300 min-h-[100px] transition-all"
                           placeholder="Add notes, thank you message..."
                         />
                       </div>
@@ -2190,7 +2188,7 @@ function InvoiceFormContent() {
                         <textarea
                           value={invoice.terms || ''}
                           onChange={(e) => updateField('terms', e.target.value)}
-                          className="w-full text-[15px] text-gray-800 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300 min-h-[100px] transition-all"
+                          className="w-full text-[15px] text-gray-800 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-300 min-h-[100px] transition-all"
                           placeholder="Add terms and conditions, late fees, etc..."
                         />
                       </div>
@@ -2213,7 +2211,7 @@ function InvoiceFormContent() {
                           <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-theme-primary"></div>
                         </label>
                         {!isPremium && (
-                          <Link href="/pricing" className="absolute -top-6 -right-2 px-2 py-0.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[9px] font-bold rounded uppercase tracking-wider shadow-sm items-center gap-1 flex whitespace-nowrap hover:from-amber-500 hover:to-amber-600 transition-all">
+                          <Link href="/pricing" className="absolute -top-6 -right-2 px-2 py-0.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[9px] font-bold rounded uppercase tracking-wider items-center gap-1 flex whitespace-nowrap hover:from-amber-500 hover:to-amber-600 transition-all">
                             PRO
                           </Link>
                         )}
@@ -2247,7 +2245,7 @@ function InvoiceFormContent() {
                           <div className="space-y-2">
                             {paymentHistory.length > 0 ? (
                               paymentHistory.map((payment: any) => (
-                                <div key={payment.id} className="bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+                                <div key={payment.id} className="bg-white p-3 rounded-lg border border-gray-200">
                                   <div className="flex justify-between items-start">
                                     <div>
                                       <div className="text-sm font-medium">
@@ -2433,8 +2431,8 @@ function InvoiceFormContent() {
 
                   {/* Payment Link Section - Premium Only */}
                   {
-                    isPremium && invoice.total && invoice.total > 0 && (
-                      <div className="mt-8 p-6 bg-gradient-to-br from-indigo-50/50 to-blue-50/50 rounded-2xl border border-indigo-100/50 shadow-sm backdrop-blur-xl">
+                    isPremium && (invoice.total || 0) > 0 && (
+                      <div className="mt-8 p-6 bg-gradient-to-br from-indigo-50/50 to-blue-50/50 rounded-2xl border border-indigo-100/50 backdrop-blur-xl">
                         <div className="flex items-center gap-3 mb-4">
                           <div className="p-2 bg-indigo-100 rounded-xl text-indigo-600">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
@@ -2449,7 +2447,7 @@ function InvoiceFormContent() {
                                 type="text"
                                 readOnly
                                 value={invoice.paymentLink}
-                                className="flex-1 px-4 py-3 text-sm border border-indigo-200 rounded-xl bg-white/80 font-mono text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                                className="flex-1 px-4 py-3 text-sm border border-indigo-200 rounded-xl bg-white/80 font-mono text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 "
                               />
                               <button
                                 onClick={() => {
@@ -2524,7 +2522,7 @@ function InvoiceFormContent() {
 
                 {/* Payment Methods Not Configured Message */}
                 {
-                  isPremium && invoice.total && invoice.total > 0 && !invoice.paymentLink && (
+                  isPremium && (invoice.total || 0) > 0 && !invoice.paymentLink && (
                     <div className="mt-6 p-4 bg-amber-50 border border-amber-200/60 rounded-xl mb-6">
                       <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 mt-0.5">
@@ -2560,7 +2558,7 @@ function InvoiceFormContent() {
       {
         showClientModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all" style={{ margin: 0 }}>
-            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
               <div className="p-6 border-b border-gray-100 bg-gray-50/50">
                 <h3 className="text-xl font-bold text-gray-900">Add New Client</h3>
               </div>
@@ -2573,7 +2571,7 @@ function InvoiceFormContent() {
                     type="text"
                     value={newClient.name}
                     onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all shadow-sm"
+                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all "
                     placeholder="Enter client name"
                   />
                 </div>
@@ -2586,7 +2584,7 @@ function InvoiceFormContent() {
                       type="email"
                       value={newClient.email}
                       onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all shadow-sm"
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all "
                       placeholder="client@example.com"
                     />
                   </div>
@@ -2598,7 +2596,7 @@ function InvoiceFormContent() {
                       type="tel"
                       value={newClient.phone}
                       onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all shadow-sm"
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all "
                       placeholder="+1 (555) 000-0000"
                     />
                   </div>
@@ -2611,7 +2609,7 @@ function InvoiceFormContent() {
                     type="text"
                     value={newClient.address}
                     onChange={(e) => setNewClient({ ...newClient, address: e.target.value })}
-                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all shadow-sm"
+                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all "
                     placeholder="Street address"
                   />
                 </div>
@@ -2624,7 +2622,7 @@ function InvoiceFormContent() {
                       type="text"
                       value={newClient.city}
                       onChange={(e) => setNewClient({ ...newClient, city: e.target.value })}
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all shadow-sm"
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all "
                     />
                   </div>
                   <div>
@@ -2635,7 +2633,7 @@ function InvoiceFormContent() {
                       type="text"
                       value={newClient.state}
                       onChange={(e) => setNewClient({ ...newClient, state: e.target.value })}
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all shadow-sm"
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all "
                     />
                   </div>
                 </div>
@@ -2648,7 +2646,7 @@ function InvoiceFormContent() {
                       type="text"
                       value={newClient.zip}
                       onChange={(e) => setNewClient({ ...newClient, zip: e.target.value })}
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all shadow-sm"
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all "
                     />
                   </div>
                   <div>
@@ -2659,7 +2657,7 @@ function InvoiceFormContent() {
                       type="text"
                       value={newClient.country}
                       onChange={(e) => setNewClient({ ...newClient, country: e.target.value })}
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all shadow-sm"
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all "
                     />
                   </div>
                 </div>
@@ -2667,7 +2665,7 @@ function InvoiceFormContent() {
               <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-3">
                 <button
                   onClick={() => setShowClientModal(false)}
-                  className="flex-1 px-4 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+                  className="flex-1 px-4 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors "
                 >
                   Cancel
                 </button>
@@ -2804,7 +2802,7 @@ function InvoiceFormContent() {
       {
         isEmailModalOpen && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all" style={{ margin: 0 }}>
-            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
               <div className="p-6 border-b border-gray-100 flex justify-between items-center">
                 <h3 className="text-lg font-bold text-gray-900">Send Invoice via Email</h3>
                 <button
@@ -2821,7 +2819,7 @@ function InvoiceFormContent() {
                     type="email"
                     value={invoice.client?.email || ''}
                     onChange={(e) => updateField('client', { ...invoice.client, email: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all shadow-sm"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all "
                     placeholder="client@example.com"
                   />
                 </div>

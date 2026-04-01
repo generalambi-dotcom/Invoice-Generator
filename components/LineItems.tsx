@@ -52,7 +52,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
   return (
     <div>
       {/* Desktop Table View */}
-      <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-200/50 shadow-sm">
+      <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-200/50 ">
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-50/80 border-b border-gray-200">
@@ -135,7 +135,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
         {lineItems.map((item) => (
           <div
             key={item.id}
-            className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm"
+            className="bg-white border border-gray-200 rounded-xl p-5 "
           >
             {/* Description Row */}
             <div className="mb-4">
@@ -145,7 +145,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
                 value={item.description}
                 onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                 placeholder="Description of item/service..."
-                className="w-full px-4 py-3.5 bg-gray-50 border border-transparent focus:bg-white focus:border-theme-primary rounded-xl text-[15px] outline-none ring-0 focus:ring-2 focus:ring-theme-primary/20 shadow-sm transition-all"
+                className="w-full px-4 py-3.5 bg-gray-50 border border-transparent focus:bg-white focus:border-theme-primary rounded-xl text-[15px] outline-none ring-0 focus:ring-2 focus:ring-theme-primary/20 transition-all"
               />
             </div>
 
@@ -159,7 +159,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
                     type="number"
                     value={item.rate || ''}
                     onChange={(e) => updateItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
-                    className="w-full pl-8 pr-4 py-3.5 bg-gray-50 border border-transparent focus:bg-white focus:border-theme-primary rounded-xl text-[15px] outline-none ring-0 focus:ring-2 focus:ring-theme-primary/20 shadow-sm transition-all"
+                    className="w-full pl-8 pr-4 py-3.5 bg-gray-50 border border-transparent focus:bg-white focus:border-theme-primary rounded-xl text-[15px] outline-none ring-0 focus:ring-2 focus:ring-theme-primary/20 transition-all"
                   />
                 </div>
               </div>
@@ -169,7 +169,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
                   type="number"
                   value={item.quantity || ''}
                   onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                  className="w-full px-4 py-3.5 bg-gray-50 border border-transparent focus:bg-white focus:border-theme-primary rounded-xl text-[15px] outline-none ring-0 focus:ring-2 focus:ring-theme-primary/20 shadow-sm transition-all"
+                  className="w-full px-4 py-3.5 bg-gray-50 border border-transparent focus:bg-white focus:border-theme-primary rounded-xl text-[15px] outline-none ring-0 focus:ring-2 focus:ring-theme-primary/20 transition-all"
                 />
               </div>
             </div>
@@ -200,7 +200,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
       <div className="mt-4">
         <button
           onClick={addItem}
-          className="w-full md:w-auto px-6 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-black transition-all shadow-sm flex items-center justify-center gap-2 text-sm font-semibold"
+          className="w-full md:w-auto px-6 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-black transition-all flex items-center justify-center gap-2 text-sm font-semibold"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
           Add Line Item

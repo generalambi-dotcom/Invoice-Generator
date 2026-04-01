@@ -149,6 +149,7 @@ function InvoiceFormContent() {
 
   // Guest post-download flow state
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<any>({ payment: false, notes: false, terms: false });
   const [showGuestPostDownloadModal, setShowGuestPostDownloadModal] = useState(false);
   const [guestEmailStep, setGuestEmailStep] = useState<1 | 2>(1);
   const [guestEmail, setGuestEmail] = useState('');
@@ -1233,22 +1234,22 @@ function InvoiceFormContent() {
 
   return (
     <>
-      <div className="bg-white py-4 sm:py-8">
+      <div className="bg-white py-3 sm:py-8 pb-24 lg:pb-8">
         <div className="max-w-[100rem] mx-auto px-0 sm:px-6 lg:px-8">
           {/* Page Header */}
-          <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="mb-4 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <h1 className="text-lg sm:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
                 {invoice.type === 'estimate' ? 'Estimate Generator' : invoice.type === 'credit_note' ? 'Credit Note Generator' : 'Invoice Generator'}
               </h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">Create professional documents in minutes</p>
+              <p className="hidden sm:block text-sm sm:text-base text-gray-600 mt-1">Create professional documents in minutes</p>
             </div>
             <div className="flex items-center gap-4 w-full sm:w-auto">
               <button
                 onClick={() => setShowAIPrompt(true)}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm sm:text-base font-medium rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0"
               >
-                <span className="text-lg leading-none">✨</span>
+                <span className="text-base sm:text-lg leading-none">✨</span>
                 Create with AI
               </button>
               <div className="hidden xl:flex text-right flex-col items-end border-l border-gray-200 pl-4">
@@ -1512,8 +1513,8 @@ function InvoiceFormContent() {
           <div className="flex flex-col xl:flex-row gap-8 items-start justify-center">
             {/* Right Sidebar - Tools & Settings */}
             <div className="w-full xl:w-80 shrink-0 space-y-6 xl:sticky xl:top-8 order-2 xl:order-2 h-fit">
-              {/* Action Buttons */}
-              <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-3">
+              {/* Action Buttons - Hidden on mobile (sticky bar replaces this) */}
+              <div className="hidden lg:flex bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex-col gap-3">
                 <button
                   onClick={handleDownloadPDF}
                   disabled={isGeneratingPDF}
@@ -1780,7 +1781,7 @@ function InvoiceFormContent() {
 
             <div className="flex-1 w-full max-w-[120rem] order-1 xl:order-1">
               <div className="bg-white p-4 rounded-xl">
-                <div className="flex justify-between items-center mb-4 px-2">
+                <div className="hidden sm:flex justify-between items-center mb-4 px-2">
                   <h2 className="text-lg font-semibold text-gray-700">Preview</h2>
                   <div className="text-xs text-gray-500">Auto-updates as you type</div>
                 </div>
@@ -1940,28 +1941,31 @@ function InvoiceFormContent() {
                             />
                           </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
-                          <label className="text-sm font-medium text-gray-500 uppercase tracking-wider">Date</label>
-                          <input
-                            type="date"
-                            value={invoice.invoiceDate || ''}
-                            onChange={(e) => updateField('invoiceDate', e.target.value)}
-                            className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-36"
-                          />
-                        </div>
-                        {invoice.type !== 'credit_note' && (
-                          <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
-                            <label className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-                              {invoice.type === 'estimate' ? 'Valid Until' : 'Due'}
-                            </label>
+                        {/* Date & Due - Side by side on mobile */}
+                        <div className="flex gap-2 sm:flex-col sm:gap-0">
+                          <div className="flex-1 sm:flex sm:flex-row sm:justify-end sm:items-center sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
+                            <label className="block sm:inline text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider mb-1 sm:mb-0">Date</label>
                             <input
                               type="date"
-                              value={invoice.dueDate || ''}
-                              onChange={(e) => updateField('dueDate', e.target.value)}
-                              className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-36"
+                              value={invoice.invoiceDate || ''}
+                              onChange={(e) => updateField('invoiceDate', e.target.value)}
+                              className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-2 sm:px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-36 text-sm sm:text-base"
                             />
                           </div>
-                        )}
+                          {invoice.type !== 'credit_note' && (
+                            <div className="flex-1 sm:flex sm:flex-row sm:justify-end sm:items-center sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
+                              <label className="block sm:inline text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider mb-1 sm:mb-0">
+                                {invoice.type === 'estimate' ? 'Valid Until' : 'Due'}
+                              </label>
+                              <input
+                                type="date"
+                                value={invoice.dueDate || ''}
+                                onChange={(e) => updateField('dueDate', e.target.value)}
+                                className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-2 sm:px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-36 text-sm sm:text-base"
+                              />
+                            </div>
+                          )}
+                        </div>
                         <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
                           <label className="text-sm font-medium text-gray-500 uppercase tracking-wider">PO #</label>
                           <input
@@ -2127,34 +2131,78 @@ function InvoiceFormContent() {
                     </div>
                   </div>
 
-                  {/* Footer Notes */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 border-t border-gray-100 pt-8">
+                  {/* Footer Notes - Collapsible on mobile */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-8 border-t border-gray-100 pt-4 sm:pt-8">
+                    {/* Payment Details - Accordion */}
                     <div>
-                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Details / Bank Info</h4>
-                      <textarea
-                        value={invoice.bankDetails || ''}
-                        onChange={(e) => updateField('bankDetails', e.target.value)}
-                        className="w-full text-sm text-gray-600 bg-white border border-gray-200 rounded p-2 focus:ring-1 focus:ring-theme-primary focus:border-theme-primary placeholder:text-gray-300 min-h-[80px]"
-                        placeholder="Add bank details, payment instructions..."
-                      />
+                      <button
+                        type="button"
+                        onClick={() => setExpandedSections((prev: any) => ({ ...prev, payment: !prev?.payment }))}
+                        className="sm:hidden w-full flex items-center justify-between py-2 text-xs font-bold text-gray-400 uppercase tracking-widest"
+                      >
+                        <span className="flex items-center gap-2">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                          Payment Details / Bank Info
+                        </span>
+                        <svg className={`w-4 h-4 transition-transform ${expandedSections?.payment ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      </button>
+                      <h4 className="hidden sm:block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Payment Details / Bank Info</h4>
+                      <div className={`${expandedSections?.payment ? 'block' : 'hidden'} sm:block`}>
+                        <textarea
+                          value={invoice.bankDetails || ''}
+                          onChange={(e) => updateField('bankDetails', e.target.value)}
+                          className="w-full text-sm text-gray-600 bg-white border border-gray-200 rounded p-2 focus:ring-1 focus:ring-theme-primary focus:border-theme-primary placeholder:text-gray-300 min-h-[80px]"
+                          placeholder="Add bank details, payment instructions..."
+                        />
+                      </div>
                     </div>
+
+                    {/* Notes - Accordion */}
                     <div>
-                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Notes</h4>
-                      <textarea
-                        value={invoice.notes || ''}
-                        onChange={(e) => updateField('notes', e.target.value)}
-                        className="w-full text-sm text-gray-600 bg-white border border-gray-200 rounded p-2 focus:ring-1 focus:ring-theme-primary focus:border-theme-primary placeholder:text-gray-300 min-h-[80px]"
-                        placeholder="Add notes, thank you message..."
-                      />
+                      <button
+                        type="button"
+                        onClick={() => setExpandedSections((prev: any) => ({ ...prev, notes: !prev?.notes }))}
+                        className="sm:hidden w-full flex items-center justify-between py-2 text-xs font-bold text-gray-400 uppercase tracking-widest"
+                      >
+                        <span className="flex items-center gap-2">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                          Notes
+                        </span>
+                        <svg className={`w-4 h-4 transition-transform ${expandedSections?.notes ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      </button>
+                      <h4 className="hidden sm:block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Notes</h4>
+                      <div className={`${expandedSections?.notes ? 'block' : 'hidden'} sm:block`}>
+                        <textarea
+                          value={invoice.notes || ''}
+                          onChange={(e) => updateField('notes', e.target.value)}
+                          className="w-full text-sm text-gray-600 bg-white border border-gray-200 rounded p-2 focus:ring-1 focus:ring-theme-primary focus:border-theme-primary placeholder:text-gray-300 min-h-[80px]"
+                          placeholder="Add notes, thank you message..."
+                        />
+                      </div>
                     </div>
+
+                    {/* Terms - Accordion */}
                     <div className="sm:col-span-2">
-                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Terms & Conditions</h4>
-                      <textarea
-                        value={invoice.terms || ''}
-                        onChange={(e) => updateField('terms', e.target.value)}
-                        className="w-full text-xs text-gray-500 bg-white border border-gray-200 rounded p-2 focus:ring-1 focus:ring-theme-primary focus:border-theme-primary placeholder:text-gray-300 min-h-[60px]"
-                        placeholder="Add terms and conditions, late fees, etc..."
-                      />
+                      <button
+                        type="button"
+                        onClick={() => setExpandedSections((prev: any) => ({ ...prev, terms: !prev?.terms }))}
+                        className="sm:hidden w-full flex items-center justify-between py-2 text-xs font-bold text-gray-400 uppercase tracking-widest"
+                      >
+                        <span className="flex items-center gap-2">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                          Terms & Conditions
+                        </span>
+                        <svg className={`w-4 h-4 transition-transform ${expandedSections?.terms ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      </button>
+                      <h4 className="hidden sm:block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Terms & Conditions</h4>
+                      <div className={`${expandedSections?.terms ? 'block' : 'hidden'} sm:block`}>
+                        <textarea
+                          value={invoice.terms || ''}
+                          onChange={(e) => updateField('terms', e.target.value)}
+                          className="w-full text-xs text-gray-500 bg-white border border-gray-200 rounded p-2 focus:ring-1 focus:ring-theme-primary focus:border-theme-primary placeholder:text-gray-300 min-h-[60px]"
+                          placeholder="Add terms and conditions, late fees, etc..."
+                        />
+                      </div>
                     </div>
 
                     <div className="sm:col-span-2 relative flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200/60 mt-2">
@@ -2678,6 +2726,54 @@ function InvoiceFormContent() {
           </div>
         )
       }
+      {/* Mobile Sticky Bottom Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="flex items-stretch gap-0">
+          {/* Download PDF */}
+          <button
+            onClick={handleDownloadPDF}
+            disabled={isGeneratingPDF}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-gray-700 active:bg-gray-100 transition-colors disabled:opacity-50"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            <span className="text-[10px] font-semibold">{isGeneratingPDF ? 'Wait...' : 'PDF'}</span>
+          </button>
+
+          {/* Email */}
+          <button
+            onClick={() => setIsEmailModalOpen(true)}
+            disabled={!invoice.id}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-gray-700 active:bg-gray-100 transition-colors disabled:opacity-40 border-l border-gray-100"
+          >
+            <Mail className="w-5 h-5" />
+            <span className="text-[10px] font-semibold">Email</span>
+          </button>
+
+          {/* WhatsApp */}
+          <button
+            onClick={handleWhatsAppShare}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[#25D366] active:bg-green-50 transition-colors border-l border-gray-100"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            <span className="text-[10px] font-semibold">WhatsApp</span>
+          </button>
+
+          {/* Save */}
+          <button
+            onClick={() => {
+              if (!user) {
+                setShowLoginPrompt(true);
+              } else {
+                handleSaveInvoice();
+              }
+            }}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 bg-theme-primary text-white active:opacity-80 transition-colors border-l border-gray-100"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+            <span className="text-[10px] font-semibold">Save</span>
+          </button>
+        </div>
+      </div>
 
       {/* Preview Zoom Modal */}
       {

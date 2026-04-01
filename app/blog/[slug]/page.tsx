@@ -8,6 +8,12 @@ import { MDXRemote } from 'next-mdx-remote/rsc';
 import { prisma } from '../../../lib/db';
 import BlogSidebar from '../../../components/blog/BlogSidebar';
 
+// Revalidate every 60 seconds so new/updated posts appear without a full redeploy
+export const revalidate = 60;
+
+// Allow slugs not pre-generated at build time to be rendered on-demand
+export const dynamicParams = true;
+
 interface PageProps {
     params: {
         slug: string;

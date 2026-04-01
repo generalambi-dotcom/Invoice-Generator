@@ -591,39 +591,40 @@ export async function sendWelcomeEmail({
 
     const content = `
       <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 30px;">
-        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Welcome to InvoiceNaija! 🎉</h1>
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Welcome to InvoiceGenerator.ng! 🎉</h1>
       </div>
       
       <p>Hi ${userName},</p>
-      <p>Your account is now set up and ready to go. Here are some things you can do right away:</p>
+      <p>Welcome aboard! I'm thrilled to see you here. You've just taken the biggest step towards getting paid faster and looking incredibly professional to your clients.</p>
+      <p>The days of messy Word Documents and Excel spreadsheets are over. With InvoiceGenerator.ng, you're about to build a billing process that commands premium prices.</p>
       
       <div style="background: #f9fafb; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
+        <p style="margin-top: 0; font-weight: bold; color: #111827;">Here is what you should do right now:</p>
         <ul style="margin: 0; padding-left: 20px;">
-          <li style="margin-bottom: 8px;">📄 Create your first invoice</li>
-          <li style="margin-bottom: 8px;">🏢 Add your company details</li>
-          <li style="margin-bottom: 8px;">💳 Set up payment methods</li>
-          <li style="margin-bottom: 8px;">👥 Add your clients</li>
+          <li style="margin-bottom: 8px;"><strong>Upload your logo</strong> to make your brand pop.</li>
+          <li style="margin-bottom: 8px;"><strong>Add your bank details</strong> so clients know how to pay you.</li>
+          <li style="margin-bottom: 8px;">Create your very first invoice in under 60 seconds!</li>
         </ul>
       </div>
 
       <div style="text-align: center; margin: 30px 0;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng'}/dashboard" class="button">Go to Dashboard</a>
+        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng'}/dashboard" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Go to Your Dashboard</a>
       </div>
       
-      <p>If you have any questions, feel free to reach out to our support team.</p>
-      <p>Happy invoicing!<br/>The InvoiceNaija Team</p>
+      <p>If you ever get stuck, just reply to this email. Our support team is exactly here to help.</p>
+      <p>Happy invoicing!<br/>The InvoiceGenerator.ng Team</p>
     `;
 
     const emailHtml = await getEmailLayout({
       content,
-      title: 'Welcome to InvoiceNaija',
-      previewText: 'Welcome to InvoiceNaija! Get started creating invoices.',
+      title: 'Welcome to InvoiceGenerator.ng',
+      previewText: "Welcome aboard! Let's get your first invoice sent out today.",
     });
 
     await resend.emails.send({
-      from: `InvoiceNaija <${fromEmail}>`,
+      from: `InvoiceGenerator.ng <${fromEmail}>`,
       to,
-      subject: 'Welcome to InvoiceNaija! 🎉',
+      subject: 'Welcome to InvoiceGenerator.ng! 🎉',
       html: emailHtml,
     });
 
@@ -756,7 +757,6 @@ export async function sendSequenceEmail({
       // into the same layout mechanism we use for hardcoded items.
       // Users might add `{{buttonUrl}}` to their custom template layout if they choose, so let's set it.
       bodyContent = bodyContent.replace(/\{\{buttonUrl\}\}/g, `${appUrl}/dashboard`);
-      // If step 1 or 4, standard interaction points to new invoice
       if (step === 1 || step === 4) {
         bodyContent = bodyContent.replace(/\{\{buttonUrl\}\}/g, `${appUrl}/invoices/new`);
       }
@@ -767,75 +767,64 @@ export async function sendSequenceEmail({
       // Fallback to Hardcoded Templates
       switch (step) {
         case 1:
-          subject = '👉 Your invoice tool is ready 🇳🇬';
-          headline = 'Welcome to InvoiceGenerator';
+          subject = '👉 Your first invoice is waiting 🇳🇬';
+          headline = 'Welcome to InvoiceGenerator.ng';
           bodyContent = `
               <p>Hi ${userName},</p>
-              <p>Welcome to InvoiceGenerator.</p>
-              <p>You can now:</p>
-              <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
-                <li>✔ Create professional invoices in Naira or USD</li>
-                <li>✔ Send invoices via email or WhatsApp</li>
-                <li>✔ Use AI to write faster invoice descriptions</li>
-              </ul>
-              <p style="margin-top: 20px;">Start your first invoice here:</p>
+              <p>The number one reason Nigerian freelancers and SMEs wait weeks to get paid is friction. When your invoice is hard to read or looks unprofessional, corporate accounting departments push it to the bottom of the pile.</p>
+              <p>Let’s fix that today.</p>
+              <p>Your dashboard is ready. You can generate a stunning, mathematically perfect PDF invoice in under 60 seconds. Best part? It separates your VAT and totals automatically.</p>
             `;
-          buttonText = 'Create Invoice';
+          buttonText = 'Create Your First Invoice';
           buttonUrl = `${appUrl}/invoices/new`;
           break;
 
         case 2:
-          subject = '👉 Most Nigerian freelancers forget this…';
+          subject = '👉 Why clients are delaying your payments...';
           headline = 'Look more professional';
           bodyContent = `
               <p>Hi ${userName},</p>
-              <p>Adding your company name and logo makes your invoices look more professional to clients.</p>
-              <p>Finish setting up your first invoice here:</p>
+              <p>A bare, black-and-white grid of numbers screams "I am a beginner." If you don't invest in your own branding, clients subconsciously feel they don't need to rush to pay you.</p>
+              <p>Log in right now to upload your high-resolution company Logo and set your primary brand color. When you send an invoice that looks like a luxury agency document, clients stop haggling and start paying.</p>
             `;
-          buttonText = 'Go to Dashboard';
+          buttonText = 'Complete Your Profile';
           buttonUrl = `${appUrl}/dashboard`;
           break;
 
         case 3:
-          subject = '👉 Send invoices via WhatsApp in seconds';
-          headline = 'Did you know?';
+          subject = '👉 Where Nigerian business actually happens 📱';
+          headline = 'WhatsApp Invoicing';
           bodyContent = `
               <p>Hi ${userName},</p>
-              <p>Many Nigerian freelancers send invoices through WhatsApp.</p>
-              <p>With Premium, you can send invoices instantly without downloading PDFs.</p>
-              <p>See how it works:</p>
+              <p>Email is slow. The actual heartbeat of Nigerian commerce is WhatsApp.</p>
+              <p>With our Premium tier, you don't even need to download heavy PDFs. You can instantly generate a highly secure, non-editable link and blast it directly into your client's WhatsApp DM with a single click. Faster delivery equals faster payment.</p>
             `;
-          buttonText = 'View Premium Features';
+          buttonText = "See Premium Features";
           buttonUrl = `${appUrl}/pricing`;
           break;
 
         case 4:
-          subject = '👉 Let AI write your invoice descriptions';
-          headline = 'Write smarter, not harder';
+          subject = "👉 Defeat writer's block instantly 🤖";
+          headline = 'Let AI write your invoice';
           bodyContent = `
               <p>Hi ${userName},</p>
-              <p>Not sure how to describe your services?</p>
-              <p>Use AI suggestions to create clear, professional invoice items in seconds.</p>
-              <p>Try it here:</p>
+              <p>"Website Design - N50,000" is a terrible invoice description. Corporate procurement officers will reject it because it lacks detail.</p>
+              <p>Are you struggling to describe your work professionally? Stop typing. With InvoiceGenerator Premium, you can use our built-in AI to instantly generate bulletproof, highly detailed service descriptions that sail through corporate audits.</p>
             `;
-          buttonText = 'Create Invoice';
+          buttonText = 'Try AI Invoice Generation';
           buttonUrl = `${appUrl}/invoices/new`;
           break;
 
         case 5:
-          subject = '👉 Look more professional to your clients';
+          subject = '👉 Ready to look like a Tier-1 Agency?';
           headline = 'Upgrade to Premium';
           bodyContent = `
               <p>Hi ${userName},</p>
-              <p>Upgrade to Premium to:</p>
-              <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
-                <li>✔ Remove branding</li>
-                <li>✔ Send invoices via WhatsApp</li>
-                <li>✔ Use AI tools</li>
-              </ul>
-              <p style="margin-top: 20px;">Start your 30-day trial:</p>
+              <p>You’ve seen what InvoiceGenerator.ng can do. Now it's time to take the training wheels off.</p>
+              <p>Upgrade to Premium today to completely remove our branding from your PDFs, unlock unlimited AI descriptions, and activate seamless WhatsApp delivery.</p>
+              <p>You charge premium prices. Your paperwork should match.</p>
             `;
-          buttonText = 'Upgrade Now';
+          buttonText = 'Upgrade to Premium';
           buttonUrl = `${appUrl}/pricing`;
           break;
       }
@@ -849,10 +838,10 @@ export async function sendSequenceEmail({
           ${bodyContent}
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${buttonUrl}" class="button" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">${buttonText}</a>
+            <a href="${buttonUrl}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">${buttonText}</a>
           </div>
           
-          <p>Happy invoicing!<br/>The InvoiceGenerator Team</p>
+          <p>Happy invoicing!<br/>The InvoiceGenerator.ng Team</p>
         `;
       bodyContent = hardcodedWrapper;
     }

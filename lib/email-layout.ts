@@ -8,7 +8,7 @@ interface EmailLayoutOptions {
 
 const DEFAULT_PRIMARY_COLOR = '#4F46E5';
 const DEFAULT_HEADER_BG = '#ffffff';
-const DEFAULT_BRAND_NAME = 'InvoiceNaija';
+const DEFAULT_BRAND_NAME = 'InvoiceGenerator.ng';
 
 export async function getEmailLayout({ content, title, previewText }: EmailLayoutOptions): Promise<string> {
     // Fetch design settings
@@ -122,19 +122,26 @@ export async function getEmailLayout({ content, title, previewText }: EmailLayou
             <td class="footer-cell">
               ${footerText ? `<div style="margin-bottom: 20px;">${footerText}</div>` : ''}
               
-              <div style="margin-bottom: 10px;">
+              <div style="margin-bottom: 15px; color: #9ca3af; font-size: 11px; line-height: 1.5;">
+                You are receiving this email because you signed up for ${brandName}.<br>
+                If you no longer wish to receive these emails, you can <a href="{{unsubscribe_url}}" style="color: #6b7280; text-decoration: underline;">unsubscribe here</a>.
+              </div>
+
+              <div style="margin-bottom: 10px; font-size: 11px; color: #9ca3af;">
+                <strong>${brandName}</strong><br>
+                Lagos, Nigeria<br>
+                <a href="mailto:support@invoicegenerator.ng" style="color: #9ca3af; text-decoration: none;">support@invoicegenerator.ng</a>
+              </div>
+              
+              <div style="margin-top: 15px; font-size: 12px;">
                 &copy; ${year} ${brandName}. All rights reserved.
               </div>
               
               ${showPoweredBy ? `
-              <div style="margin-top: 15px; font-size: 12px; color: #9ca3af;">
-                Powered by <a href="https://invoicegenerator.ng" style="color: #9ca3af; text-decoration: underline;">InvoiceNaija</a>
+              <div style="margin-top: 8px; font-size: 11px; color: #9ca3af;">
+                Powered by <a href="https://invoicegenerator.ng" style="color: #9ca3af; text-decoration: underline;">InvoiceGenerator.ng</a>
               </div>
               ` : ''}
-              
-              <div style="margin-top: 15px;">
-                <a href="{{unsubscribe_url}}" style="color: #9ca3af; font-size: 12px;">Unsubscribe</a>
-              </div>
             </td>
           </tr>
         </table>

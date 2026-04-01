@@ -1835,57 +1835,48 @@ function InvoiceFormContent() {
                           type="text"
                           value={invoice.company?.name || ''}
                           onChange={(e) => updateField('company.name', e.target.value)}
-                          className="w-full text-2xl font-bold text-gray-900 tracking-tight bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300 mb-2"
+                          className="w-full text-xl font-bold text-gray-900 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300 mb-4 transition-all"
                           placeholder="Your Company Name"
                         />
 
                         {addressModes.company === 'simple' ? (
                           <textarea
-                            value={
-                              // Construct address string if empty, or use existing
-                              invoice.company?.address || ''
-                            }
+                            value={invoice.company?.address || ''}
                             onChange={(e) => {
-                              // For simple mode, we basically just dump everything into address line 1 for now, 
-                              // or we could parse it? For this implementation, let's treat 'address' as the full block when in simple mode
-                              // But to avoid losing data, typically we'd map this to a specific field. 
-                              // User request implies "1 big text area". 
-                              // Let's map it to 'address' field.
                               updateField('company.address', e.target.value);
                             }}
-                            className="w-full bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300 text-sm min-h-[80px]"
+                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-400 text-[15px] min-h-[100px] transition-all"
                             placeholder="Address, City, State, Zip, Country..."
                           />
                         ) : (
-                          <div className="space-y-1 text-sm text-gray-500">
+                          <div className="space-y-3 text-[15px] text-gray-700">
                             <input
                               type="text"
                               value={invoice.company?.address || ''}
                               onChange={(e) => updateField('company.address', e.target.value)}
-                              className="w-full bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300"
+                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-400 transition-all"
                               placeholder="Address Line 1"
                             />
-                            <div className="flex gap-1">
+                            <div className="flex gap-2">
                               <input
                                 type="text"
                                 value={invoice.company?.city || ''}
                                 onChange={(e) => updateField('company.city', e.target.value)}
-                                className="min-w-0 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300"
+                                className="min-w-0 flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-400 transition-all"
                                 placeholder="City"
                               />
-                              <span>,</span>
                               <input
                                 type="text"
                                 value={invoice.company?.state || ''}
                                 onChange={(e) => updateField('company.state', e.target.value)}
-                                className="min-w-0 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300"
+                                className="min-w-0 flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-400 transition-all"
                                 placeholder="State"
                               />
                               <input
                                 type="text"
                                 value={invoice.company?.zip || ''}
                                 onChange={(e) => updateField('company.zip', e.target.value)}
-                                className="min-w-0 w-20 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300"
+                                className="min-w-0 w-24 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-400 transition-all"
                                 placeholder="Zip"
                               />
                             </div>
@@ -1893,7 +1884,7 @@ function InvoiceFormContent() {
                               type="text"
                               value={invoice.company?.country || ''}
                               onChange={(e) => updateField('company.country', e.target.value)}
-                              className="w-full bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300"
+                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-400 transition-all"
                               placeholder="Country"
                             />
                           </div>
@@ -1929,51 +1920,50 @@ function InvoiceFormContent() {
                         {invoice.type === 'estimate' ? 'Estimate' : invoice.type === 'credit_note' ? 'Credit Note' : 'Invoice'}
                       </h1>
 
-                      <div className="space-y-1">
-                        <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
-                          <label className="text-sm font-medium text-gray-500 uppercase tracking-wider">Number</label>
-                          <div className="flex flex-col items-end w-full sm:w-auto">
-                            <input
-                              type="text"
-                              value={invoice.invoiceNumber || ''}
-                              onChange={(e) => updateField('invoiceNumber', e.target.value)}
-                              className="text-right font-semibold text-gray-900 font-mono bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-32 placeholder:text-gray-300"
-                              placeholder="#"
-                            />
-                          </div>
+                      <div className="space-y-4 text-left">
+                        <div className="w-full">
+                          <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Invoice No</label>
+                          <input
+                            type="text"
+                            value={invoice.invoiceNumber || ''}
+                            onChange={(e) => updateField('invoiceNumber', e.target.value)}
+                            className="font-mono bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full placeholder:text-gray-300 transition-all text-[15px]"
+                            placeholder="#INV-001"
+                          />
                         </div>
-                        {/* Date & Due - Side by side on mobile */}
-                        <div className="flex gap-2 sm:flex-col sm:gap-0">
-                          <div className="flex-1 sm:flex sm:flex-row sm:justify-end sm:items-center sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
-                            <label className="block sm:inline text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider mb-1 sm:mb-0">Date</label>
+
+                        <div className="flex flex-col sm:flex-row gap-4">
+                          <div className="flex-1">
+                            <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Date</label>
                             <input
                               type="date"
                               value={invoice.invoiceDate || ''}
                               onChange={(e) => updateField('invoiceDate', e.target.value)}
-                              className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-2 sm:px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-36 text-sm sm:text-base"
+                              className="bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full transition-all text-[15px]"
                             />
                           </div>
                           {invoice.type !== 'credit_note' && (
-                            <div className="flex-1 sm:flex sm:flex-row sm:justify-end sm:items-center sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
-                              <label className="block sm:inline text-xs sm:text-sm font-medium text-gray-500 uppercase tracking-wider mb-1 sm:mb-0">
-                                {invoice.type === 'estimate' ? 'Valid Until' : 'Due'}
+                            <div className="flex-1">
+                              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">
+                                {invoice.type === 'estimate' ? 'Valid Until' : 'Due Date'}
                               </label>
                               <input
                                 type="date"
                                 value={invoice.dueDate || ''}
                                 onChange={(e) => updateField('dueDate', e.target.value)}
-                                className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-2 sm:px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-36 text-sm sm:text-base"
+                                className="bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full transition-all text-[15px]"
                               />
                             </div>
                           )}
                         </div>
-                        <div className="flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-4 group/meta hover:bg-gray-50 p-1 -mr-1 rounded">
-                          <label className="text-sm font-medium text-gray-500 uppercase tracking-wider">PO #</label>
+
+                        <div className="w-full">
+                          <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">PO #</label>
                           <input
                             type="text"
                             value={invoice.purchaseOrder || ''}
                             onChange={(e) => updateField('purchaseOrder', e.target.value)}
-                            className="text-right font-medium text-gray-900 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full sm:w-32 placeholder:text-gray-300"
+                            className="bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm w-full placeholder:text-gray-300 transition-all text-[15px]"
                             placeholder="Optional"
                           />
                         </div>
@@ -1998,7 +1988,7 @@ function InvoiceFormContent() {
                           type="text"
                           value={invoice.client?.name || ''}
                           onChange={(e) => updateField('client.name', e.target.value)}
-                          className="w-full text-lg font-semibold text-gray-900 bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300 mb-2"
+                          className="w-full text-lg font-bold text-gray-900 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300 mb-4 transition-all"
                           placeholder="Client Name"
                         />
 
@@ -2006,38 +1996,38 @@ function InvoiceFormContent() {
                           <textarea
                             value={invoice.client?.address || ''}
                             onChange={(e) => updateField('client.address', e.target.value)}
-                            className="w-full bg-white border border-gray-200 rounded px-3 py-2 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300 text-sm min-h-[80px]"
+                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-400 text-[15px] min-h-[100px] transition-all"
                             placeholder="Address, City, State, Zip, Country..."
                           />
                         ) : (
-                          <div className="grid grid-cols-2 gap-2 mt-2">
+                          <div className="grid grid-cols-2 gap-4 mt-2">
                             <input
                               type="text"
                               value={invoice.client?.city || ''}
                               onChange={(e) => updateField('client.city', e.target.value)}
                               placeholder="City"
-                              className="w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm"
+                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] placeholder:text-gray-400 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm transition-all"
                             />
                             <input
                               type="text"
                               value={invoice.client?.state || ''}
                               onChange={(e) => updateField('client.state', e.target.value)}
                               placeholder="State/Province"
-                              className="w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm"
+                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] placeholder:text-gray-400 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm transition-all"
                             />
                             <input
                               type="text"
                               value={invoice.client?.zip || ''}
                               onChange={(e) => updateField('client.zip', e.target.value)}
                               placeholder="Zip/Postal"
-                              className="w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm"
+                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] placeholder:text-gray-400 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm transition-all"
                             />
                             <input
                               type="text"
                               value={invoice.client?.country || ''}
                               onChange={(e) => updateField('client.country', e.target.value)}
                               placeholder="Country"
-                              className="w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm"
+                              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-[15px] placeholder:text-gray-400 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm transition-all"
                             />
                           </div>
                         )}
@@ -2074,7 +2064,7 @@ function InvoiceFormContent() {
                             type="number"
                             value={invoice.discountRate || 0}
                             onChange={(e) => updateField('discountRate', parseFloat(e.target.value) || 0)}
-                            className="w-16 text-right bg-white border border-gray-200 rounded px-3 py-2 text-xs focus:ring-1 focus:ring-theme-primary shadow-sm"
+                            className="w-20 text-right bg-white border border-gray-200 rounded-xl px-3 py-2 text-[15px] focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm transition-all"
                             placeholder="0"
                             min="0"
                           />
@@ -2093,7 +2083,7 @@ function InvoiceFormContent() {
                             type="number"
                             value={invoice.taxRate || 0}
                             onChange={(e) => updateField('taxRate', parseFloat(e.target.value) || 0)}
-                            className="w-16 text-right bg-white border border-gray-200 rounded px-3 py-2 text-xs focus:ring-1 focus:ring-theme-primary shadow-sm"
+                            className="w-20 text-right bg-white border border-gray-200 rounded-xl px-3 py-2 text-[15px] focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm transition-all"
                             placeholder="0"
                             min="0"
                           />
@@ -2115,7 +2105,7 @@ function InvoiceFormContent() {
                             type="number"
                             value={invoice.shipping || 0}
                             onChange={(e) => updateField('shipping', parseFloat(e.target.value) || 0)}
-                            className="w-24 text-right bg-white border border-gray-200 rounded px-3 py-2 text-xs focus:ring-1 focus:ring-theme-primary shadow-sm"
+                            className="w-28 text-right bg-white border border-gray-200 rounded-xl px-3 py-2 text-[15px] focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm transition-all"
                             placeholder="0"
                             min="0"
                           />
@@ -2152,7 +2142,7 @@ function InvoiceFormContent() {
                         <textarea
                           value={invoice.bankDetails || ''}
                           onChange={(e) => updateField('bankDetails', e.target.value)}
-                          className="w-full text-sm text-gray-600 bg-white border border-gray-200 rounded p-2 focus:ring-1 focus:ring-theme-primary focus:border-theme-primary placeholder:text-gray-300 min-h-[80px]"
+                          className="w-full text-[15px] text-gray-800 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300 min-h-[100px] transition-all"
                           placeholder="Add bank details, payment instructions..."
                         />
                       </div>
@@ -2176,7 +2166,7 @@ function InvoiceFormContent() {
                         <textarea
                           value={invoice.notes || ''}
                           onChange={(e) => updateField('notes', e.target.value)}
-                          className="w-full text-sm text-gray-600 bg-white border border-gray-200 rounded p-2 focus:ring-1 focus:ring-theme-primary focus:border-theme-primary placeholder:text-gray-300 min-h-[80px]"
+                          className="w-full text-[15px] text-gray-800 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300 min-h-[100px] transition-all"
                           placeholder="Add notes, thank you message..."
                         />
                       </div>
@@ -2200,7 +2190,7 @@ function InvoiceFormContent() {
                         <textarea
                           value={invoice.terms || ''}
                           onChange={(e) => updateField('terms', e.target.value)}
-                          className="w-full text-xs text-gray-500 bg-white border border-gray-200 rounded p-2 focus:ring-1 focus:ring-theme-primary focus:border-theme-primary placeholder:text-gray-300 min-h-[60px]"
+                          className="w-full text-[15px] text-gray-800 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary shadow-sm placeholder:text-gray-300 min-h-[100px] transition-all"
                           placeholder="Add terms and conditions, late fees, etc..."
                         />
                       </div>

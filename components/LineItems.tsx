@@ -56,10 +56,10 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-50/80 border-b border-gray-200">
-              <th className="text-left p-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Description</th>
-              <th className="text-right p-4 text-xs font-bold text-gray-500 uppercase tracking-wider w-24">Quantity</th>
-              <th className="text-right p-4 text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Rate</th>
-              <th className="text-right p-4 text-xs font-bold text-gray-500 uppercase tracking-wider w-32">Amount</th>
+              <th className="text-left p-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest">Description</th>
+              <th className="text-right p-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-24">Quantity</th>
+              <th className="text-right p-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-32">Rate</th>
+              <th className="text-right p-4 text-[11px] font-bold text-gray-500 uppercase tracking-widest w-32">Amount</th>
               <th className="w-16 p-4"></th>
             </tr>
           </thead>
@@ -75,7 +75,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
                     value={item.description}
                     onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                     placeholder="Item description"
-                    className="w-full px-3 py-2 bg-gray-50 border border-transparent hover:border-gray-200 rounded-lg text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-transparent hover:border-gray-200 rounded-xl text-[15px] text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
                   />
                 </td>
                 <td className="p-3">
@@ -87,7 +87,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
                     }
                     min="0"
                     step="0.01"
-                    className="w-full px-3 py-2 bg-gray-50 border border-transparent hover:border-gray-200 rounded-lg text-sm text-right text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-transparent hover:border-gray-200 rounded-xl text-[15px] text-right text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
                   />
                 </td>
                 <td className="p-3">
@@ -101,7 +101,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
                       }
                       min="0"
                       step="0.01"
-                      className="w-full pl-6 pr-3 py-2 bg-gray-50 border border-transparent hover:border-gray-200 rounded-lg text-sm text-right text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
+                      className="w-full pl-6 pr-4 py-2.5 bg-gray-50 border border-transparent hover:border-gray-200 rounded-xl text-[15px] text-right text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
                     />
                   </div>
                 </td>
@@ -139,37 +139,37 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
           >
             {/* Description Row */}
             <div className="mb-4">
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description</label>
+              <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Description</label>
               <input
                 type="text"
                 value={item.description}
                 onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                 placeholder="Description of item/service..."
-                className="w-full px-4 py-3 bg-gray-50 border border-transparent focus:bg-white rounded-xl text-sm outline-none ring-1 ring-transparent focus:ring-theme-primary transition-all"
+                className="w-full px-4 py-3.5 bg-gray-50 border border-transparent focus:bg-white focus:border-theme-primary rounded-xl text-[15px] outline-none ring-0 focus:ring-2 focus:ring-theme-primary/20 shadow-sm transition-all"
               />
             </div>
 
             {/* Quantity, Rate, Amount Row */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Rate</label>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Rate</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">{currencySymbol}</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[15px]">{currencySymbol}</span>
                   <input
                     type="number"
                     value={item.rate || ''}
                     onChange={(e) => updateItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
-                    className="w-full pl-8 pr-4 py-3 bg-gray-50 border border-transparent focus:bg-white rounded-xl text-sm outline-none ring-1 ring-transparent focus:ring-theme-primary transition-all"
+                    className="w-full pl-8 pr-4 py-3.5 bg-gray-50 border border-transparent focus:bg-white focus:border-theme-primary rounded-xl text-[15px] outline-none ring-0 focus:ring-2 focus:ring-theme-primary/20 shadow-sm transition-all"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Qty</label>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Qty</label>
                 <input
                   type="number"
                   value={item.quantity || ''}
                   onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-transparent focus:bg-white rounded-xl text-sm outline-none ring-1 ring-transparent focus:ring-theme-primary transition-all"
+                  className="w-full px-4 py-3.5 bg-gray-50 border border-transparent focus:bg-white focus:border-theme-primary rounded-xl text-[15px] outline-none ring-0 focus:ring-2 focus:ring-theme-primary/20 shadow-sm transition-all"
                 />
               </div>
             </div>

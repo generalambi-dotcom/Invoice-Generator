@@ -88,10 +88,7 @@ export default function BlogListFilter({ initialPosts }: { initialPosts: Post[] 
                 </div>
             </div>
 
-            {/* Results Counter */}
-            <div className="text-sm border-b border-gray-100 pb-2">
-                <span className="font-semibold text-gray-900">{filteredPosts.length}</span> {filteredPosts.length === 1 ? 'article found' : 'articles found'}
-            </div>
+
 
             {/* Post Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

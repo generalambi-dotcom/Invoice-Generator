@@ -8,6 +8,35 @@ import { MDXRemote } from 'next-mdx-remote/rsc';
 import { prisma } from '../../../lib/db';
 import BlogSidebar from '../../../components/blog/BlogSidebar';
 
+/**
+ * Sanitize markdown content for MDX rendering.
+ * MDX treats curly braces as JSX expressions, so raw JSON/structured-data
+ * blocks embedded in the markdown crash the renderer.
+ * This strips JSON-LD blocks and escapes remaining stray braces.
+ */
+function sanitizeMdxContent(content: string): string {
+  // 1. Remove full JSON-LD / schema blocks (multi-line JSON objects)
+  let cleaned = content.replace(/```json[\s\S]*?```/g, (match) => match); // preserve fenced json
+  
+  // 2. Split by code fences so we only touch non-code content
+  const parts = cleaned.split(/(```[\s\S]*?```|`[^`]+`)/g);
+  
+  const sanitized = parts.map((part, i) => {
+    // Odd indices are code blocks — leave untouched
+    if (i % 2 === 1) return part;
+    
+    // Remove standalone JSON-LD blocks (lines starting with { and ending with })
+    let text = part.replace(/^\s*\{[\s\S]*?^\s*\}/gm, '');
+    
+    // Escape any remaining stray curly braces
+    text = text.replace(/\{/g, '\\{').replace(/\}/g, '\\}');
+    
+    return text;
+  });
+  
+  return sanitized.join('');
+}
+
 // Revalidate every 60 seconds so new/updated posts appear without a full redeploy
 export const revalidate = 60;
 
@@ -164,7 +193,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                                     prose-a:text-blue-600 dark:prose-a:text-blue-400 hover:prose-a:text-blue-500
                                     prose-img:rounded-xl prose-img:shadow-lg
                                     prose-headings:font-bold prose-headings:text-gray-900 dark:prose-headings:text-white">
-                                <MDXRemote source={post.content} />
+                                <MDXRemote source={sanitizeMdxContent(post.content)} />
                             </article>
                         </div>
                     </main>

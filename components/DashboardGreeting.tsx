@@ -31,7 +31,7 @@ export default function DashboardGreeting({ userName, totalStats }: DashboardGre
     }, []);
 
     return (
-        <div className="relative overflow-hidden bg-gradient-to-r from-emerald-800 to-teal-600 rounded-3xl p-8 mb-8 text-white shadow-xl">
+        <div className="relative overflow-hidden bg-gradient-to-r from-emerald-800 to-teal-600 rounded-2xl md:rounded-3xl p-5 md:p-8 mb-6 md:mb-8 text-white shadow-xl">
             {/* Decorative Circles */}
             <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-white opacity-5"></div>
             <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-60 h-60 rounded-full bg-white opacity-5"></div>
@@ -40,18 +40,18 @@ export default function DashboardGreeting({ userName, totalStats }: DashboardGre
                 <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                         {icon}
-                        <h1 className="text-3xl font-bold tracking-tight">
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
                             {greeting}, {userName?.split(' ')[0] || 'There'}!
                         </h1>
                     </div>
-                    <p className="text-emerald-50 text-lg opacity-90 max-w-xl">
+                    <p className="text-emerald-50 text-sm md:text-lg opacity-90 max-w-xl">
                         Here's what's happening with your store today. You have <span className="font-bold text-white">{totalStats?.unpaid || 0} unpaid</span> invoices pending.
                     </p>
 
-                    <div className="mt-8 flex gap-4">
+                    <div className="mt-4 md:mt-8 flex gap-4">
                         <button
                             onClick={() => document.getElementById('new-invoice-btn')?.click()}
-                            className="bg-white text-emerald-900 px-6 py-2.5 rounded-full font-semibold shadow-emerald-900/20 shadow-lg hover:bg-emerald-50 transition-all active:scale-95 flex items-center gap-2"
+                            className="bg-white text-emerald-900 px-5 py-2 md:px-6 md:py-2.5 rounded-full text-sm md:text-base font-semibold shadow-emerald-900/20 shadow-lg hover:bg-emerald-50 transition-all active:scale-95 flex items-center gap-2"
                         >
                             Create Invoice →
                         </button>

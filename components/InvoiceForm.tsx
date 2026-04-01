@@ -890,7 +890,7 @@ function InvoiceFormContent() {
           setInvoice(prev => ({ ...prev, id: result.invoice.id }));
         }
         toast.dismiss('saving-share');
-      } catch (error) {
+      } catch (error: any) {
         toast.dismiss('saving-share');
         if (error.message === 'FREE_PLAN_LIMIT_REACHED') {
           setShowLimitModal(true);

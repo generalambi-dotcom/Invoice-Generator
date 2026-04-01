@@ -19,6 +19,9 @@ export default function Sidebar() {
         // Only run in browser
         if (typeof window === 'undefined') return;
 
+        const handleToggle = () => setIsOpen(prev => !prev);
+        window.addEventListener('toggleMobileNav', handleToggle);
+
         // Dynamically import to avoid circular dependencies if any, 
         // though we could likely just use the storage directly or move logic
         const loadUser = async () => {
@@ -38,6 +41,8 @@ export default function Sidebar() {
             }
         };
         loadUser();
+
+        return () => window.removeEventListener('toggleMobileNav', handleToggle);
     }, []);
 
     const menuItems = [
@@ -225,19 +230,21 @@ export default function Sidebar() {
 
     return (
         <>
-            {/* Mobile Menu Button */}
-            <button
-                className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-white shadow-md"
-                onClick={() => setIsOpen(!isOpen)}
-            >
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    {isOpen ? (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    ) : (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    )}
-                </svg>
-            </button>
+            {/* Mobile Menu Button - Hidden on main dashboard since it has its inline header */}
+            {pathname !== '/dashboard' && (
+                <button
+                    className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-white shadow-md"
+                    onClick={() => setIsOpen(!isOpen)}
+                >
+                    <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {isOpen ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        )}
+                    </svg>
+                </button>
+            )}
 
             {/* Sidebar */}
             <div className={`

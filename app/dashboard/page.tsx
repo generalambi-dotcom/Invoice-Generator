@@ -403,7 +403,7 @@ export default function DashboardPage() {
               <span className="w-2 h-6 bg-emerald-600 rounded-full"></span>
               Dashboard
             </h1>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               {availableCurrencies.length > 1 && (
                 <div className="hidden sm:block">
                   <select
@@ -423,12 +423,22 @@ export default function DashboardPage() {
                 <div className="text-sm font-medium text-gray-900">{user?.name}</div>
                 <div className="text-xs text-gray-500">{user?.email}</div>
               </div>
-              <button
-                onClick={handleSignOut}
-                className="text-sm text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors font-medium"
-              >
-                Sign Out
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Inline Burger Menu for Mobile next to Sign Out */}
+                <button
+                  onClick={() => window.dispatchEvent(new Event('toggleMobileNav'))}
+                  className="lg:hidden p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors bg-gray-50 border border-gray-200"
+                  title="Menu"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="text-xs sm:text-sm text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors font-medium"
+                >
+                  Sign Out
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -530,9 +540,9 @@ export default function DashboardPage() {
         {/* Action Bar & List Header */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
           <h2 className="text-xl font-bold text-gray-900">Recent Documents</h2>
-          <div className="flex flex-wrap gap-3 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto mt-2 sm:mt-0 items-stretch sm:items-center">
             {/* Document Type Tabs */}
-            <div className="flex bg-gray-100 p-1 rounded-lg">
+            <div className="flex flex-1 sm:flex-none justify-between sm:justify-start bg-gray-100 p-1 rounded-lg overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => { setActiveTab('invoices'); setShowDeleted(false); }}
                 className={`flex-1 md:flex-none px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all ${activeTab === 'invoices' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
@@ -554,7 +564,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Status Tabs */}
-            <div className="flex bg-gray-100 p-1 rounded-lg">
+            <div className="flex flex-1 sm:flex-none justify-between sm:justify-start bg-gray-100 p-1 rounded-lg">
               <button
                 onClick={() => setShowDeleted(false)}
                 className={`flex-1 md:flex-none px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all ${!showDeleted ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
@@ -626,7 +636,7 @@ export default function DashboardPage() {
                     <th className="px-3 md:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Customer
                     </th>
-                    <th className="px-3 md:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="hidden sm:table-cell px-3 md:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Reference
                     </th>
                     <th className="hidden md:table-cell px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -659,7 +669,7 @@ export default function DashboardPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 md:px-6 py-4 whitespace-nowrap">
+                      <td className="hidden sm:table-cell px-3 md:px-6 py-4 whitespace-nowrap">
                         <div className="text-[10px] md:text-sm font-medium text-gray-600 bg-gray-100 px-1.5 py-0.5 md:px-2 md:py-1 rounded inline-block max-w-[70px] sm:max-w-[100px] md:max-w-none truncate">{invoice.invoiceNumber}</div>
                       </td>
                       <td className="hidden md:table-cell px-6 py-4 whitespace-nowrap">

@@ -56,18 +56,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export async function generateStaticParams() {
-    try {
-        const posts = await prisma.blogPost.findMany({
-            where: { published: true },
-            select: { slug: true }
-        });
-        return posts.map((post) => ({
-            slug: post.slug,
-        }));
-    } catch (error) {
-        console.error('Error generating static params:', error);
-        return [];
-    }
+    // Return empty array so pages are generated on-demand (ISR)
+    // Prevents Vercel OOM errors during build time when processing 100+ MDX files
+    return [];
 }
 
 export default async function BlogPostPage({ params }: PageProps) {

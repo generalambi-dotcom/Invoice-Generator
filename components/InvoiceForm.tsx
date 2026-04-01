@@ -148,6 +148,7 @@ function InvoiceFormContent() {
   });
 
   // Guest post-download flow state
+  const [showLimitModal, setShowLimitModal] = useState(false);
   const [showGuestPostDownloadModal, setShowGuestPostDownloadModal] = useState(false);
   const [guestEmailStep, setGuestEmailStep] = useState<1 | 2>(1);
   const [guestEmail, setGuestEmail] = useState('');
@@ -624,7 +625,11 @@ function InvoiceFormContent() {
       toast.success('Invoice saved successfully!');
     } catch (error: any) {
       console.error('Error saving invoice:', error);
-      toast.error('Failed to save invoice: ' + (error.message || 'Please try again.'));
+      if (error.message === 'FREE_PLAN_LIMIT_REACHED') {
+        setShowLimitModal(true);
+      } else {
+        toast.error('Failed to save invoice: ' + (error.message || 'Please try again.'));
+      }
     } finally {
       setSavingInvoice(false);
     }
@@ -819,7 +824,11 @@ function InvoiceFormContent() {
           setInvoiceHistory(formattedInvoices);
         } catch (error: any) {
           console.error('Error saving invoice:', error);
-          toast.error('Failed to save invoice. Please try again.');
+          if (error.message === 'FREE_PLAN_LIMIT_REACHED') {
+            setShowLimitModal(true);
+          } else {
+            toast.error('Failed to save invoice. Please try again.');
+          }
         } finally {
           setSavingInvoice(false);
         }
@@ -883,7 +892,11 @@ function InvoiceFormContent() {
         toast.dismiss('saving-share');
       } catch (error) {
         toast.dismiss('saving-share');
-        toast.error('Failed to save invoice for sharing.');
+        if (error.message === 'FREE_PLAN_LIMIT_REACHED') {
+          setShowLimitModal(true);
+        } else {
+          toast.error('Failed to save invoice for sharing.');
+        }
         return;
       }
     }
@@ -2910,6 +2923,44 @@ function InvoiceFormContent() {
               </div>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* Free Plan Limit Reached Modal */}
+      {showLimitModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] px-4">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-200">
+            <button
+              onClick={() => setShowLimitModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-5 transform rotate-3">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Invoice Limit Reached</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                You have reached the 15 invoice limit for your Free Plan this month. To continue generating unlimited invoices, securely sending via WhatsApp, and tracking payments, please upgrade to Premium.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Link
+                  href="/upgrade"
+                  className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  Upgrade to Premium
+                </Link>
+                <button
+                  onClick={() => setShowLimitModal(false)}
+                  className="w-full py-3 border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold rounded-xl text-sm transition-colors"
+                >
+                  Maybe later
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -4,6 +4,7 @@ import { getAuthenticatedUser } from '@/lib/api-auth';
 import { rateLimit, rateLimitConfigs, getClientIdentifier } from '@/lib/rate-limit';
 import { logRequest, logError } from '@/lib/request-logger';
 import { autoGeneratePaymentLink } from '@/lib/auto-payment-link';
+import { sendLimitWarningEmail } from '@/lib/email';
 
 // GET - Get user's invoices
 export async function GET(request: NextRequest) {
@@ -138,6 +139,38 @@ export async function POST(request: NextRequest) {
     }
 
     try {
+      // Check Free Plan LIMIT (15 invoices / calendar month)
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.userId },
+        select: { subscriptionPlan: true, email: true, name: true }
+      });
+
+      if (!dbUser?.subscriptionPlan || dbUser.subscriptionPlan === 'free') {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const currentMonthInvoicesCount = await prisma.invoice.count({
+          where: {
+            userId: user.userId,
+            createdAt: { gte: startOfMonth }
+          }
+        });
+
+        if (currentMonthInvoicesCount >= 15) {
+          return NextResponse.json(
+            { error: 'FREE_PLAN_LIMIT_REACHED', message: 'You have reached the 15 invoice limit for your Free Plan this month. Please upgrade to continue creating invoices.' },
+            { status: 403 } // 403 Forbidden
+          );
+        }
+
+        // Implicit warning on 14th invoice (count is 13 prior to creating this one)
+        if (currentMonthInvoicesCount === 13 && dbUser && dbUser.email) {
+          // Fire email asynchronously, don't await so we don't slow down creation
+          sendLimitWarningEmail({ to: dbUser.email, name: dbUser.name || 'there' }).catch(err => console.error('Limit warning email failed:', err));
+        }
+      }
+
       const invoice = await prisma.invoice.create({
         data: {
           userId: user.userId,

@@ -866,3 +866,65 @@ export async function sendSequenceEmail({
   }
 }
 
+/**
+ * Send an email warning that the free plan 15 invoice limit is almost reached.
+ */
+interface SendLimitWarningEmailParams {
+  to: string;
+  name?: string;
+}
+
+export async function sendLimitWarningEmail({
+  to,
+  name,
+}: SendLimitWarningEmailParams): Promise<{ success: boolean; error?: string }> {
+  try {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.log('⚠️ RESEND_API_KEY not set. Limit warning email would be sent to', to);
+      return { success: true };
+    }
+
+    const resend = new Resend(apiKey);
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
+    const userName = name || 'there';
+
+    const content = `
+      <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 30px;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">⚠️ You're almost at your limit!</h1>
+      </div>
+      
+      <p>Hi ${userName},</p>
+      <p>We wanted to give you a quick heads up: you have just created your <strong>14th invoice</strong> this month.</p>
+      <p>Your current Free Plan allows you to create up to 15 invoices per calendar month. Once you hit 15, you won't be able to generate new invoices until the 1st of next month.</p>
+      
+      <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <p style="margin-top: 0; color: #111827;">To ensure your business keeps moving without interruption, consider upgrading to our Premium tier today for unlimited invoices, WhatsApp sending, and priority support.</p>
+      </div>
+
+      <div style="text-align: center; margin: 30px 0;">
+         <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng'}/upgrade" style="background-color: #059669; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Upgrade to Premium</a>
+      </div>
+      
+      <p>If you have any questions about our plans, just reply to this email!</p>
+    `;
+
+    const emailHtml = await getEmailLayout({
+      content,
+      title: 'Approaching Your Monthly Limits',
+      previewText: 'You have almost reached your 15 invoice monthly limit.',
+    });
+
+    await resend.emails.send({
+      from: `InvoiceNaija <${fromEmail}>`,
+      to,
+      subject: 'You are approaching your invoice limit ⚠️',
+      html: emailHtml,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error sending limit warning email:', error);
+    return { success: false, error: error.message };
+  }
+}

@@ -1237,20 +1237,21 @@ function InvoiceFormContent() {
       <div className="bg-white py-3 sm:py-8 pb-24 lg:pb-8">
         <div className="max-w-[100rem] mx-auto px-0 sm:px-6 lg:px-8">
           {/* Page Header */}
-          <div className="mb-4 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-            <div>
-              <h1 className="text-lg sm:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+          <div className={`mb-4 sm:mb-8 flex flex-row justify-between items-center gap-2 sm:gap-4 pb-1 sm:pb-0 relative z-10 ${user ? 'pl-12 sm:pl-0 -mt-16 sm:mt-0 pt-1 sm:pt-0' : ''}`}>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-[17px] sm:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3 leading-none sm:leading-tight truncate">
                 {invoice.type === 'estimate' ? 'Estimate Generator' : invoice.type === 'credit_note' ? 'Credit Note Generator' : 'Invoice Generator'}
               </h1>
               <p className="hidden sm:block text-sm sm:text-base text-gray-600 mt-1">Create professional documents in minutes</p>
             </div>
-            <div className="flex items-center gap-4 w-full sm:w-auto">
+            <div className="flex items-center gap-2 sm:gap-4 w-auto shrink-0">
               <button
                 onClick={() => setShowAIPrompt(true)}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm sm:text-base font-medium rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0"
+                className="inline-flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-5 py-1.5 sm:py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs sm:text-base font-bold rounded-lg sm:rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md shadow-indigo-500/20 active:scale-95 whitespace-nowrap"
               >
-                <span className="text-base sm:text-lg leading-none">✨</span>
-                Create with AI
+                <span className="text-sm sm:text-lg leading-none mt-[1px]">✨</span>
+                <span className="hidden sm:inline">Create with AI</span>
+                <span className="inline sm:hidden tracking-wider">AI</span>
               </button>
               <div className="hidden xl:flex text-right flex-col items-end border-l border-gray-200 pl-4">
                 <span className="text-sm font-medium text-gray-400 uppercase tracking-widest">Draft</span>

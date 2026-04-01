@@ -1,4 +1,5 @@
 import BlogCard from '../../components/blog/BlogCard';
+import BlogListFilter from '../../components/blog/BlogListFilter';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -141,13 +142,9 @@ export default async function BlogPage() {
                     </div>
                 )}
 
-                {/* All Other Posts */}
+                {/* All Other Posts with Filter mechanism */}
                 {regularPosts.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {regularPosts.map((post) => (
-                            <BlogCard key={post.slug} post={post} />
-                        ))}
-                    </div>
+                    <BlogListFilter initialPosts={regularPosts} />
                 ) : (
                     <div className="text-center py-20">
                         <p className="text-xl text-gray-500">No posts found. Please check back later.</p>

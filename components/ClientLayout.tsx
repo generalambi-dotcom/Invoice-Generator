@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import { getCurrentUser } from '@/lib/auth';
 import { Toaster } from 'react-hot-toast';
 import NewsletterPopup from '@/components/NewsletterPopup';
+import PromoBanner from '@/components/PromoBanner';
 
 export default function ClientLayout({
     children,
@@ -35,7 +36,14 @@ export default function ClientLayout({
 
     return (
         <>
-            {showSidebar ? <Sidebar /> : (!isAuthPage && <Header />)}
+            {showSidebar ? <Sidebar /> : (!isAuthPage && (
+                <div className="w-full">
+                    <PromoBanner />
+                    <div className="sticky top-0 z-50">
+                        <Header />
+                    </div>
+                </div>
+            ))}
 
             <main
                 className={`
@@ -45,7 +53,7 @@ export default function ClientLayout({
             >
                 <div className={`
           flex-grow p-4 sm:p-6 lg:p-8 
-          ${showSidebar ? 'mt-16 lg:mt-0' : 'pt-24 sm:pt-28'}
+          ${showSidebar ? 'mt-16 lg:mt-0' : ''}
           ${isAuthPage ? '!p-0' : ''}
         `}>
                     {children}

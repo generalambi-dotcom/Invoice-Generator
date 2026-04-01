@@ -102,11 +102,12 @@ export default function Header() {
   };
 
   return (
-    <header className="fixed top-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-5xl z-50 transition-all duration-300">
-      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-full shadow-lg px-4 sm:px-6 py-2">
-        <div className="flex items-center justify-between h-12 relative">
-          {/* Logo */}
-          <div className="flex items-center space-x-3 shrink-0">
+    <header className="w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 transition-all duration-300 shadow-sm relative z-40">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 relative">
+          
+          {/* Logo and Desktop Nav Container */}
+          <div className="flex items-center lg:space-x-8 shrink-0">
             <Link href="/" className="flex items-center space-x-2" onClick={closeMenus}>
               <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                 <svg
@@ -122,39 +123,39 @@ export default function Header() {
                 InvoiceGenerator
               </span>
             </Link>
-          </div>
 
-          {/* Desktop Navigation Links - Centered */}
-          <nav className="hidden md:flex items-center space-x-8 absolute left-1/2 -translate-x-1/2">
+            {/* Desktop Navigation Links */}
+            <nav className="hidden lg:flex items-center space-x-8 ml-8 border-l border-gray-200 dark:border-gray-700 pl-8">
             <Link
               href="/invoice-generator-ai"
-              className="text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center gap-1"
+              className="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors flex items-center gap-1"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
               AI Generator
             </Link>
             <Link
               href="/blog"
-              className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors"
             >
               Resources
             </Link>
             <Link
               href="/help"
-              className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors"
             >
               Help
             </Link>
             <Link
               href="/upgrade"
-              className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-black dark:hover:text-white transition-colors"
             >
               Pricing
             </Link>
-          </nav>
+            </nav>
+          </div>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-3 shrink-0">
+          <div className="flex items-center space-x-3 lg:space-x-5 shrink-0">
             {/* Language Selector */}
             <div className="hidden sm:block relative">
               <button
@@ -204,16 +205,16 @@ export default function Header() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Link href="/signin" className="px-5 py-2 text-sm font-semibold text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-                  Login
+                <Link href="/signin" className="px-5 py-2 text-sm font-bold text-gray-900 dark:text-white border-2 border-gray-900 dark:border-white rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors hidden sm:block">
+                  Sign in
                 </Link>
-                <Link href="/signup" className="px-5 py-2 text-sm font-semibold text-white bg-black dark:bg-white dark:text-black rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition-all shadow-md items-center gap-2 hidden sm:flex">
+                <Link href="/signup" className="px-5 py-2 text-sm font-bold text-white bg-green-500 rounded-md hover:bg-green-600 transition-all shadow-sm items-center gap-2 hidden sm:flex">
                   <span>Get Started</span>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                 </Link>
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="md:hidden p-2 text-gray-700 hover:text-gray-900"
+                  className="lg:hidden p-2 text-gray-700 hover:text-gray-900"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                 </button>

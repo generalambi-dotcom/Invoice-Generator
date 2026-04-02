@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { LineItem } from '@/types/invoice';
 
 interface LineItemsProps {
@@ -11,6 +11,19 @@ interface LineItemsProps {
 }
 
 export default function LineItems({ lineItems, onUpdate, currency, currencySymbol }: LineItemsProps) {
+  const textareaRefs = useRef<Map<string, HTMLTextAreaElement>>(new Map());
+
+  const autoResize = useCallback((el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }, []);
+
+  // Auto-resize all textareas whenever lineItems descriptions change
+  useEffect(() => {
+    textareaRefs.current.forEach((el) => autoResize(el));
+  }, [lineItems, autoResize]);
+
   const updateItem = (id: string, field: keyof LineItem, value: string | number) => {
     const updated = lineItems.map((item) => {
       if (item.id === id) {
@@ -70,12 +83,20 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
                 className="group hover:bg-gray-50/50 transition-colors"
               >
                 <td className="p-3">
-                  <input
-                    type="text"
+                  <textarea
+                    ref={(el) => {
+                      if (el) textareaRefs.current.set(item.id, el);
+                      else textareaRefs.current.delete(item.id);
+                    }}
                     value={item.description}
-                    onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                    placeholder="Item description"
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-transparent hover:border-gray-200 rounded-xl text-[15px] text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all"
+                    onChange={(e) => {
+                      updateItem(item.id, 'description', e.target.value);
+                      autoResize(e.target);
+                    }}
+                    onFocus={(e) => autoResize(e.target)}
+                    placeholder="Item description (supports multiple lines)"
+                    rows={1}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-transparent hover:border-gray-200 rounded-xl text-[15px] text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all resize-none overflow-hidden"
                   />
                 </td>
                 <td className="p-3">
@@ -140,12 +161,20 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
             {/* Description Row */}
             <div className="mb-4">
               <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Description</label>
-              <input
-                type="text"
+              <textarea
+                ref={(el) => {
+                  if (el) textareaRefs.current.set('m-' + item.id, el);
+                  else textareaRefs.current.delete('m-' + item.id);
+                }}
                 value={item.description}
-                onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                onChange={(e) => {
+                  updateItem(item.id, 'description', e.target.value);
+                  autoResize(e.target);
+                }}
+                onFocus={(e) => autoResize(e.target)}
                 placeholder="Description of item/service..."
-                className="w-full px-4 py-3.5 bg-gray-50 border border-transparent focus:bg-white focus:border-theme-primary rounded-xl text-[15px] outline-none ring-0 focus:ring-2 focus:ring-theme-primary/20 transition-all"
+                rows={1}
+                className="w-full px-4 py-3.5 bg-gray-50 border border-transparent focus:bg-white focus:border-theme-primary rounded-xl text-[15px] outline-none ring-0 focus:ring-2 focus:ring-theme-primary/20 transition-all resize-none overflow-hidden"
               />
             </div>
 

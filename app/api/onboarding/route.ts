@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getCurrentUser } from '@/lib/session';
+import { getAuthenticatedUser } from '@/lib/api-auth';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
+    const user = getAuthenticatedUser(request);
     
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -18,13 +18,13 @@ export async function POST(request: Request) {
     }
 
     const companyDefaults = await prisma.companyDefaults.upsert({
-      where: { userId: user.id },
+      where: { userId: user.userId },
       update: {
         defaultLayout: layout,
         companyInfo: companyInfo,
       },
       create: {
-        userId: user.id,
+        userId: user.userId,
         defaultLayout: layout,
         companyInfo: companyInfo,
       },

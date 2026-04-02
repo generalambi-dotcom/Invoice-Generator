@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import DashboardGreeting from '@/components/DashboardGreeting';
 import DashboardCharts from '@/components/DashboardCharts';
+import OnboardingModal from '@/components/OnboardingModal';
 import {
   Plus, BarChart3, FileText, Eye, CreditCard,
   Trash2, RefreshCcw, MoreHorizontal
@@ -19,6 +20,7 @@ import {
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [activeInvoices, setActiveInvoices] = useState<Invoice[]>([]);
   const [deletedInvoices, setDeletedInvoices] = useState<Invoice[]>([]);
   const [activeEstimates, setActiveEstimates] = useState<Invoice[]>([]);
@@ -88,6 +90,9 @@ export default function DashboardPage() {
   const loadCompanySettings = async () => {
     try {
       const defaults = await getCompanyDefaultsAPI();
+      if (!defaults || Object.keys(defaults).length === 0) {
+        setShowOnboarding(true);
+      }
       if (defaults && defaults.defaultCurrency) {
         setCurrency(defaults.defaultCurrency);
         setAvailableCurrencies(prev => {
@@ -803,6 +808,13 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+      {/* Onboarding Modal */}
+      {showOnboarding && (
+        <OnboardingModal 
+          onComplete={() => { setShowOnboarding(false); loadCompanySettings(); }} 
+          onSkip={() => setShowOnboarding(false)} 
+        />
+      )}
     </div>
   );
 }

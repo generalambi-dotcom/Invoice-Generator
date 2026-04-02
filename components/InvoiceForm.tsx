@@ -1239,8 +1239,13 @@ function InvoiceFormContent() {
           {/* Page Header */}
           <div className={`mb-4 sm:mb-8 flex flex-row justify-between items-center gap-2 sm:gap-4 pb-1 sm:pb-0 relative z-10 ${user ? 'pl-12 sm:pl-0 -mt-16 sm:mt-0 pt-1 sm:pt-0' : ''}`}>
             <div className="flex-1 min-w-0">
-              <h1 className="text-[17px] sm:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3 leading-none sm:leading-tight truncate">
-                {invoice.type === 'estimate' ? 'Estimate Generator' : invoice.type === 'credit_note' ? 'Credit Note Generator' : 'Invoice Generator'}
+              <h1 className="text-[19px] sm:text-3xl font-bold text-gray-900 flex items-center gap-1.5 sm:gap-2.5 leading-none sm:leading-tight truncate tracking-tight">
+                <div className="w-7 h-7 sm:w-9 sm:h-9 bg-green-500 rounded-full flex items-center justify-center shrink-0">
+                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <span>{invoice.type === 'estimate' ? 'EstimateGenerator' : invoice.type === 'credit_note' ? 'CreditNoteGenerator' : 'InvoiceGenerator'}</span>
               </h1>
               <p className="hidden sm:block text-sm sm:text-base text-gray-600 mt-1">Create professional documents in minutes</p>
             </div>

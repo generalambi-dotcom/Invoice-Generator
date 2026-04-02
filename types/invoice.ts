@@ -1,5 +1,7 @@
 export type Theme = 'slate' | 'blue' | 'green' | 'purple' | 'red';
 
+export type Layout = 'modern' | 'bold' | 'classic' | 'creative' | 'startup' | 'elegant';
+
 export type Currency = 'GBP' | 'USD' | 'EUR' | 'JPY' | 'CAD' | 'AUD' | 'NGN' | 'ZAR' | 'KES' | 'GHS' | 'AED' | 'CNY' | 'INR' | 'BRL';
 
 export interface LineItem {
@@ -63,6 +65,7 @@ export interface Invoice {
   total: number;
   currency: Currency;
   theme: Theme;
+  layout?: Layout;
   notes?: string;
   bankDetails?: string;
   terms?: string;

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
-import { Invoice, currencySymbols } from '@/types/invoice';
+import { Invoice, currencySymbols, themeColors, Theme } from '@/types/invoice';
 import { formatCurrency } from './calculations';
 import { format } from 'date-fns';
 
@@ -227,6 +227,8 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
 
   const currencySymbol = currencySymbols[invoice.currency || 'USD'];
   const currency = invoice.currency || 'USD';
+  const currentTheme = (invoice.theme as Theme) || 'slate';
+  const primaryColor = themeColors[currentTheme]?.primary || '#475569';
 
   return (
     <Document>
@@ -332,11 +334,11 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
 
         {/* Line Items Table */}
         <View style={styles.table}>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderCell, styles.colDescription]}>Description</Text>
-            <Text style={[styles.tableHeaderCell, styles.colQuantity]}>Qty</Text>
-            <Text style={[styles.tableHeaderCell, styles.colRate]}>Rate</Text>
-            <Text style={[styles.tableHeaderCell, styles.colAmount]}>Amount</Text>
+          <View style={[styles.tableHeader, { backgroundColor: primaryColor, borderBottomColor: primaryColor }]}>
+            <Text style={[styles.tableHeaderCell, styles.colDescription, { color: '#FFFFFF' }]}>Description</Text>
+            <Text style={[styles.tableHeaderCell, styles.colQuantity, { color: '#FFFFFF' }]}>Qty</Text>
+            <Text style={[styles.tableHeaderCell, styles.colRate, { color: '#FFFFFF' }]}>Rate</Text>
+            <Text style={[styles.tableHeaderCell, styles.colAmount, { color: '#FFFFFF' }]}>Amount</Text>
           </View>
 
           {invoice.lineItems && invoice.lineItems.length > 0 ? (
@@ -400,7 +402,7 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
 
             <View style={styles.totalDueRow}>
               <Text style={styles.totalDueLabel}>Total Due</Text>
-              <Text style={styles.totalDueValue}>
+              <Text style={[styles.totalDueValue, { color: primaryColor }]}>
                 {currencySymbol} {formatCurrency(invoice.total || 0, currency)}
               </Text>
             </View>

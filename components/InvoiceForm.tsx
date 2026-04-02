@@ -13,6 +13,7 @@ import {
   Invoice,
   LineItem,
   Theme,
+  Layout,
   Currency,
   CompanyDefaults,
   CompanyInfo,
@@ -1674,6 +1675,22 @@ function InvoiceFormContent() {
                     <option value="CNY">CNY (¥)</option>
                     <option value="INR">INR (₹)</option>
                     <option value="BRL">BRL (R$)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Invoice Layout</label>
+                  <select
+                    value={invoice.layout || 'modern'}
+                    onChange={(e) => updateField('layout', e.target.value as Layout)}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary"
+                  >
+                    <option value="modern">Modern Minimalist</option>
+                    <option value="bold">Bold Business</option>
+                    <option value="classic">Classic Corporate</option>
+                    <option value="creative">Creative Studio</option>
+                    <option value="startup">Sleek Startup</option>
+                    <option value="elegant">Elegant Edge</option>
                   </select>
                 </div>
 

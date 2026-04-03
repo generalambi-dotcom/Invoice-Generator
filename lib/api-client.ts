@@ -1308,3 +1308,81 @@ export async function deleteTemplateAPI(templateId: string): Promise<void> {
     throw error;
   }
 }
+
+/**
+ * Get user profile data (including lead gen fields + completeness score)
+ */
+export async function getUserProfileAPI(): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/user/profile`, {
+      headers: await getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to view profile');
+      }
+      const error = await response.json().catch(() => ({ error: 'Failed to load profile' }));
+      throw new Error(error.error || 'Failed to load profile');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error loading profile:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update user profile fields (lead gen + business profile fields)
+ */
+export async function updateUserProfileAPI(profileData: Record<string, any>): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE}/api/user/profile`, {
+      method: 'PATCH',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(profileData),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+        }
+        throw new Error('Please sign in to update profile');
+      }
+      const error = await response.json().catch(() => ({ error: 'Failed to update profile' }));
+      throw new Error(error.error || 'Failed to update profile');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error updating profile:', error);
+    throw error;
+  }
+}
+
+/**
+ * Dismiss a profile nudge (update lastProfilePrompt timestamp)
+ */
+export async function dismissProfileNudgeAPI(): Promise<void> {
+  try {
+    const response = await fetch(`${API_BASE}/api/user/profile`, {
+      method: 'PATCH',
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ lastProfilePrompt: new Date().toISOString() }),
+    });
+
+    if (!response.ok) {
+      console.error('Failed to dismiss nudge');
+    }
+  } catch (error: any) {
+    console.error('Error dismissing nudge:', error);
+  }
+}
+

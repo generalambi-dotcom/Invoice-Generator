@@ -66,6 +66,41 @@
   }
 }
 
+/* ── Blog prose table enhancements ────────────────────────────────────── */
+.prose table {
+  @apply w-full border-collapse text-sm;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.prose thead {
+  @apply bg-gray-100 dark:bg-gray-700;
+}
+
+.prose thead th {
+  @apply px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600;
+}
+
+.prose tbody td {
+  @apply px-4 py-3 border-b border-gray-100 dark:border-gray-700;
+}
+
+.prose tbody tr:nth-child(even) {
+  @apply bg-gray-50 dark:bg-gray-800/50;
+}
+
+.prose tbody tr:hover {
+  @apply bg-blue-50/50 dark:bg-blue-900/20;
+}
+
+/* Responsive table wrapper */
+.prose table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Print styles for PDF */
 @media print {
   body {

@@ -44,6 +44,22 @@ model User {
   subscriptionEndDate   DateTime?
   subscriptionPaymentMethod String? // 'paypal' | 'paystack' | 'stripe'
 
+  // Business Profile (for lead generation)
+  industry            String?   // Industry/sector dropdown value
+  businessType        String?   // 'sole_proprietor' | 'partnership' | 'llc' | 'ltd' | 'plc' | 'ngo' | 'government'
+  companySize         String?   // '1-5' | '6-20' | '21-50' | '51-200' | '200+'
+  monthlyRevenueRange String?   // Revenue bracket
+  yearFounded         Int?
+  cacNumber           String?   // CAC/RC registration number
+  tinNumber           String?   // Tax Identification Number
+  linkedinUrl         String?
+  instagramUrl        String?
+  twitterUrl          String?
+
+  // Profile completeness tracking
+  profileCompleteness Int       @default(0)  // 0-100 percentage
+  lastProfilePrompt   DateTime? // When we last nudged them
+
   // Relations
   paymentCredentials PaymentCredential[]
   invoices          Invoice[]

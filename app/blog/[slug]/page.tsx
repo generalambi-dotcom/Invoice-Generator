@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { MDXRemote } from 'next-mdx-remote/rsc';
+import remarkGfm from 'remark-gfm';
 import { prisma } from '../../../lib/db';
 import BlogSidebar from '../../../components/blog/BlogSidebar';
 
@@ -193,7 +194,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                                     prose-a:text-blue-600 dark:prose-a:text-blue-400 hover:prose-a:text-blue-500
                                     prose-img:rounded-xl prose-img:shadow-lg
                                     prose-headings:font-bold prose-headings:text-gray-900 dark:prose-headings:text-white">
-                                <MDXRemote source={sanitizeMdxContent(post.content)} />
+                                <MDXRemote source={sanitizeMdxContent(post.content)} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} />
                             </article>
                         </div>
                     </main>

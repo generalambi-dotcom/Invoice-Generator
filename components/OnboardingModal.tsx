@@ -5,6 +5,7 @@ import { Layout, Theme } from '@/types/invoice';
 import ImageUpload from './ImageUpload';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { INDUSTRY_OPTIONS, BUSINESS_TYPE_OPTIONS } from '@/lib/profile-completeness';
 
 interface OnboardingModalProps {
   onComplete: () => void;
@@ -133,6 +134,8 @@ export default function OnboardingModal({ onComplete, onSkip }: OnboardingModalP
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [logo, setLogo] = useState<string | null>(null);
+  const [industry, setIndustry] = useState('');
+  const [businessType, setBusinessType] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -143,7 +146,9 @@ export default function OnboardingModal({ onComplete, onSkip }: OnboardingModalP
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           layout,
-          companyInfo: { name: companyName, address, phone, logo }
+          companyInfo: { name: companyName, address, phone, logo },
+          industry: industry || undefined,
+          businessType: businessType || undefined,
         })
       });
       if (!res.ok) throw new Error('Failed to save settings');
@@ -161,9 +166,22 @@ export default function OnboardingModal({ onComplete, onSkip }: OnboardingModalP
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-full">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-          <h2 className="text-xl font-bold text-gray-900">
-            {step === 1 ? 'Choose Your Default Layout' : 'Enter Company Details'}
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-gray-900">
+              {step === 1 ? 'Choose Your Default Layout' : 'Tell Us About Your Business'}
+            </h2>
+            {/* Step indicator */}
+            <div className="flex items-center gap-1.5">
+              {[1, 2].map(s => (
+                <div
+                  key={s}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    s === step ? 'bg-green-500' : s < step ? 'bg-green-300' : 'bg-gray-200'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
           <button onClick={onSkip} className="text-sm font-medium text-gray-400 hover:text-gray-600">
             Skip for now
           </button>
@@ -243,9 +261,51 @@ export default function OnboardingModal({ onComplete, onSkip }: OnboardingModalP
                 <textarea
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors resize-none h-24"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors resize-none h-20"
                   placeholder="123 Business Rd..."
                 />
+              </div>
+
+              {/* New Lead Gen Fields */}
+              <div className="border-t border-gray-100 pt-5">
+                <p className="text-xs text-gray-400 mb-4 flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  These help us personalise your experience
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
+                    <select
+                      value={industry}
+                      onChange={(e) => setIndustry(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors bg-white text-sm"
+                    >
+                      <option value="">Select your industry</option>
+                      {INDUSTRY_OPTIONS.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-gray-400 mt-1">Helps us suggest relevant invoice templates</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
+                    <select
+                      value={businessType}
+                      onChange={(e) => setBusinessType(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors bg-white text-sm"
+                    >
+                      <option value="">Select type</option>
+                      {BUSINESS_TYPE_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-gray-400 mt-1">Helps format your tax information</p>
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center justify-between pt-6 border-t border-gray-100">

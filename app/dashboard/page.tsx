@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser, signOut } from '@/lib/auth';
-import { loadInvoicesAPI, deleteInvoiceAPI, updateOverdueInvoicesAPI, getPaymentRemindersAPI, sendPaymentRemindersAPI, approveInvoiceAPI, rejectInvoiceAPI, requestApprovalAPI, markInvoiceSentAPI, getCompanyDefaultsAPI } from '@/lib/api-client';
+import { loadInvoicesAPI, deleteInvoiceAPI, updateOverdueInvoicesAPI, getPaymentRemindersAPI, sendPaymentRemindersAPI, approveInvoiceAPI, rejectInvoiceAPI, requestApprovalAPI, markInvoiceSentAPI, getCompanyDefaultsAPI, getUserProfileAPI } from '@/lib/api-client';
 import { Invoice, currencySymbols, Currency } from '@/types/invoice';
 import { formatCurrency } from '@/lib/calculations';
 import { format } from 'date-fns';
@@ -12,6 +12,8 @@ import { toast } from 'react-hot-toast';
 import DashboardGreeting from '@/components/DashboardGreeting';
 import DashboardCharts from '@/components/DashboardCharts';
 import OnboardingModal from '@/components/OnboardingModal';
+import ProfileCompletenessCard from '@/components/ProfileCompletenessCard';
+import ProfileNudge from '@/components/ProfileNudge';
 import {
   Plus, BarChart3, FileText, Eye, CreditCard,
   Trash2, RefreshCcw, MoreHorizontal
@@ -34,6 +36,8 @@ export default function DashboardPage() {
   const [processingApproval, setProcessingApproval] = useState<string | null>(null);
   const [currency, setCurrency] = useState('USD');
   const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['USD']);
+  const [profileData, setProfileData] = useState<any>(null);
+  const [showNudge, setShowNudge] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -77,7 +81,8 @@ export default function DashboardPage() {
       await Promise.all([
         loadInvoiceData(),
         loadPaymentReminders(),
-        loadCompanySettings()
+        loadCompanySettings(),
+        loadProfileData()
       ]);
 
       // Update overdue invoices on mount (background)
@@ -109,6 +114,24 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error loading company settings:', error);
+    }
+  };
+
+  const loadProfileData = async () => {
+    try {
+      const data = await getUserProfileAPI();
+      setProfileData(data);
+      
+      // Check if we should show the nudge (24h cooldown)
+      if (data?.user?.lastProfilePrompt) {
+        const lastPrompt = new Date(data.user.lastProfilePrompt);
+        const hoursSinceLastPrompt = (Date.now() - lastPrompt.getTime()) / (1000 * 60 * 60);
+        if (hoursSinceLastPrompt < 24) {
+          setShowNudge(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading profile data:', error);
     }
   };
 
@@ -456,6 +479,28 @@ export default function DashboardPage() {
           userName={user?.name}
           totalStats={{ paid: stats.paidCount, unpaid: stats.unpaidCount }}
         />
+
+        {/* Profile Nudge - contextual suggestion */}
+        {showNudge && profileData?.nudge && profileData?.completeness?.score < 100 && (
+          <ProfileNudge
+            nudge={profileData.nudge}
+            score={profileData.completeness.score}
+            onDismiss={() => setShowNudge(false)}
+          />
+        )}
+
+        {/* Profile Completeness - compact card */}
+        {profileData?.completeness && profileData.completeness.score < 100 && (
+          <div className="mb-6">
+            <ProfileCompletenessCard
+              score={profileData.completeness.score}
+              currentTier={profileData.completeness.currentTier}
+              nextTier={profileData.completeness.nextTier}
+              missingFields={profileData.completeness.missingFields}
+              compact={true}
+            />
+          </div>
+        )}
 
         {/* Stats Cards - Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">

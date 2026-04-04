@@ -44,10 +44,10 @@ export default function BusinessesDirectoryPage() {
             </div>
             InvoiceGenerator.ng
           </Link>
-          <div className="flex items-center gap-6">
-            <Link href="/businesses" className="text-sm font-medium text-white hover:text-blue-300 transition">Explore</Link>
+          <div className="flex items-center gap-3 sm:gap-6">
+            <Link href="/businesses" className="hidden sm:block text-sm font-medium text-white hover:text-blue-300 transition">Explore</Link>
             <Link href="/signin" className="text-sm font-medium text-white/90 hover:text-white transition">Sign in</Link>
-            <Link href="/signup" className="text-sm font-medium bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition shadow-lg shadow-blue-600/30">
+            <Link href="/signup" className="text-sm font-medium bg-blue-600 text-white px-4 py-2 sm:px-5 rounded-full hover:bg-blue-700 transition shadow-lg shadow-blue-600/30">
               Add a listing
             </Link>
           </div>
@@ -55,7 +55,7 @@ export default function BusinessesDirectoryPage() {
       </header>
 
       {/* Full Bleed Hero Section */}
-      <section className="relative h-[65vh] min-h-[500px] w-full flex items-center justify-center">
+      <section className="relative h-[auto] min-h-[500px] md:h-[65vh] w-full flex items-center justify-center py-24 md:py-0">
         {/* Background Image (Coffee Shop/Business Vibe) */}
         <div 
           className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
@@ -65,11 +65,11 @@ export default function BusinessesDirectoryPage() {
            <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 via-gray-900/60 to-gray-900/90 mix-blend-multiply"></div>
         </div>
 
-        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 text-center mt-12">
-          <h1 className="text-5xl sm:text-7xl font-extrabold text-white tracking-tight mb-4 drop-shadow-md">
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 text-center mt-12 md:mt-16">
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white tracking-tight mb-4 drop-shadow-md">
             Discover great businesses <br className="hidden sm:block" /> in Nigeria
           </h1>
-          <p className="text-lg sm:text-xl text-white/90 font-medium mb-12 drop-shadow-sm">
+          <p className="text-base sm:text-lg lg:text-xl text-white/90 font-medium mb-8 lg:mb-12 drop-shadow-sm px-2">
             Find trusted partners, creative agencies, and top-rated professionals.
           </p>
 

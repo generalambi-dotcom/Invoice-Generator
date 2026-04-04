@@ -107,79 +107,29 @@ export default function BusinessesDirectoryPage() {
         </div>
       </section>
 
-      {/* Main Container - 3 Column Layout */}
-      <div className="flex-1 flex w-full relative">
+      {/* Main Container - Centered Grid (Gumtree style) */}
+      <div className="w-full relative max-w-[1400px] mx-auto pb-24 top-[-2rem] relative z-20">
          
-         {/* LEFT COLUMN: Deep Filters (Screenshot 2 left side) */}
-         <aside className="hidden lg:block w-[300px] shrink-0 bg-white border-r border-gray-200 p-6 overflow-y-auto" style={{ height: 'calc(100vh - 80px)', position: 'sticky', top: 0 }}>
-            <div className="flex items-center justify-between mb-8">
-               <h3 className="font-bold text-gray-900 text-lg">Filters</h3>
-               <button 
-                 onClick={() => setFilters({ industry: '', size: '', status: '' })}
-                 className="text-sm font-medium text-gray-500 hover:text-gray-900 flex items-center gap-1"
-               >
-                  <Filter className="w-3.5 h-3.5" /> Reset
-               </button>
-            </div>
-
-            <div className="space-y-8">
-               {/* Activity Filter */}
-               <div>
-                   <label className="block text-sm font-semibold text-gray-900 mb-3">Activity Status</label>
-                   <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
-                      <button 
-                        className={`flex-1 py-1.5 text-sm font-medium rounded-md transition ${filters.status === '' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
-                        onClick={() => setFilters({...filters, status: ''})}
-                      >All</button>
-                      <button 
-                        className={`flex-1 py-1.5 text-sm font-medium rounded-md transition ${filters.status === 'active' ? 'bg-[#6B4CE6] shadow-sm text-white' : 'text-gray-500 hover:text-gray-700'}`}
-                        onClick={() => setFilters({...filters, status: 'active'})}
-                      >Active Now</button>
-                   </div>
-               </div>
-
-               {/* Size Filter */}
-               <div>
-                   <label className="block text-sm font-semibold text-gray-900 mb-3">Company Size</label>
-                   <div className="space-y-2">
-                      {['1-5', '6-20', '21-50', '51-200', '200+'].map(size => (
-                         <label key={size} className="flex items-center gap-3 cursor-pointer group">
-                            <input 
-                              type="radio" 
-                              name="size"
-                              checked={filters.size === size}
-                              onChange={() => setFilters({...filters, size})}
-                              className="w-4 h-4 text-[#6B4CE6] border-gray-300 focus:ring-[#6B4CE6]"
-                            />
-                            <span className="text-sm text-gray-600 group-hover:text-gray-900 transition">{size} employees</span>
-                         </label>
-                      ))}
-                   </div>
-               </div>
-            </div>
-         </aside>
-
          {/* MIDDLE COLUMN: Grid Results */}
-         <main className="flex-1 p-6 lg:p-8 min-w-0 bg-[#F5F7FA]">
+         <main className="p-6 lg:p-8 min-w-0 bg-transparent">
              {/* Header Bar */}
              <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
                 <h3 className="text-gray-700 font-medium">
                     {loading ? 'Finding businesses...' : `Showing ${businesses.length} results`}
                 </h3>
-                <div className="flex items-center gap-2 bg-white rounded-lg p-1 border border-gray-200">
+                <div className="flex items-center gap-2 bg-white rounded-lg p-1 border border-gray-200 shadow-sm">
                    <button className="p-1.5 bg-gray-100 rounded text-gray-900 shadow-sm"><Grid className="w-4 h-4" /></button>
-                   <button className="p-1.5 text-gray-400 hover:text-gray-900"><MapPin className="w-4 h-4" /></button>
                 </div>
              </div>
 
              {/* Results */}
              {loading ? (
-                <div className="flex flex-col items-center justify-center py-32 text-gray-400">
+                <div className="flex flex-col items-center justify-center py-32 text-gray-400 bg-white rounded-2xl shadow-sm border border-gray-100">
                    <Loader2 className="w-10 h-10 animate-spin mb-4 text-[#6B4CE6]" />
                    <p className="font-medium">Curating the database...</p>
                 </div>
              ) : businesses.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-dashed border-gray-300 text-center">
+                <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-dashed border-gray-300 text-center shadow-sm">
                    <div className="w-16 h-16 bg-[#F5F7FA] rounded-full flex items-center justify-center mb-4">
                       <Search className="w-8 h-8 text-gray-400" />
                    </div>
@@ -189,27 +139,13 @@ export default function BusinessesDirectoryPage() {
                    </p>
                 </div>
              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {businesses.map((biz) => (
                         <BusinessCard key={biz.id} data={biz} />
                     ))}
                 </div>
              )}
          </main>
-
-         {/* RIGHT COLUMN: Interactive Maps Placeholder (Screenshot 2 right side) */}
-         <aside className="hidden xl:block w-[450px] shrink-0 bg-gray-200 sticky top-0" style={{ height: '100vh' }}>
-            <iframe 
-               width="100%" 
-               height="100%" 
-               frameBorder="0" 
-               style={{ border: 0 }} 
-               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3963.952912260219!2d3.375295414770757!3d6.5276316452784755!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b2ae68280c1%3A0xdc9e87a367c3d9cb!2sLagos!5e0!3m2!1sen!2sng!4v1620000000000!5m2!1sen!2sng" 
-               allowFullScreen 
-               loading="lazy"
-               title="Business Map"
-            ></iframe>
-         </aside>
 
       </div>
     </div>

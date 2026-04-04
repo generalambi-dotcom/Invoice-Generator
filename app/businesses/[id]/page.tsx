@@ -134,9 +134,6 @@ export default function BusinessProfilePage() {
          <div className="max-w-[1200px] mx-auto px-6 flex overflow-x-auto hide-scrollbar">
              <button className="py-5 px-6 border-b-2 border-[#6B4CE6] text-[#6B4CE6] font-bold whitespace-nowrap">Profile</button>
              <button className="py-5 px-6 border-b-2 border-transparent text-gray-500 font-medium hover:text-gray-900 whitespace-nowrap flex items-center gap-2">Reviews <span className="bg-gray-100 text-gray-500 py-0.5 px-2 rounded-full text-xs">1</span></button>
-             <button className="py-5 px-6 border-b-2 border-transparent text-gray-500 font-medium hover:text-gray-900 whitespace-nowrap flex items-center gap-2">Events <span className="bg-gray-100 text-gray-500 py-0.5 px-2 rounded-full text-xs">0</span></button>
-             <button className="py-5 px-6 border-b-2 border-transparent text-gray-500 font-medium hover:text-gray-900 whitespace-nowrap flex items-center gap-2">Jobs <span className="bg-gray-100 text-gray-500 py-0.5 px-2 rounded-full text-xs">2</span></button>
-             <button className="py-5 px-6 border-b-2 border-transparent text-gray-500 font-medium hover:text-gray-900 whitespace-nowrap flex items-center gap-2">Store <span className="bg-gray-100 text-gray-500 py-0.5 px-2 rounded-full text-xs">0</span></button>
          </div>
       </div>
 

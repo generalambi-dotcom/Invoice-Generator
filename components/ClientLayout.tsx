@@ -27,16 +27,18 @@ export default function ClientLayout({
     }, []);
 
     // Determine if we should show the sidebar
-    // We hide it if not logged in
-    const showSidebar = isLoggedIn;
-
     // We could also allow forcing sidebar hidden on specific public pages if needed
     const isAuthPage = ['/signin', '/signup'].includes(pathname);
-    // but for now, rely strictly on auth status as requested.
+    const isDirectoryPage = pathname?.startsWith('/businesses');
+    
+    // We hide it if not logged in, OR if we are forcing a full-bleed public directory view
+    const showSidebar = isLoggedIn && !isDirectoryPage;
+
+    const hideGlobalHeader = isAuthPage || isDirectoryPage;
 
     return (
         <>
-            {showSidebar ? <Sidebar /> : (!isAuthPage && (
+            {showSidebar ? <Sidebar /> : (!hideGlobalHeader && (
                 <div className="w-full">
                     <PromoBanner />
                     <div className="sticky top-0 z-50">
@@ -54,12 +56,12 @@ export default function ClientLayout({
                 <div className={`
           flex-grow p-4 sm:p-6 lg:p-8 
           ${showSidebar ? 'mt-16 lg:mt-0' : ''}
-          ${isAuthPage ? '!p-0' : ''}
+          ${(isAuthPage || isDirectoryPage) ? '!p-0' : ''}
         `}>
                     {children}
                 </div>
 
-                {!isAuthPage && (
+                {!hideGlobalHeader && (
                     <div className="mt-auto">
                         <Footer />
                     </div>

@@ -1439,3 +1439,17 @@ export const getBusinessesAPI = async (filters: { industry?: string, size?: stri
 
   return response.json();
 };
+
+export const getBusinessProfileAPI = async (id: string) => {
+  const response = await fetch(`/api/businesses/${id}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch business profile');
+  }
+
+  return response.json();
+};

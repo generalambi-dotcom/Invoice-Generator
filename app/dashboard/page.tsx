@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser, signOut } from '@/lib/auth';
-import { loadInvoicesAPI, deleteInvoiceAPI, updateOverdueInvoicesAPI, getPaymentRemindersAPI, sendPaymentRemindersAPI, approveInvoiceAPI, rejectInvoiceAPI, requestApprovalAPI, markInvoiceSentAPI, getCompanyDefaultsAPI, getUserProfileAPI } from '@/lib/api-client';
+import { loadInvoicesAPI, deleteInvoiceAPI, updateOverdueInvoicesAPI, getPaymentRemindersAPI, sendPaymentRemindersAPI, approveInvoiceAPI, rejectInvoiceAPI, requestApprovalAPI, markInvoiceSentAPI, getCompanyDefaultsAPI, getUserProfileAPI, getDirectorySettingsAPI } from '@/lib/api-client';
 import { Invoice, currencySymbols, Currency } from '@/types/invoice';
 import { formatCurrency } from '@/lib/calculations';
 import { format } from 'date-fns';
@@ -14,6 +14,8 @@ import DashboardCharts from '@/components/DashboardCharts';
 import OnboardingModal from '@/components/OnboardingModal';
 import ProfileCompletenessCard from '@/components/ProfileCompletenessCard';
 import ProfileNudge from '@/components/ProfileNudge';
+import DirectoryOptInModal from '@/components/DirectoryOptInModal';
+import DirectorySettingsCard from '@/components/DirectorySettingsCard';
 import {
   Plus, BarChart3, FileText, Eye, CreditCard,
   Trash2, RefreshCcw, MoreHorizontal
@@ -38,6 +40,8 @@ export default function DashboardPage() {
   const [availableCurrencies, setAvailableCurrencies] = useState<string[]>(['USD']);
   const [profileData, setProfileData] = useState<any>(null);
   const [showNudge, setShowNudge] = useState(true);
+  const [directorySettings, setDirectorySettings] = useState<any>(null);
+  const [directoryMetrics, setDirectoryMetrics] = useState<any>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -82,7 +86,8 @@ export default function DashboardPage() {
         loadInvoiceData(),
         loadPaymentReminders(),
         loadCompanySettings(),
-        loadProfileData()
+        loadProfileData(),
+        loadDirectorySettings()
       ]);
 
       // Update overdue invoices on mount (background)
@@ -132,6 +137,18 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error loading profile data:', error);
+    }
+  };
+
+  const loadDirectorySettings = async () => {
+    try {
+      const data = await getDirectorySettingsAPI();
+      if (data && data.settings) {
+        setDirectorySettings(data.settings);
+        setDirectoryMetrics(data.metrics);
+      }
+    } catch (error) {
+      console.error('Error loading directory settings:', error);
     }
   };
 
@@ -474,6 +491,14 @@ export default function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+        {/* Directory Modal Flow (Invisible unless needed) */}
+        {directorySettings && (
+          <DirectoryOptInModal 
+            settings={directorySettings} 
+            onComplete={(updatedSettings) => setDirectorySettings(updatedSettings)} 
+          />
+        )}
+
         {/* New Greeting Component */}
         <DashboardGreeting
           userName={user?.name}
@@ -500,6 +525,17 @@ export default function DashboardPage() {
               compact={true}
             />
           </div>
+        )}
+
+        {/* Directory Settings Card */}
+        {directorySettings && directorySettings.hasSeenDirectoryPrompt && (
+           <div className="mb-8">
+             <DirectorySettingsCard 
+               settings={directorySettings} 
+               metrics={directoryMetrics} 
+               onUpdate={(updated) => setDirectorySettings(updated)} 
+             />
+           </div>
         )}
 
         {/* Stats Cards - Key Metrics */}

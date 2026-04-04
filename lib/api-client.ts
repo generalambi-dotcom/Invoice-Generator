@@ -1386,3 +1386,56 @@ export async function dismissProfileNudgeAPI(): Promise<void> {
   }
 }
 
+// ==========================================
+// BUSINESS DIRECTORY API
+// ==========================================
+
+export const getDirectorySettingsAPI = async () => {
+  const response = await fetch('/api/user/directory-settings', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch directory settings');
+  }
+
+  return response.json();
+};
+
+export const updateDirectorySettingsAPI = async (data: any) => {
+  const response = await fetch('/api/user/directory-settings', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to update directory settings');
+  }
+
+  return response.json();
+};
+
+export const getBusinessesAPI = async (filters: { industry?: string, size?: string, status?: string }) => {
+  const params = new URLSearchParams();
+  if (filters.industry) params.append('industry', filters.industry);
+  if (filters.size) params.append('size', filters.size);
+  if (filters.status) params.append('status', filters.status);
+
+  const url = `/api/businesses${params.toString() ? '?' + params.toString() : ''}`;
+  
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to fetch businesses');
+  }
+
+  return response.json();
+};

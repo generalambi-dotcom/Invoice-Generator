@@ -62,6 +62,12 @@ model User {
 
   // Phase 2: Visibility (Light Directory)
   directoryOptIn      Boolean   @default(false)
+  hasSeenDirectoryPrompt Boolean @default(false) // Track if they've seen the opt-in modal
+  dirShowName         Boolean   @default(true)
+  dirShowIndustry     Boolean   @default(true)
+  dirShowLocation     Boolean   @default(true)
+  dirShowSize         Boolean   @default(true)
+  dirShowActivity     Boolean   @default(false)
 
   // Phase 1: Data Gravity Signals (Aggregated for performance)
   totalInvoiceCount   Int       @default(0)

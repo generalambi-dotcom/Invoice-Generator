@@ -60,6 +60,14 @@ model User {
   profileCompleteness Int       @default(0)  // 0-100 percentage
   lastProfilePrompt   DateTime? // When we last nudged them
 
+  // Phase 2: Visibility (Light Directory)
+  directoryOptIn      Boolean   @default(false)
+
+  // Phase 1: Data Gravity Signals (Aggregated for performance)
+  totalInvoiceCount   Int       @default(0)
+  lastActiveAt        DateTime? @default(now())
+  businessPulseScore  Int       @default(0) // Internal 0-100 activity score
+
   // Relations
   paymentCredentials PaymentCredential[]
   invoices          Invoice[]

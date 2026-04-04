@@ -204,6 +204,16 @@ export async function POST(request: NextRequest) {
 
       console.log(`✅ Invoice created: ${invoice.id} for user ${user.userId} (${invoiceNumber})`);
 
+      // Update Phase 1 Data Gravity Signals
+      await prisma.user.update({
+        where: { id: user.userId },
+        data: {
+          totalInvoiceCount: { increment: 1 },
+          lastActiveAt: new Date(),
+          businessPulseScore: { increment: 2 } // Basic bump
+        }
+      }).catch(err => console.error('Error updating Data Gravity signals:', err));
+
       // Auto-generate payment link if credentials are configured
       // Only if no payment link was provided in the request
       if (!body.paymentLink && total > 0) {

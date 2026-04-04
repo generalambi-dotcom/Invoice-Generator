@@ -116,6 +116,15 @@ export async function DELETE(
       where: { id: invoiceId },
     });
 
+    // Phase 1 Data Gravity: Decrement totalInvoiceCount
+    await prisma.user.update({
+      where: { id: user.userId },
+      data: {
+        totalInvoiceCount: { decrement: 1 },
+        lastActiveAt: new Date(),
+      }
+    }).catch(err => console.error('Error updating Data Gravity on delete:', err));
+
     return NextResponse.json({ message: 'Invoice deleted' });
   } catch (error: any) {
     console.error('Error deleting invoice:', error);
@@ -231,6 +240,15 @@ export async function PATCH(
         console.error('Error auto-generating payment link:', error);
       }
     }
+
+    // Phase 1 Data Gravity: Update lastActiveAt and bump score 
+    await prisma.user.update({
+      where: { id: user.userId },
+      data: {
+        lastActiveAt: new Date(),
+        businessPulseScore: { increment: 1 } // small bump for activity
+      }
+    }).catch(err => console.error('Error updating Data Gravity on patch:', err));
 
     return NextResponse.json({ invoice: updatedInvoice });
   } catch (error: any) {

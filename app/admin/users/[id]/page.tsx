@@ -69,7 +69,7 @@ export default function UserActivityPage() {
         );
     }
 
-    const { user, counts, recentInvoices, recentClients } = data;
+    const { user, counts, recentInvoices, recentClients, recentEmails = [] } = data;
 
     const statsCards = [
         { label: 'Invoices', value: counts.invoices, icon: FileText, color: 'bg-blue-100 text-blue-600' },
@@ -127,6 +127,50 @@ export default function UserActivityPage() {
                             }`}>
                             Status: {user.subscriptionStatus || 'Active'}
                         </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Platform Health & Gravity Widget */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                    <h3 className="text-sm font-semibold text-gray-500 mb-2">Pulse Score</h3>
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-gray-900">{user.businessPulseScore || 0}<span className="text-sm text-gray-400 font-normal">/100</span></span>
+                        {(user.businessPulseScore || 0) > 50 ? (
+                           <span className="text-green-600 text-xs font-bold bg-green-50 px-2 py-1 rounded">High</span>
+                        ) : (
+                           <span className="text-orange-600 text-xs font-bold bg-orange-50 px-2 py-1 rounded">Low</span>
+                        )}
+                    </div>
+                </div>
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                    <h3 className="text-sm font-semibold text-gray-500 mb-2">Directory Status</h3>
+                    <div className="text-lg font-bold">
+                        {user.directoryOptIn ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-sm bg-indigo-50 text-indigo-700">
+                                <Shield className="w-4 h-4" /> Live
+                            </span>
+                        ) : (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-sm bg-gray-100 text-gray-700">
+                                <Shield className="w-4 h-4" /> Unlisted
+                            </span>
+                        )}
+                    </div>
+                </div>
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                    <h3 className="text-sm font-semibold text-gray-500 mb-2">Last Active</h3>
+                    <div className="text-lg font-bold text-gray-900">
+                        {user.lastActiveAt ? format(new Date(user.lastActiveAt), 'MMM d, yyyy') : 'Never'}
+                    </div>
+                </div>
+                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                    <h3 className="text-sm font-semibold text-gray-500 mb-2">Profile Completeness</h3>
+                    <div className="flex items-center gap-3">
+                        <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+                             <div className="h-full bg-blue-500 rounded-full" style={{ width: `${user.profileCompleteness || 0}%` }}></div>
+                        </div>
+                        <span className="text-sm font-bold text-gray-700">{user.profileCompleteness || 0}%</span>
                     </div>
                 </div>
             </div>
@@ -209,6 +253,56 @@ export default function UserActivityPage() {
                             ))
                         )}
                     </div>
+                </div>
+            </div>
+
+            {/* Email Dispatch Audit Log */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mt-6 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
+                    <Mail className="w-5 h-5 text-gray-500" />
+                    <h3 className="text-lg font-bold text-gray-900">Recent Emails Sent</h3>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-gray-200 text-sm text-gray-500">
+                                <th className="px-6 py-3 font-semibold">Date</th>
+                                <th className="px-6 py-3 font-semibold">Recipient</th>
+                                <th className="px-6 py-3 font-semibold">Subject</th>
+                                <th className="px-6 py-3 font-semibold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {recentEmails.length === 0 ? (
+                                <tr>
+                                    <td colSpan={4} className="px-6 py-8 text-center text-gray-500">No emails have been sent by this user</td>
+                                </tr>
+                            ) : (
+                                recentEmails.map((email: any) => (
+                                    <tr key={email.id} className="hover:bg-gray-50 transition">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {format(new Date(email.sentAt), 'MMM d, HH:mm')}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {email.to}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600 truncate max-w-[250px]">
+                                            {email.subject}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`inline-flex px-2.5 py-1 text-xs font-semibold rounded-full ${
+                                                email.status === 'sent' 
+                                                ? (email.openedAt ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800')
+                                                : 'bg-red-100 text-red-800'
+                                            }`}>
+                                                {email.status === 'sent' && email.openedAt ? 'OPENED' : email.status.toUpperCase()}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

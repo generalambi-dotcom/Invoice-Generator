@@ -69,6 +69,21 @@ export async function GET(
             take: 5
         });
 
+        // Fetch recent emails
+        const recentEmails = await prisma.emailLog.findMany({
+            where: { userId },
+            select: {
+                id: true,
+                to: true,
+                subject: true,
+                status: true,
+                sentAt: true,
+                openedAt: true
+            },
+            orderBy: { sentAt: 'desc' },
+            take: 5
+        });
+
         return NextResponse.json({
             user: {
                 id: user.id,
@@ -77,10 +92,15 @@ export async function GET(
                 createdAt: user.createdAt,
                 subscriptionPlan: user.subscriptionPlan,
                 subscriptionStatus: user.subscriptionStatus,
+                lastActiveAt: user.lastActiveAt,
+                businessPulseScore: user.businessPulseScore,
+                directoryOptIn: user.directoryOptIn,
+                profileCompleteness: user.profileCompleteness
             },
             counts: user._count,
             recentInvoices,
-            recentClients
+            recentClients,
+            recentEmails
         });
 
     } catch (error: any) {

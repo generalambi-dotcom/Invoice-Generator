@@ -30,7 +30,7 @@ export async function getVerificationEmailHtml(verificationUrl: string, name?: s
   return getEmailLayout({
     content,
     title: 'Verify Email Address',
-    previewText: 'Verify your email address for InvoiceNaija',
+    previewText: 'Verify your email address for Invoice Generator',
   });
 }
 
@@ -49,6 +49,6 @@ This link will expire in 24 hours.
 If you didn't create an account, you can safely ignore this email.
 
 Best regards,
-The InvoiceNaija Team
+The Invoice Generator Team
   `.trim();
 }

@@ -14,7 +14,7 @@ export default function EmailDesignSettingsPage() {
     const [testEmail, setTestEmail] = useState('');
 
     const [brandLogo, setBrandLogo] = useState('');
-    const [brandName, setBrandName] = useState('InvoiceNaija');
+    const [brandName, setBrandName] = useState('Invoice Generator');
     const [primaryColor, setPrimaryColor] = useState('#4F46E5');
     const [headerBg, setHeaderBg] = useState('#ffffff');
     const [footerText, setFooterText] = useState('');
@@ -37,7 +37,7 @@ export default function EmailDesignSettingsPage() {
             if (res.ok) {
                 const data = await res.json();
                 setBrandLogo(data.brandLogo || '');
-                setBrandName(data.brandName || 'InvoiceNaija');
+                setBrandName(data.brandName || 'Invoice Generator');
                 setPrimaryColor(data.primaryColor || '#4F46E5');
                 setHeaderBg(data.headerBg || '#ffffff');
                 setFooterText(data.footerText || '');
@@ -175,7 +175,7 @@ export default function EmailDesignSettingsPage() {
                                         type="text"
                                         value={brandName}
                                         onChange={(e) => setBrandName(e.target.value)}
-                                        placeholder="InvoiceNaija"
+                                        placeholder="Invoice Generator"
                                         className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                     />
                                     <p className="text-xs text-gray-500 mt-1">Used in email footer and as header text if no logo is provided.</p>
@@ -247,7 +247,7 @@ export default function EmailDesignSettingsPage() {
                                 </div>
                                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
                                     <div>
-                                        <label className="text-sm font-medium text-gray-900 block">Show "Powered by InvoiceNaija"</label>
+                                        <label className="text-sm font-medium text-gray-900 block">Show "Powered by Invoice Generator"</label>
                                         <p className="text-xs text-gray-500 mt-0.5">Show a small credit link in the footer.</p>
                                     </div>
                                     <button
@@ -314,7 +314,7 @@ export default function EmailDesignSettingsPage() {
                                         </div>
                                         {showPoweredBy && (
                                             <div className="mt-2 text-[10px] text-gray-300">
-                                                Powered by InvoiceNaija
+                                                Powered by Invoice Generator
                                             </div>
                                         )}
                                     </div>

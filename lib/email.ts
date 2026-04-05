@@ -83,7 +83,7 @@ export async function sendInvoiceEmail({
     const emailHtml = await getEmailLayout({
       content,
       title: `Invoice ${invoice.invoiceNumber || 'N/A'}`,
-      previewText: `Invoice ${invoice.invoiceNumber} from InvoiceNaija`,
+      previewText: `Invoice ${invoice.invoiceNumber} from Invoice Generator`,
     });
 
     // Prep From Email
@@ -694,7 +694,7 @@ export async function sendPaymentReceivedEmail({
     });
 
     await resend.emails.send({
-      from: `InvoiceNaija <${fromEmail}>`,
+      from: `Invoice Generator <${fromEmail}>`,
       to,
       subject: `Payment received for Invoice ${invoiceNumber}`,
       html: emailHtml,
@@ -916,7 +916,7 @@ export async function sendLimitWarningEmail({
     });
 
     await resend.emails.send({
-      from: `InvoiceNaija <${fromEmail}>`,
+      from: `Invoice Generator <${fromEmail}>`,
       to,
       subject: 'You are approaching your invoice limit ⚠️',
       html: emailHtml,

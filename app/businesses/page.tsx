@@ -81,7 +81,7 @@ export default function BusinessesDirectoryPage() {
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2 text-gray-900 font-extrabold text-2xl tracking-tighter">
               <svg className="w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-              InvoiceNaija<span className="text-gray-500 font-normal ml-0.5">Explore</span>
+              Invoice Generator<span className="text-gray-500 font-normal ml-0.5">Explore</span>
             </Link>
           </div>
           <div className="flex items-center gap-6">

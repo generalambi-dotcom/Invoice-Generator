@@ -74,7 +74,7 @@ function EnquireFunnelContent() {
       <header className="bg-white border-b border-gray-200 py-4 px-6 flex justify-between items-center">
         <Link href="/businesses" className="flex items-center gap-2 text-gray-900 font-extrabold text-xl tracking-tighter">
           <svg className="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          InvoiceNaija<span className="text-gray-500 font-normal ml-0.5">Explore</span>
+          Invoice Generator<span className="text-gray-500 font-normal ml-0.5">Explore</span>
         </Link>
         <div className="text-sm font-bold text-gray-400">Step {step} of 4</div>
       </header>

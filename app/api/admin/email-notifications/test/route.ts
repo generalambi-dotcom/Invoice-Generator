@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
                 // Mock template
                 template = {
                     name: 'Welcome Email',
-                    subject: 'Welcome to InvoiceNaija! 🎉',
+                    subject: 'Welcome to Invoice Generator! 🎉',
                     body: '<p>Hi {{userName}},</p><p>Your account is now set up and ready to go.</p>'
                 };
             } else {
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
         });
 
         const data = await resend.emails.send({
-            from: `InvoiceNaija <${fromEmail}>`,
+            from: `Invoice Generator <${fromEmail}>`,
             to: recipientEmail,
             subject: `[TEST] ${testSubject}`,
             html,

@@ -27,14 +27,14 @@ export async function getPasswordResetEmailHtml(resetUrl: string, userName?: str
       
       <p style="text-align: left;">If you continue to have problems, please contact our support team.</p>
       
-      <p style="text-align: left;">Best regards,<br>The InvoiceNaija Team</p>
+      <p style="text-align: left;">Best regards,<br>The Invoice Generator Team</p>
     </div>
   `;
 
   return getEmailLayout({
     content,
     title: 'Reset Your Password',
-    previewText: 'Reset your password for InvoiceNaija',
+    previewText: 'Reset your password for Invoice Generator',
   });
 }
 
@@ -50,6 +50,6 @@ ${resetUrl}
 This link will expire in 1 hour. If you didn't request this password reset, please ignore this email.
 
 Best regards,
-The InvoiceNaija Team
+The Invoice Generator Team
   `.trim();
 }

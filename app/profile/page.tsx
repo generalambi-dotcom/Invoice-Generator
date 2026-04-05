@@ -8,10 +8,9 @@ import { toast } from 'react-hot-toast';
 import ProfileCompletenessCard from '@/components/ProfileCompletenessCard';
 import {
   INDUSTRY_OPTIONS,
-  BUSINESS_TYPE_OPTIONS,
   COMPANY_SIZE_OPTIONS,
-  REVENUE_RANGE_OPTIONS,
 } from '@/lib/profile-completeness';
+import { getRegionConfig } from '@/lib/regionalization';
 
 export default function ProfilePage() {
     const [user, setUser] = useState<any>(null);
@@ -191,6 +190,8 @@ export default function ProfilePage() {
         return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
     }
 
+    const regionConfig = getRegionConfig(defaultCurrency);
+
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div>
@@ -356,7 +357,7 @@ export default function ProfilePage() {
                                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white"
                             >
                                 <option value="">Select type</option>
-                                {BUSINESS_TYPE_OPTIONS.map(opt => (
+                                {regionConfig.businessTypes.map((opt: any) => (
                                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                                 ))}
                             </select>
@@ -387,7 +388,7 @@ export default function ProfilePage() {
                                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white"
                             >
                                 <option value="">Select range</option>
-                                {REVENUE_RANGE_OPTIONS.map(opt => (
+                                {regionConfig.revenueRanges.map((opt: any) => (
                                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                                 ))}
                             </select>
@@ -424,7 +425,7 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            CAC/RC Number
+                            {regionConfig.registrationLabel}
                             <span className="ml-1 text-xs text-gray-400 font-normal">(Registration)</span>
                         </label>
                         <input
@@ -438,8 +439,7 @@ export default function ProfilePage() {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Tax Identification Number (TIN)
-                            <span className="ml-1 text-xs text-gray-400 font-normal">(FIRS)</span>
+                            {regionConfig.taxIdLabel}
                         </label>
                         <input
                             type="text"

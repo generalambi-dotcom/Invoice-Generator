@@ -77,6 +77,7 @@ export async function GET(
                 to: true,
                 subject: true,
                 status: true,
+                errorMessage: true,
                 sentAt: true,
                 openedAt: true
             },

@@ -5,7 +5,8 @@ import { Layout, Theme } from '@/types/invoice';
 import ImageUpload from './ImageUpload';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { INDUSTRY_OPTIONS, BUSINESS_TYPE_OPTIONS } from '@/lib/profile-completeness';
+import { INDUSTRY_OPTIONS } from '@/lib/profile-completeness';
+import { getRegionConfig } from '@/lib/regionalization';
 
 interface OnboardingModalProps {
   onComplete: () => void;
@@ -137,6 +138,7 @@ export default function OnboardingModal({ onComplete, onSkip }: OnboardingModalP
   const [industry, setIndustry] = useState('');
   const [businessType, setBusinessType] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const regionConfig = getRegionConfig('USD'); // Default neutral fallback
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -299,7 +301,7 @@ export default function OnboardingModal({ onComplete, onSkip }: OnboardingModalP
                       className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors bg-white text-sm"
                     >
                       <option value="">Select type</option>
-                      {BUSINESS_TYPE_OPTIONS.map(opt => (
+                      {regionConfig.businessTypes.map((opt: any) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
                     </select>

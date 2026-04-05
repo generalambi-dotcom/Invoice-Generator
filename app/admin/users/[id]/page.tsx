@@ -286,8 +286,13 @@ export default function UserActivityPage() {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                             {email.to}
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-600 truncate max-w-[250px]">
-                                            {email.subject}
+                                        <td className="px-6 py-4 text-sm text-gray-600 max-w-[250px]">
+                                            <div className="truncate">{email.subject}</div>
+                                            {email.status === 'failed' && email.errorMessage && (
+                                                <div className="text-xs text-red-500 font-medium mt-1.5 whitespace-normal break-words bg-red-50 p-2 rounded">
+                                                    Error: {email.errorMessage}
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`inline-flex px-2.5 py-1 text-xs font-semibold rounded-full ${

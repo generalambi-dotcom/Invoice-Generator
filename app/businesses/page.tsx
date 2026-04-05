@@ -10,6 +10,7 @@ import { INDUSTRY_OPTIONS } from '@/lib/profile-completeness';
 export default function BusinessesDirectoryPage() {
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [latestPosts, setLatestPosts] = useState<any[]>([]);
   const [filters, setFilters] = useState({
     industry: '',
     size: '',
@@ -57,6 +58,22 @@ export default function BusinessesDirectoryPage() {
     }
   }, [filters.industry]);
 
+  // Load latest posts
+  useEffect(() => {
+    const loadPosts = async () => {
+       try {
+         const res = await fetch('/api/blog/posts');
+         if (res.ok) {
+           const data = await res.json();
+           setLatestPosts(data.slice(0, 3));
+         }
+       } catch (error) {
+         console.error('Failed to load blog posts', error);
+       }
+    };
+    loadPosts();
+  }, []);
+
   const TRENDING_CATEGORIES = [
     { icon: Wrench, title: 'Contractors', desc: 'Find a top trader to fix or replace your pipes & appliances', query: 'Construction' },
     { icon: Scissors, title: 'Creative Agencies', desc: 'Browse professionals & top-rated agencies for your new campaign', query: 'Media & Entertainment' },
@@ -65,14 +82,14 @@ export default function BusinessesDirectoryPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-amber-50/30 font-sans">
+    <div className="min-h-screen bg-[#F5F7FA] font-sans">
       
       {/* Premium Dark Local Header */}
       <header className="relative z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="w-full px-6 py-4 flex justify-between items-center max-w-[1600px] mx-auto">
           <Link href="/" className="flex items-center gap-2 text-gray-900 font-bold text-2xl tracking-tight" onClick={clearSearch}>
-            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-               <span className="text-yellow-400 text-lg font-bold">I</span>
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+               <span className="text-white text-lg font-bold">I</span>
             </div>
             InvoiceNaija<span className="text-sm font-medium text-gray-500 mt-1.5 ml-1 hidden sm:inline">Business</span>
           </Link>
@@ -80,7 +97,7 @@ export default function BusinessesDirectoryPage() {
             <Link href="/" className="hidden md:block text-sm font-semibold text-gray-700 hover:text-black">Post your enquiry</Link>
             <Link href="/blog" className="hidden md:block text-sm font-semibold text-gray-700 hover:text-black">Blog</Link>
             <div className="flex items-center gap-3">
-               <Link href="/signin" className="text-sm font-bold text-gray-800 bg-yellow-400 px-6 py-2 rounded-lg hover:bg-yellow-500 transition shadow-sm flex items-center gap-2">
+               <Link href="/signin" className="text-sm font-bold text-white bg-blue-600 px-6 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm flex items-center gap-2">
                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                  Log in
                </Link>
@@ -89,16 +106,16 @@ export default function BusinessesDirectoryPage() {
         </div>
       </header>
 
-      {/* Yell Hero Area */}
+      {/* Hero Area */}
       <section className="relative w-full overflow-hidden flex flex-col md:flex-row min-h-[500px] md:h-[60vh] bg-gray-900">
         
-        {/* White Search Box Layer (Left Overhang on Desktop) */}
+        {/* White Search Box Layer */}
         <div className="relative z-20 w-full md:w-5/12 lg:w-[400px] bg-white md:h-full flex flex-col justify-center px-4 md:px-12 py-8 md:py-0 shrink-0 shadow-2xl">
            <div className="max-w-md mx-auto w-full">
               {/* Tabs */}
               <div className="flex w-full mb-6 border border-gray-200 rounded-lg overflow-hidden font-bold">
-                 <button onClick={() => setSearchTab('search')} className={`flex-1 py-3 text-sm ${searchTab === 'search' ? 'bg-yellow-400 text-black' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>Search</button>
-                 <button onClick={() => setSearchTab('enquire')} className={`flex-1 py-3 text-sm border-l border-gray-200 ${searchTab === 'enquire' ? 'bg-yellow-400 text-black' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>Enquire</button>
+                 <button onClick={() => setSearchTab('search')} className={`flex-1 py-3 text-sm transition-colors ${searchTab === 'search' ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>Search</button>
+                 <button onClick={() => setSearchTab('enquire')} className={`flex-1 py-3 text-sm border-l border-gray-200 transition-colors ${searchTab === 'enquire' ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>Enquire</button>
               </div>
 
               {/* Inputs */}
@@ -108,7 +125,7 @@ export default function BusinessesDirectoryPage() {
                     <input 
                       type="text" 
                       placeholder="Search businesses..." 
-                      className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none font-medium text-gray-900 placeholder-gray-500"
+                      className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none font-medium text-gray-900 placeholder-gray-500"
                       value={searchInput}
                       onChange={e => setSearchInput(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && executeSearch()}
@@ -119,7 +136,7 @@ export default function BusinessesDirectoryPage() {
                     <input 
                       type="text" 
                       placeholder="Town, city or postcode" 
-                      className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none font-medium text-gray-900 placeholder-gray-500"
+                      className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none font-medium text-gray-900 placeholder-gray-500"
                       value={locationInput}
                       onChange={e => setLocationInput(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && executeSearch()}
@@ -147,7 +164,7 @@ export default function BusinessesDirectoryPage() {
              </div>
              <div className="relative z-10 px-8 lg:px-16 max-w-3xl">
                 <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white tracking-tight drop-shadow-lg leading-tight">
-                  <span className="text-yellow-400">InvoiceNaija</span> - your marketplace <br />for local services
+                  <span className="text-blue-500">InvoiceNaija</span> - your marketplace <br />for local services
                 </h1>
              </div>
         </div>
@@ -156,17 +173,17 @@ export default function BusinessesDirectoryPage() {
 
       {/* Conditionally Render Content vs Search Results */}
       {!searchModeActive ? (
-        <div className="w-full bg-amber-50/50">
+        <div className="w-full bg-[#F5F7FA]">
           <div className="max-w-[1400px] mx-auto px-6 py-12 md:py-16">
             
             {/* Promo Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-24">
                {/* Enquire Fast Card */}
-               <div className="bg-yellow-400 rounded-xl overflow-hidden shadow-sm flex flex-col sm:flex-row h-auto sm:h-[300px]">
+               <div className="bg-blue-600 rounded-xl overflow-hidden shadow-sm flex flex-col sm:flex-row h-auto sm:h-[300px]">
                   <div className="p-8 sm:w-1/2 flex flex-col justify-center">
-                     <h2 className="text-3xl font-extrabold text-gray-900 mb-4 tracking-tight">No time to search?</h2>
-                     <p className="text-lg text-gray-800 font-medium mb-8">Simply share details to connect with the best businesses for the job</p>
-                     <button className="self-start border-2 border-black text-black font-bold px-6 py-2.5 rounded-lg hover:bg-black hover:text-white transition-colors uppercase tracking-wide text-sm">
+                     <h2 className="text-3xl font-extrabold text-white mb-4 tracking-tight">No time to search?</h2>
+                     <p className="text-lg text-blue-100 font-medium mb-8">Simply share details to connect with the best businesses for the job</p>
+                     <button className="self-start border-2 border-white text-white font-bold px-6 py-2.5 rounded-lg hover:bg-white hover:text-blue-600 transition-colors uppercase tracking-wide text-sm">
                         Post your enquiry
                      </button>
                   </div>
@@ -200,8 +217,8 @@ export default function BusinessesDirectoryPage() {
                  return (
                    <div key={idx} className="flex flex-col items-center text-center group cursor-pointer" onClick={() => executeSearch(cat.query)}>
                       <div className="w-24 h-24 mb-6 relative">
-                         {/* Yellow Accent */}
-                         <div className="absolute inset-0 bg-yellow-400 rounded-lg transform rotate-6 drop-shadow-sm group-hover:rotate-12 transition-transform duration-300"></div>
+                         {/* Blue Accent */}
+                         <div className="absolute inset-0 bg-blue-600 rounded-lg transform rotate-6 drop-shadow-sm group-hover:rotate-12 transition-transform duration-300"></div>
                          <div className="absolute inset-0 bg-white border-2 border-black rounded-lg flex items-center justify-center">
                             <Icon className="w-10 h-10 text-black stroke-[1.5]" />
                          </div>
@@ -216,47 +233,37 @@ export default function BusinessesDirectoryPage() {
                })}
             </div>
 
-            {/* Fresh from our blog */}
+            {/* Fresh from our blog - Connected to DB */}
             <div className="border-t border-gray-200 pt-16 mb-16">
                <div className="flex items-center gap-2 mb-8 cursor-pointer group w-max">
-                 <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight group-hover:text-amber-600 transition-colors">Fresh from our blog</h2>
+                 <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight group-hover:text-blue-600 transition-colors">Fresh from our blog</h2>
                  <ChevronRight className="w-6 h-6 text-gray-900 mt-1" />
                </div>
 
                <div className="flex flex-wrap gap-3 mb-10">
-                 <span className="px-5 py-2.5 bg-gray-200/80 text-sm font-bold text-gray-800 rounded-md cursor-pointer hover:bg-gray-300">Creative & Media</span>
-                 <span className="px-5 py-2.5 bg-gray-200/80 text-sm font-bold text-gray-800 rounded-md cursor-pointer hover:bg-gray-300">Business & Finance</span>
-                 <span className="px-5 py-2.5 bg-gray-200/80 text-sm font-bold text-gray-800 rounded-md cursor-pointer hover:bg-gray-300">Consulting</span>
+                 <Link href="/blog?category=Marketing" className="px-5 py-2.5 bg-gray-200/80 text-sm font-bold text-gray-800 rounded-md cursor-pointer hover:bg-gray-300">Creative & Media</Link>
+                 <Link href="/blog?category=Finance" className="px-5 py-2.5 bg-gray-200/80 text-sm font-bold text-gray-800 rounded-md cursor-pointer hover:bg-gray-300">Business & Finance</Link>
+                 <Link href="/blog?category=Compliance" className="px-5 py-2.5 bg-gray-200/80 text-sm font-bold text-gray-800 rounded-md cursor-pointer hover:bg-gray-300">Consulting</Link>
                </div>
 
                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {/* Blog Mock 1 */}
-                  <div className="group cursor-pointer">
-                     <div className="h-56 bg-gray-200 rounded-2xl mb-5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Blog" />
-                     </div>
-                     <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-amber-600">How to price your digital agency services in 2026</h3>
-                     <p className="text-gray-600 mb-4 line-clamp-2">A complete guide to hourly rates vs value-based pricing: find out what you should charge clients.</p>
-                     <span className="text-sm font-bold border-b border-black pb-0.5 group-hover:border-amber-600 group-hover:text-amber-600">Read more</span>
-                  </div>
-                  {/* Blog Mock 2 */}
-                  <div className="group cursor-pointer">
-                     <div className="h-56 bg-gray-200 rounded-2xl mb-5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Blog" />
-                     </div>
-                     <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-amber-600">Managing cash flow when invoices are paid late</h3>
-                     <p className="text-gray-600 mb-4 line-clamp-2">Planning your financial runway? Here is a clear breakdown of typical costs and how to hedge them.</p>
-                     <span className="text-sm font-bold border-b border-black pb-0.5 group-hover:border-amber-600 group-hover:text-amber-600">Read more</span>
-                  </div>
-                  {/* Blog Mock 3 */}
-                  <div className="group cursor-pointer">
-                     <div className="h-56 bg-gray-200 rounded-2xl mb-5 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Blog" />
-                     </div>
-                     <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-amber-600">Do you need a dedicated accountant for your startup?</h3>
-                     <p className="text-gray-600 mb-4 line-clamp-2">Has your tax load become unbearable? A quick financial swap can fix it in a few quarters.</p>
-                     <span className="text-sm font-bold border-b border-black pb-0.5 group-hover:border-amber-600 group-hover:text-amber-600">Read more</span>
-                  </div>
+                  {latestPosts.map((post) => (
+                    <Link href={`/blog/${post.slug}`} key={post.id} className="group cursor-pointer flex flex-col h-full">
+                       <div className="h-56 bg-gray-200 rounded-2xl mb-5 overflow-hidden shrink-0">
+                          {post.coverImage ? (
+                            <img src={post.coverImage} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={post.title} />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 font-bold text-sm">Read Article</div>
+                          )}
+                       </div>
+                       <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600">{post.title}</h3>
+                       <p className="text-gray-600 mb-4 line-clamp-2 flex-1">{post.excerpt}</p>
+                       <span className="text-sm font-bold border-b border-black pb-0.5 group-hover:border-blue-600 group-hover:text-blue-600 w-max">Read more</span>
+                    </Link>
+                  ))}
+                  {latestPosts.length === 0 && (
+                     <div className="col-span-3 text-center text-gray-400 py-12">Loading latest articles...</div>
+                  )}
                </div>
             </div>
 
@@ -298,8 +305,8 @@ export default function BusinessesDirectoryPage() {
                 </div>
              ) : businesses.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-dashed border-gray-300 text-center shadow-sm">
-                   <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mb-4 border border-yellow-200">
-                      <Search className="w-8 h-8 text-yellow-500" />
+                   <div className="w-16 h-16 bg-[#F5F7FA] rounded-full flex items-center justify-center mb-4 border border-blue-200">
+                      <Search className="w-8 h-8 text-blue-500" />
                    </div>
                    <h3 className="text-xl font-bold text-gray-900">No professionals found</h3>
                    <p className="text-gray-500 max-w-sm mt-2 mb-6">

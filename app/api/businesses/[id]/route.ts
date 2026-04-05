@@ -47,6 +47,16 @@ export async function GET(
       isActive: user.dirShowActivity ? isActive : null, 
     };
 
+    // Record a real profile view event (fire-and-forget)
+    const visitorIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    prisma.directoryEvent.create({
+      data: {
+        type: 'profile_view',
+        businessId: user.id,
+        visitorIp,
+      }
+    }).catch(() => {}); // Non-blocking
+
     return NextResponse.json({ business: sanitizedBusiness });
 
   } catch (error) {

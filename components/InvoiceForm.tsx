@@ -1694,7 +1694,7 @@ function InvoiceFormContent() {
                   </select>
                 </div>
 
-                {/* Mini Theme Preview */}
+                {/* Mini Theme Preview - Layout Aware */}
                 <div className="pt-4 border-t border-gray-100">
                   <div className="flex justify-between items-center mb-3">
                     <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Theme Preview</label>
@@ -1707,70 +1707,136 @@ function InvoiceFormContent() {
                     </button>
                   </div>
                   <div
-                    className="w-full aspect-[210/297] bg-white rounded border border-gray-200 relative overflow-hidden p-3 flex flex-col gap-2 cursor-pointer hover:ring-2 hover:ring-blue-100 transition-all"
+                    className={`w-full aspect-[210/297] rounded border relative overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-100 transition-all duration-500 ${
+                      invoice.layout === 'startup' ? 'bg-[#0f172a] border-slate-700' : 
+                      invoice.layout === 'elegant' ? 'bg-[#fafaf9] border-stone-300' : 
+                      'bg-white border-gray-200'
+                    }`}
                     onClick={() => setIsPreviewModalOpen(true)}
                   >
-                    {/* Brand Stripe */}
-                    <div className="absolute top-0 left-0 w-full h-1 bg-theme-primary opacity-80"></div>
-
-                    {/* Header */}
-                    <div className="flex justify-between items-start mb-2 mt-1">
-                      {invoice.company?.logo ? (
-                        <img src={invoice.company.logo} className="w-8 h-8 object-contain" alt="" />
-                      ) : (
-                        <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-[6px] text-gray-400">Logo</div>
-                      )}
-                      <div className="text-[6px] text-right">
-                        <div className="font-bold text-gray-900">{invoice.invoiceNumber || '#'}</div>
-                        <div className="text-gray-500">{invoice.invoiceDate || 'Date'}</div>
+                    {/* Layout-specific header decoration */}
+                    {(!invoice.layout || invoice.layout === 'modern') && (
+                      <div className="absolute top-0 left-0 w-full h-1 bg-theme-primary opacity-80"></div>
+                    )}
+                    {invoice.layout === 'bold' && (
+                      <div className="w-full h-7 bg-gray-900 flex items-center justify-between px-3">
+                        <div className="w-4 h-4 bg-white/20 rounded-sm"></div>
+                        <div className="w-10 h-2 bg-white/30 rounded"></div>
                       </div>
-                    </div>
+                    )}
+                    {invoice.layout === 'classic' && (
+                      <div className="w-full h-5 border-b-2 border-theme-primary bg-gray-50 flex items-center px-3">
+                        <div className="w-6 h-2 bg-theme-primary/30 rounded-sm"></div>
+                      </div>
+                    )}
+                    {invoice.layout === 'creative' && (
+                      <div className="absolute top-0 left-0 w-2 h-full bg-theme-primary opacity-90"></div>
+                    )}
+                    {invoice.layout === 'startup' && (
+                      <div className="w-full h-6 bg-slate-800 flex items-center px-3">
+                        <div className="w-4 h-4 bg-blue-500 rounded-full"></div>
+                      </div>
+                    )}
+                    {invoice.layout === 'elegant' && (
+                      <div className="absolute inset-1 border border-stone-300 pointer-events-none"></div>
+                    )}
 
-                    {/* Content Preview */}
-                    <div className="space-y-2 flex-1">
-                      <div className="flex gap-2 mb-2">
-                        <div className="w-1/2">
-                          <div className="text-[5px] font-bold text-gray-400 uppercase mb-0.5">FROM</div>
-                          <div className="text-[6px] font-bold text-gray-800 truncate">{invoice.company?.name || 'Company'}</div>
-                        </div>
-                        <div className="w-1/2">
-                          <div className="text-[5px] font-bold text-gray-400 uppercase mb-0.5">TO</div>
-                          <div className="text-[6px] font-bold text-gray-800 truncate">{invoice.client?.name || 'Client'}</div>
+                    <div className={`p-3 flex flex-col gap-2 h-full ${invoice.layout === 'creative' ? 'pl-5' : ''}`}>
+                      {/* Header */}
+                      <div className={`flex justify-between items-start mb-2 ${invoice.layout === 'bold' ? 'mt-0' : 'mt-1'}`}>
+                        {invoice.company?.logo ? (
+                          <img src={invoice.company.logo} className="w-8 h-8 object-contain" alt="" />
+                        ) : (
+                          <div className={`w-8 h-8 rounded flex items-center justify-center text-[6px] ${
+                            invoice.layout === 'startup' ? 'bg-slate-700 text-slate-400' : 
+                            invoice.layout === 'elegant' ? 'bg-transparent border border-stone-300 text-stone-400' : 
+                            'bg-gray-100 text-gray-400'
+                          }`}>Logo</div>
+                        )}
+                        <div className="text-[6px] text-right">
+                          <div className={`font-bold ${invoice.layout === 'startup' ? 'text-white' : 'text-gray-900'}`}>{invoice.invoiceNumber || '#'}</div>
+                          <div className={`${invoice.layout === 'startup' ? 'text-slate-400' : 'text-gray-500'}`}>{invoice.invoiceDate || 'Date'}</div>
                         </div>
                       </div>
 
-                      {/* Mini Items Table */}
-                      <div className="w-full">
-                        <div className="bg-gray-50 p-1 mb-0.5 flex justify-between">
-                          <div className="w-1/2 text-[4px] font-bold text-gray-500">ITEM</div>
-                          <div className="w-1/4 text-[4px] font-bold text-gray-500 text-right">AMT</div>
-                        </div>
-                        {(invoice.lineItems || []).slice(0, 3).map((item, i) => (
-                          <div key={i} className="flex justify-between py-0.5 border-b border-gray-50">
-                            <div className="w-1/2 text-[4px] text-gray-700 truncate">{item.description || 'Item'}</div>
-                            <div className="w-1/4 text-[4px] text-gray-700 text-right">{formatCurrency((item.quantity || 0) * (item.rate || 0), invoice.currency || 'NGN')}</div>
+                      {/* Content Preview */}
+                      <div className="space-y-2 flex-1">
+                        <div className="flex gap-2 mb-2">
+                          <div className="w-1/2">
+                            <div className={`text-[5px] font-bold uppercase mb-0.5 ${invoice.layout === 'startup' ? 'text-slate-500' : 'text-gray-400'}`}>FROM</div>
+                            <div className={`text-[6px] font-bold truncate ${invoice.layout === 'startup' ? 'text-white' : 'text-gray-800'}`}>{invoice.company?.name || 'Company'}</div>
                           </div>
-                        ))}
+                          <div className="w-1/2">
+                            <div className={`text-[5px] font-bold uppercase mb-0.5 ${invoice.layout === 'startup' ? 'text-slate-500' : 'text-gray-400'}`}>TO</div>
+                            <div className={`text-[6px] font-bold truncate ${invoice.layout === 'startup' ? 'text-white' : 'text-gray-800'}`}>{invoice.client?.name || 'Client'}</div>
+                          </div>
+                        </div>
+
+                        {/* Mini Items Table */}
+                        <div className="w-full">
+                          <div className={`p-1 mb-0.5 flex justify-between ${
+                            invoice.layout === 'startup' ? 'bg-slate-800 rounded' : 
+                            invoice.layout === 'elegant' ? 'border-b border-stone-300' :
+                            invoice.layout === 'bold' ? 'bg-gray-900 text-white rounded-sm' :
+                            'bg-gray-50'
+                          }`}>
+                            <div className={`w-1/2 text-[4px] font-bold ${
+                              invoice.layout === 'startup' ? 'text-slate-400' : 
+                              invoice.layout === 'bold' ? 'text-white' : 
+                              'text-gray-500'
+                            }`}>ITEM</div>
+                            <div className={`w-1/4 text-[4px] font-bold text-right ${
+                              invoice.layout === 'startup' ? 'text-slate-400' : 
+                              invoice.layout === 'bold' ? 'text-white' : 
+                              'text-gray-500'
+                            }`}>AMT</div>
+                          </div>
+                          {(invoice.lineItems || []).slice(0, 3).map((item, i) => (
+                            <div key={i} className={`flex justify-between py-0.5 border-b ${
+                              invoice.layout === 'startup' ? 'border-slate-800' : 'border-gray-50'
+                            }`}>
+                              <div className={`w-1/2 text-[4px] truncate ${invoice.layout === 'startup' ? 'text-slate-300' : 'text-gray-700'}`}>{item.description || 'Item'}</div>
+                              <div className={`w-1/4 text-[4px] text-right ${invoice.layout === 'startup' ? 'text-slate-300' : 'text-gray-700'}`}>{formatCurrency((item.quantity || 0) * (item.rate || 0), invoice.currency || 'NGN')}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Footer Totals */}
+                      <div className="flex justify-end mt-auto">
+                        <div className="w-2/3 space-y-0.5">
+                          <div className={`flex justify-between text-[5px] ${invoice.layout === 'startup' ? 'text-slate-400' : 'text-gray-600'}`}>
+                            <span>Subtotal</span>
+                            <span>{formatCurrency(invoice.subtotal || 0, invoice.currency || 'NGN')}</span>
+                          </div>
+                          <div className={`flex justify-between text-[5px] ${invoice.layout === 'startup' ? 'text-slate-400' : 'text-gray-600'}`}>
+                            <span>Tax</span>
+                            <span>{formatCurrency(invoice.taxAmount || 0, invoice.currency || 'NGN')}</span>
+                          </div>
+                          <div className={`h-px my-0.5 ${invoice.layout === 'startup' ? 'bg-slate-700' : 'bg-gray-200'}`}></div>
+                          <div className={`flex justify-between text-[6px] font-bold ${invoice.layout === 'startup' ? 'text-white' : 'text-gray-900'}`}>
+                            <span>Total</span>
+                            <span>{formatCurrency(invoice.total || 0, invoice.currency || 'NGN')}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Footer Totals */}
-                    <div className="flex justify-end mt-auto">
-                      <div className="w-2/3 space-y-0.5">
-                        <div className="flex justify-between text-[5px] text-gray-600">
-                          <span>Subtotal</span>
-                          <span>{formatCurrency(invoice.subtotal || 0, invoice.currency || 'NGN')}</span>
-                        </div>
-                        <div className="flex justify-between text-[5px] text-gray-600">
-                          <span>Tax</span>
-                          <span>{formatCurrency(invoice.taxAmount || 0, invoice.currency || 'NGN')}</span>
-                        </div>
-                        <div className="h-px bg-gray-200 my-0.5"></div>
-                        <div className="flex justify-between text-[6px] font-bold text-gray-900">
-                          <span>Total</span>
-                          <span>{formatCurrency(invoice.total || 0, invoice.currency || 'NGN')}</span>
-                        </div>
-                      </div>
+                    {/* Layout label badge */}
+                    <div className={`absolute bottom-1.5 left-1.5 text-[5px] font-bold px-1.5 py-0.5 rounded ${
+                      invoice.layout === 'startup' ? 'bg-blue-500/20 text-blue-400' :
+                      invoice.layout === 'bold' ? 'bg-gray-900 text-white' :
+                      invoice.layout === 'elegant' ? 'bg-stone-200 text-stone-600' :
+                      invoice.layout === 'creative' ? 'bg-theme-primary/10 text-theme-primary' :
+                      invoice.layout === 'classic' ? 'bg-theme-primary/10 text-theme-primary' :
+                      'bg-gray-100 text-gray-500'
+                    }`}>
+                      {invoice.layout === 'modern' || !invoice.layout ? 'Modern' : 
+                       invoice.layout === 'bold' ? 'Bold' :
+                       invoice.layout === 'classic' ? 'Classic' :
+                       invoice.layout === 'creative' ? 'Creative' :
+                       invoice.layout === 'startup' ? 'Startup' :
+                       invoice.layout === 'elegant' ? 'Elegant' : ''}
                     </div>
                   </div>
                 </div>

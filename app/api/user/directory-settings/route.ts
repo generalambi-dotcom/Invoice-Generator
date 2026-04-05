@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
-import { rateLimit, rateLimitConfigs, getClientIdentifier } from '@/lib/rate-limit';
 
-// Dummy metrics generator for Phase 2 - drives perceived value while directory is small
-const generateSmartMetrics = () => {
-    return {
-        profileViews: Math.floor(Math.random() * (45 - 5 + 1) + 5), // Random between 5-45
-        searchAppearances: Math.floor(Math.random() * (80 - 15 + 1) + 15) // Random between 15-80
-    };
+// Real metrics from DirectoryEvent table
+const getRealMetrics = async (userId: string) => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const [profileViews, searchAppearances] = await Promise.all([
+        prisma.directoryEvent.count({
+            where: {
+                businessId: userId,
+                type: 'profile_view',
+                createdAt: { gte: thirtyDaysAgo },
+            }
+        }),
+        prisma.directoryEvent.count({
+            where: {
+                businessId: userId,
+                type: 'search_appearance',
+                createdAt: { gte: thirtyDaysAgo },
+            }
+        }),
+    ]);
+
+    return { profileViews, searchAppearances };
 };
 
 export async function GET(request: NextRequest) {
@@ -36,9 +52,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // Fetch real metrics only if opted in
+    const metrics = directoryData.directoryOptIn 
+      ? await getRealMetrics(user.userId) 
+      : null;
+
     return NextResponse.json({
         settings: directoryData,
-        metrics: directoryData.directoryOptIn ? generateSmartMetrics() : null
+        metrics,
     });
 
   } catch (error) {
@@ -89,9 +110,13 @@ export async function PATCH(request: NextRequest) {
         }
     });
 
+    const metrics = updatedUser.directoryOptIn 
+      ? await getRealMetrics(user.userId) 
+      : null;
+
     return NextResponse.json({ 
         settings: updatedUser,
-        metrics: updatedUser.directoryOptIn ? generateSmartMetrics() : null 
+        metrics,
     });
 
   } catch (error) {

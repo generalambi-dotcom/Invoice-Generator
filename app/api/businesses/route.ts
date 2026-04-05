@@ -106,6 +106,18 @@ export async function GET(request: NextRequest) {
       return true;
     });
 
+    // Record search_appearance for each business that appeared (fire-and-forget)
+    const visitorIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    if (sanitizedBusinesses.length > 0) {
+      prisma.directoryEvent.createMany({
+        data: sanitizedBusinesses.map(biz => ({
+          type: 'search_appearance',
+          businessId: biz.id,
+          visitorIp,
+        }))
+      }).catch(() => {}); // Non-blocking
+    }
+
     return NextResponse.json({ 
       businesses: sanitizedBusinesses,
       total: sanitizedBusinesses.length

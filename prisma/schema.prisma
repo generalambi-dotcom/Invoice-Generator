@@ -93,6 +93,7 @@ model User {
   tasks                  Task[]
   timeLogs               TimeLog[]
   invoiceTemplates       InvoiceTemplate[]
+  directoryEvents        DirectoryEvent[]
 }
 
 model InvoiceReminderSettings {
@@ -714,3 +715,17 @@ model EmailNotificationTemplate {
   updatedAt   DateTime @updatedAt
   createdAt   DateTime @default(now())
 }
+
+model DirectoryEvent {
+  id          String   @id @default(cuid())
+  type        String   // 'profile_view' | 'search_appearance'
+  businessId  String   // The user whose profile was viewed/appeared
+  visitorIp   String?  // Anonymized visitor identifier
+  createdAt   DateTime @default(now())
+
+  business    User     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, type])
+  @@index([businessId, createdAt])
+}
+

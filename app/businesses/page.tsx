@@ -2,61 +2,29 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { getBusinessesAPI } from '@/lib/api-client';
 import BusinessCard from '@/components/BusinessCard';
-import { Search, Loader2, MapPin, Grid, Briefcase, ChevronRight, PenTool, Wrench, Scissors, Laptop, CheckCircle2 } from 'lucide-react';
+import { Search, Loader2, MapPin, ChevronRight } from 'lucide-react';
 import { INDUSTRY_OPTIONS } from '@/lib/profile-completeness';
 
 export default function BusinessesDirectoryPage() {
+  const router = useRouter();
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [latestPosts, setLatestPosts] = useState<any[]>([]);
-  const [filters, setFilters] = useState({
-    industry: '',
-    size: '',
-    status: '',
-    q: ''
-  });
-
+  
   const [searchInput, setSearchInput] = useState('');
   const [locationInput, setLocationInput] = useState('');
-  const [searchModeActive, setSearchModeActive] = useState(false);
-  const [searchTab, setSearchTab] = useState<'search'|'enquire'>('search');
 
-  const executeSearch = async (forceIndustry?: string) => {
-    setLoading(true);
-    setSearchModeActive(true);
+  const executeSearch = (categoryStr?: string) => {
+    const service = categoryStr || searchInput;
+    const query = new URLSearchParams();
+    if (service) query.set('service', service);
+    if (locationInput) query.set('location', locationInput);
     
-    // Automatically jump to search mode 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    try {
-      const currentFilters = { ...filters, q: searchInput };
-      if (forceIndustry) currentFilters.industry = forceIndustry;
-      
-      const data = await getBusinessesAPI(currentFilters);
-      setBusinesses(data.businesses || []);
-    } catch (error) {
-      console.error('Failed to load businesses', error);
-    } finally {
-      setLoading(false);
-    }
+    router.push(`/businesses/enquire?${query.toString()}`);
   };
-
-  const clearSearch = () => {
-    setSearchModeActive(false);
-    setSearchInput('');
-    setLocationInput('');
-    setFilters({ industry: '', size: '', status: '', q: '' });
-    setBusinesses([]);
-  };
-
-  // If filters change (like industry dropdown inside search view), refresh automatically
-  useEffect(() => {
-    if (searchModeActive && filters.industry !== '') {
-      executeSearch();
-    }
-  }, [filters.industry]);
 
   // Load latest posts
   useEffect(() => {
@@ -74,257 +42,155 @@ export default function BusinessesDirectoryPage() {
     loadPosts();
   }, []);
 
-  const TRENDING_CATEGORIES = [
-    { icon: Wrench, title: 'Contractors', desc: 'Find a top trader to fix or replace your pipes & appliances', query: 'Construction' },
-    { icon: Scissors, title: 'Creative Agencies', desc: 'Browse professionals & top-rated agencies for your new campaign', query: 'Media & Entertainment' },
-    { icon: PenTool, title: 'Consultants', desc: 'Bring in local experts to refresh your business strategy, inside & out', query: 'Consulting' },
-    { icon: Laptop, title: 'IT Specialists', desc: 'Find a top rated tech consultant for your digital and IT needs', query: 'Technology' },
+  const CATEGORIES = [
+    {
+      title: 'Home and Garden',
+      items: [
+        { name: 'House Cleaning', img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=600', query: 'Cleaning' },
+        { name: 'Gardening', img: 'https://images.unsplash.com/photo-1416879598555-2571ad4c62fb?auto=format&fit=crop&q=80&w=600', query: 'Gardening' },
+        { name: 'Painting & Decorating', img: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&q=80&w=600', query: 'Contracting' },
+        { name: 'Plumbing', img: 'https://images.unsplash.com/photo-1505798577917-a65157d3320a?auto=format&fit=crop&q=80&w=600', query: 'Plumbing' },
+      ]
+    },
+    {
+      title: 'Health & Wellbeing',
+      items: [
+        { name: 'Personal Trainers', img: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=600', online: true, query: 'Fitness' },
+        { name: 'Counselling', img: 'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?auto=format&fit=crop&q=80&w=600', online: true, query: 'Therapy' },
+        { name: 'Massage Therapy', img: 'https://images.unsplash.com/photo-1519823551278-64ac92734fb1?auto=format&fit=crop&q=80&w=600', query: 'Wellness' },
+        { name: 'Nutritionists', img: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=600', online: true, query: 'Nutrition' },
+      ]
+    },
+    {
+      title: 'Business Services',
+      items: [
+        { name: 'Web Design', img: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=600', online: true, query: 'Technology' },
+        { name: 'Accounting', img: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=600', online: true, query: 'Finance' },
+        { name: 'Legal Services', img: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=600', online: true, query: 'Legal' },
+        { name: 'Marketing', img: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?auto=format&fit=crop&q=80&w=600', online: true, query: 'Marketing' },
+      ]
+    }
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] font-sans">
+    <div className="min-h-screen bg-white font-sans">
       
-      {/* Premium Dark Local Header */}
-      <header className="relative z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="w-full px-6 py-4 flex justify-between items-center max-w-[1600px] mx-auto">
-          <Link href="/" className="flex items-center gap-2 text-gray-900 font-bold text-2xl tracking-tight" onClick={clearSearch}>
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-               <span className="text-white text-lg font-bold">I</span>
-            </div>
-            InvoiceNaija<span className="text-sm font-medium text-gray-500 mt-1.5 ml-1 hidden sm:inline">Business</span>
-          </Link>
-          <div className="flex items-center gap-3 md:gap-8">
-            <Link href="/" className="hidden md:block text-sm font-semibold text-gray-700 hover:text-black">Post your enquiry</Link>
-            <Link href="/blog" className="hidden md:block text-sm font-semibold text-gray-700 hover:text-black">Blog</Link>
-            <div className="flex items-center gap-3">
-               <Link href="/signin" className="text-sm font-bold text-white bg-blue-600 px-6 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm flex items-center gap-2">
-                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                 Log in
-               </Link>
-            </div>
+      {/* Bark Style Header */}
+      <header className="relative z-50 bg-white border-b border-gray-100 py-4">
+        <div className="w-full px-6 flex justify-between items-center max-w-[1600px] mx-auto">
+          <div className="flex items-center gap-8">
+            <Link href="/" className="flex items-center gap-2 text-gray-900 font-extrabold text-2xl tracking-tighter">
+              <svg className="w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              InvoiceNaija<span className="text-gray-500 font-normal ml-0.5">Explore</span>
+            </Link>
+          </div>
+          <div className="flex items-center gap-6">
+            <Link href="/signin" className="hidden md:block text-sm font-bold text-gray-700 hover:text-black">Login</Link>
+            <Link href="/signup" className="text-sm font-bold text-white bg-blue-600 px-5 py-2.5 rounded hover:bg-blue-700 transition flex items-center gap-2 shadow-sm">
+              <span className="w-4 h-4 bg-white/20 rounded-full flex items-center justify-center text-[10px]">P</span>
+              Join as a Professional
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero Area */}
-      <section className="relative w-full overflow-hidden flex flex-col md:flex-row min-h-[500px] md:h-[60vh] bg-gray-900">
-        
-        {/* White Search Box Layer */}
-        <div className="relative z-20 w-full md:w-5/12 lg:w-[400px] bg-white md:h-full flex flex-col justify-center px-4 md:px-12 py-8 md:py-0 shrink-0 shadow-2xl">
-           <div className="max-w-md mx-auto w-full">
-              {/* Tabs */}
-              <div className="flex w-full mb-6 border border-gray-200 rounded-lg overflow-hidden font-bold">
-                 <button onClick={() => setSearchTab('search')} className={`flex-1 py-3 text-sm transition-colors ${searchTab === 'search' ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>Search</button>
-                 <button onClick={() => setSearchTab('enquire')} className={`flex-1 py-3 text-sm border-l border-gray-200 transition-colors ${searchTab === 'enquire' ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>Enquire</button>
-              </div>
+      {/* Bark Hero Area */}
+      <section className="w-full bg-white pt-20 pb-16 px-6 md:pt-32 md:pb-28">
+        <div className="max-w-4xl mx-auto flex flex-col items-center">
+            
+            <h1 className="text-4xl md:text-5xl lg:text-[56px] font-bold text-gray-900 text-center mb-4 leading-[1.1] tracking-tight">
+              Find the perfect <br className="hidden md:block" />professional for you
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-400 font-medium text-center mb-10">
+              Get free quotes within minutes
+            </p>
 
-              {/* Inputs */}
-              <div className="space-y-4">
-                 <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input 
-                      type="text" 
-                      placeholder="Search businesses..." 
-                      className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none font-medium text-gray-900 placeholder-gray-500"
-                      value={searchInput}
-                      onChange={e => setSearchInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && executeSearch()}
-                    />
-                 </div>
-                 <div className="relative">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input 
-                      type="text" 
-                      placeholder="Town, city or postcode" 
-                      className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none font-medium text-gray-900 placeholder-gray-500"
-                      value={locationInput}
-                      onChange={e => setLocationInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && executeSearch()}
-                    />
-                 </div>
-                 
-                 <button 
-                  onClick={() => executeSearch()} 
-                  className="w-full bg-black text-white hover:bg-gray-900 py-4 rounded-lg font-bold text-lg transition-colors shadow-lg mt-2 flex items-center justify-center gap-2"
-                 >
-                    {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-                    Search
-                 </button>
-              </div>
-           </div>
+            {/* Horizontal Search Bar */}
+            <div className="w-full max-w-3xl flex flex-col md:flex-row shadow-[0_8px_30px_rgb(0,0,0,0.08)] rounded-lg overflow-hidden border border-gray-200">
+               <div className="flex-1 flex items-center bg-white px-4 py-1 border-b md:border-b-0 md:border-r border-gray-200">
+                  <input 
+                    type="text" 
+                    placeholder="What service are you looking for?" 
+                    className="w-full py-4 outline-none text-gray-900 font-medium placeholder-gray-400"
+                    value={searchInput}
+                    onChange={e => setSearchInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && executeSearch()}
+                  />
+               </div>
+               <div className="w-full md:w-[220px] flex items-center bg-white px-4 py-1">
+                  <MapPin className="w-5 h-5 text-gray-400 mr-2 shrink-0" />
+                  <input 
+                    type="text" 
+                    placeholder="Postcode" 
+                    className="w-full py-4 outline-none text-gray-900 font-medium placeholder-gray-400"
+                    value={locationInput}
+                    onChange={e => setLocationInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && executeSearch()}
+                  />
+               </div>
+               <button 
+                onClick={() => executeSearch()} 
+                className="w-full md:w-[140px] bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 md:py-0 transition-colors flex items-center justify-center gap-2"
+               >
+                 Search
+               </button>
+            </div>
+            
+            <div className="mt-6 text-sm text-gray-400 font-medium">
+              Popular: <span className="cursor-pointer hover:text-blue-600 transition-colors" onClick={() => executeSearch('House Cleaning')}>House Cleaning</span>, <span className="cursor-pointer hover:text-blue-600 transition-colors" onClick={() => executeSearch('Web Design')}>Web Design</span>, <span className="cursor-pointer hover:text-blue-600 transition-colors" onClick={() => executeSearch('Personal Trainers')}>Personal Trainers</span>
+            </div>
+
         </div>
-
-        {/* Right Hero Image Area */}
-        <div className="relative w-full md:w-auto md:flex-1 h-[400px] md:h-full flex items-center">
-             <div 
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=2674")' }}
-             >
-                <div className="absolute inset-0 bg-black/40"></div>
-             </div>
-             <div className="relative z-10 px-8 lg:px-16 max-w-3xl">
-                <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white tracking-tight drop-shadow-lg leading-tight">
-                  <span className="text-blue-500">InvoiceNaija</span> - your marketplace <br />for local services
-                </h1>
-             </div>
-        </div>
-
       </section>
 
-      {/* Conditionally Render Content vs Search Results */}
-      {!searchModeActive ? (
-        <div className="w-full bg-[#F5F7FA]">
-          <div className="max-w-[1400px] mx-auto px-6 py-12 md:py-16">
-            
-            {/* Promo Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-24">
-               {/* Enquire Fast Card */}
-               <div className="bg-blue-600 rounded-xl overflow-hidden shadow-sm flex flex-col sm:flex-row h-auto sm:h-[300px]">
-                  <div className="p-8 sm:w-1/2 flex flex-col justify-center">
-                     <h2 className="text-3xl font-extrabold text-white mb-4 tracking-tight">No time to search?</h2>
-                     <p className="text-lg text-blue-100 font-medium mb-8">Simply share details to connect with the best businesses for the job</p>
-                     <button className="self-start border-2 border-white text-white font-bold px-6 py-2.5 rounded-lg hover:bg-white hover:text-blue-600 transition-colors uppercase tracking-wide text-sm">
-                        Post your enquiry
-                     </button>
-                  </div>
-                  <div className="hidden sm:block sm:w-1/2 h-full bg-cover bg-center" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1518458028785-8fbcd101ebb9?auto=format&fit=crop&q=80&w=1400")' }}>
-                  </div>
-               </div>
+      {/* Trust Bar */}
+      <div className="w-full border-y border-gray-100 bg-[#fafafa] py-6 flex justify-center items-center gap-8 md:gap-16 grayscale opacity-60 overflow-hidden px-6">
+         <span className="font-extrabold text-2xl tracking-tighter text-gray-400">PUNCH</span>
+         <span className="font-extrabold text-2xl tracking-tighter text-gray-400 font-serif">VANGUARD</span>
+         <span className="font-bold text-2xl text-gray-400">BUSINESSDAY</span>
+         <span className="font-extrabold text-xl text-gray-400 italic">TechCabal</span>
+      </div>
 
-               {/* Grow Business Card */}
-               <div className="bg-[#2B2B2B] rounded-xl overflow-hidden shadow-sm flex flex-col sm:flex-row h-auto sm:h-[300px]">
-                  <div className="p-8 sm:w-1/2 flex flex-col justify-center">
-                     <h2 className="text-3xl font-extrabold text-white mb-4 tracking-tight">Want to grow your business?</h2>
-                     <p className="text-lg text-gray-200 font-medium mb-8">Create your free business profile to reach more customers online</p>
-                     <Link href="/signup" className="self-start border-2 border-white text-white font-bold px-6 py-2.5 rounded-lg hover:bg-white hover:text-black transition-colors uppercase tracking-wide text-sm">
-                        Get started
-                     </Link>
-                  </div>
-                  <div className="hidden sm:block sm:w-1/2 h-full bg-cover bg-center" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&q=80&w=1400")' }}>
-                  </div>
-               </div>
-            </div>
-
-            {/* Trending Categories */}
-            <div className="text-center mb-16">
-               <h2 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">Trending Categories</h2>
-               <p className="text-xl text-gray-600 font-medium">Easily find, connect with, and buy from great businesses near you</p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">
-               {TRENDING_CATEGORIES.map((cat, idx) => {
-                 const Icon = cat.icon;
-                 return (
-                   <div key={idx} className="flex flex-col items-center text-center group cursor-pointer" onClick={() => executeSearch(cat.query)}>
-                      <div className="w-24 h-24 mb-6 relative">
-                         {/* Blue Accent */}
-                         <div className="absolute inset-0 bg-blue-600 rounded-lg transform rotate-6 drop-shadow-sm group-hover:rotate-12 transition-transform duration-300"></div>
-                         <div className="absolute inset-0 bg-white border-2 border-black rounded-lg flex items-center justify-center">
-                            <Icon className="w-10 h-10 text-black stroke-[1.5]" />
-                         </div>
-                      </div>
-                      <h3 className="text-2xl font-bold text-gray-900 mb-3">{cat.title}</h3>
-                      <p className="text-sm font-medium text-gray-600 mb-6 flex-1 px-4 leading-relaxed">{cat.desc}</p>
-                      <button className="border border-gray-300 text-gray-800 font-bold px-6 py-2.5 rounded-lg group-hover:border-black group-hover:bg-black group-hover:text-white transition-colors text-sm w-max mx-auto shadow-sm">
-                         Discover
-                      </button>
-                   </div>
-                 );
-               })}
-            </div>
-
-            {/* Fresh from our blog - Connected to DB */}
-            <div className="border-t border-gray-200 pt-16 mb-16">
-               <div className="flex items-center gap-2 mb-8 cursor-pointer group w-max">
-                 <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight group-hover:text-blue-600 transition-colors">Fresh from our blog</h2>
-                 <ChevronRight className="w-6 h-6 text-gray-900 mt-1" />
-               </div>
-
-               <div className="flex flex-wrap gap-3 mb-10">
-                 <Link href="/blog?category=Marketing" className="px-5 py-2.5 bg-gray-200/80 text-sm font-bold text-gray-800 rounded-md cursor-pointer hover:bg-gray-300">Creative & Media</Link>
-                 <Link href="/blog?category=Finance" className="px-5 py-2.5 bg-gray-200/80 text-sm font-bold text-gray-800 rounded-md cursor-pointer hover:bg-gray-300">Business & Finance</Link>
-                 <Link href="/blog?category=Compliance" className="px-5 py-2.5 bg-gray-200/80 text-sm font-bold text-gray-800 rounded-md cursor-pointer hover:bg-gray-300">Consulting</Link>
-               </div>
-
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {latestPosts.map((post) => (
-                    <Link href={`/blog/${post.slug}`} key={post.id} className="group cursor-pointer flex flex-col h-full">
-                       <div className="h-56 bg-gray-200 rounded-2xl mb-5 overflow-hidden shrink-0">
-                          {post.coverImage ? (
-                            <img src={post.coverImage} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={post.title} />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 font-bold text-sm">Read Article</div>
-                          )}
-                       </div>
-                       <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600">{post.title}</h3>
-                       <p className="text-gray-600 mb-4 line-clamp-2 flex-1">{post.excerpt}</p>
-                       <span className="text-sm font-bold border-b border-black pb-0.5 group-hover:border-blue-600 group-hover:text-blue-600 w-max">Read more</span>
-                    </Link>
-                  ))}
-                  {latestPosts.length === 0 && (
-                     <div className="col-span-3 text-center text-gray-400 py-12">Loading latest articles...</div>
-                  )}
-               </div>
-            </div>
-
-          </div>
-        </div>
-      ) : (
-        /* SEARCH RESULTS RENDER - Standard List View */
-        <div className="w-full max-w-[1400px] mx-auto px-6 py-8">
-             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-gray-200 pb-4">
-                <div>
-                   <h2 className="text-2xl font-extrabold text-gray-900 mb-1">
-                      Search Results for &quot;{searchInput}&quot; {locationInput && `in ${locationInput}`} {filters.industry && `- ${filters.industry}`}
-                   </h2>
-                   <p className="text-gray-500 font-medium">
-                      {loading ? 'Finding businesses...' : `Showing ${businesses.length} trusted professionals`}
-                   </p>
-                </div>
-                <div className="flex items-center gap-4 mt-4 md:mt-0">
-                   <select 
-                     className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-bold text-gray-700 outline-none hover:bg-gray-50 shadow-sm"
-                     value={filters.industry}
-                     onChange={(e) => setFilters({...filters, industry: e.target.value})}
-                   >
-                     <option value="">All Categories</option>
-                     {INDUSTRY_OPTIONS.map((niche: any) => (
-                        <option key={niche.value} value={niche.value}>{niche.label}</option>
-                     ))}
-                   </select>
-                   <button onClick={clearSearch} className="text-sm font-bold text-gray-500 hover:text-black hover:underline cursor-pointer">
-                      Clear Search
-                   </button>
-                </div>
+      <div className="w-full max-w-[1400px] mx-auto px-6 py-16">
+        
+        {/* Render Category Grids */}
+        {CATEGORIES.map((categoryGroup, index) => (
+          <div key={index} className="mb-16">
+             <div className="flex justify-between items-end mb-6">
+               <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{categoryGroup.title}</h2>
+               <button className="text-sm font-medium text-gray-400 hover:text-blue-600 hidden md:block">View All</button>
              </div>
-
-             {loading ? (
-                <div className="flex flex-col items-center justify-center py-32 text-gray-400 bg-white rounded-2xl shadow-sm border border-gray-100">
-                   <Loader2 className="w-10 h-10 animate-spin mb-4 text-[#6B4CE6]" />
-                   <p className="font-bold text-lg text-gray-900">Querying database...</p>
-                </div>
-             ) : businesses.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-dashed border-gray-300 text-center shadow-sm">
-                   <div className="w-16 h-16 bg-[#F5F7FA] rounded-full flex items-center justify-center mb-4 border border-blue-200">
-                      <Search className="w-8 h-8 text-blue-500" />
-                   </div>
-                   <h3 className="text-xl font-bold text-gray-900">No professionals found</h3>
-                   <p className="text-gray-500 max-w-sm mt-2 mb-6">
-                       Try expanding your search query or removing the category filter.
-                   </p>
-                   <button onClick={clearSearch} className="text-sm font-bold text-black border-b-2 border-black pb-0.5">
-                      Back to Directory
-                   </button>
-                </div>
-             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {businesses.map((biz) => (
-                        <BusinessCard key={biz.id} data={biz} />
-                    ))}
-                </div>
-             )}
-        </div>
-      )}
+             
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                {categoryGroup.items.map((cat, idx) => (
+                  <div 
+                    key={idx} 
+                    className="group cursor-pointer flex flex-col bg-white rounded overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+                    onClick={() => executeSearch(cat.query)}
+                  >
+                     <div className="relative h-32 md:h-48 overflow-hidden bg-gray-100">
+                        <div 
+                          className="absolute inset-0 bg-cover bg-center brightness-95 group-hover:scale-105 transition-transform duration-500" 
+                          style={{ backgroundImage: `url('${cat.img}')` }}
+                        />
+                        {/* Gradient overlay for text contrast if needed, but Bark puts text below */}
+                        
+                        {cat.online && (
+                          <div className="absolute top-3 right-3 bg-blue-600 text-white text-[10px] md:text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                            Available online
+                          </div>
+                        )}
+                     </div>
+                     <div className="p-4 bg-white">
+                        <h3 className="font-bold text-sm md:text-base text-gray-900 line-clamp-1">{cat.name}</h3>
+                     </div>
+                  </div>
+                ))}
+             </div>
+          </div>
+        ))}
+        
+      </div>
 
     </div>
   );

@@ -74,6 +74,9 @@ model User {
   lastActiveAt        DateTime? @default(now())
   businessPulseScore  Int       @default(0) // Internal 0-100 activity score
 
+  dirCity             String?
+  dirState            String?
+
   // Relations
   paymentCredentials PaymentCredential[]
   invoices          Invoice[]
@@ -94,6 +97,7 @@ model User {
   timeLogs               TimeLog[]
   invoiceTemplates       InvoiceTemplate[]
   directoryEvents        DirectoryEvent[]
+  leadResponses          LeadResponse[]
 }
 
 model InvoiceReminderSettings {
@@ -714,6 +718,47 @@ model EmailNotificationTemplate {
   variables   String?  // JSON array of available variable names
   updatedAt   DateTime @updatedAt
   createdAt   DateTime @default(now())
+}
+
+model LeadEnquiry {
+  id              String   @id @default(cuid())
+  industry        String   // Category of work
+  serviceReq      String   @db.Text // What exactly they need done
+  locationCity    String?
+  locationState   String?
+  isRemote        Boolean  @default(false)
+  urgency         String   // ASAP, Within a week, Flexible
+  
+  // Customer Details
+  customerName    String
+  customerEmail   String
+  customerPhone   String?
+  
+  status          String   @default("open")       // open, closed
+  maxResponses    Int      @default(10)           // Cap at 10 businesses
+  currentResponses Int     @default(0)            // Counter
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  responses       LeadResponse[]
+}
+
+// Maps a Business (User) applying to a Lead
+model LeadResponse {
+  id              String   @id @default(cuid())
+  leadId          String
+  businessId      String
+  
+  message         String   @db.Text // Cover letter / pitch
+  status          String   @default("pending") // pending, accepted, rejected
+  
+  createdAt       DateTime @default(now())
+
+  lead            LeadEnquiry @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  business        User        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, businessId]) // A business can only apply once per lead
 }
 
 model DirectoryEvent {

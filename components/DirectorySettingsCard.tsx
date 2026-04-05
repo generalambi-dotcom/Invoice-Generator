@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { updateDirectorySettingsAPI } from '@/lib/api-client';
 import { toast } from 'react-hot-toast';
-import { Check, X, Eye, EyeOff, BarChart, Users, MapPin, Briefcase } from 'lucide-react';
+import { Check, X, Eye, EyeOff, BarChart, Users, MapPin, Briefcase, Link as LinkIcon, Share2 } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function DirectorySettingsCard({ settings, metrics, onUpdate }: { settings: any, metrics: any, onUpdate?: (newSettings: any) => void }) {
@@ -138,13 +138,36 @@ export default function DirectorySettingsCard({ settings, metrics, onUpdate }: {
               />
             </div>
             
-            <div className="mt-6 pt-6 border-t border-gray-100 flex items-start gap-3">
-               <div className="mt-0.5 bg-blue-50 p-1.5 rounded-full text-blue-600">
-                  <Check className="w-4 h-4" />
+            <div className="mt-6 pt-6 border-t border-gray-100 flex flex-col md:flex-row md:items-center gap-6 justify-between">
+               <div className="flex-1 flex items-start gap-3">
+                  <div className="mt-0.5 bg-blue-50 p-1.5 rounded-full text-blue-600">
+                     <Check className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Your data is private</p>
+                    <p className="text-sm text-gray-500">We never share sensitive business data. Only selected profile information is visible.</p>
+                  </div>
                </div>
-               <div>
-                 <p className="text-sm font-medium text-gray-900">Your data is private</p>
-                 <p className="text-sm text-gray-500">We never share sensitive business data such as revenue, invoices, or contact details. Only selected profile information is visible.</p>
+               
+               <div className="flex flex-col sm:flex-row w-full md:w-auto gap-3">
+                 <button 
+                    onClick={() => {
+                      const url = `${window.location.origin}/businesses/${settings.id || 'me'}`;
+                      navigator.clipboard.writeText(url);
+                      toast.success("Profile link copied!");
+                    }}
+                    className="flex-1 sm:flex-none justify-center items-center gap-2 px-5 py-2.5 bg-white hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-medium transition border border-gray-200 shadow-sm flex"
+                 >
+                   <LinkIcon className="w-4 h-4 text-gray-400" /> Copy Link
+                 </button>
+                 <a 
+                    href={`https://wa.me/?text=${encodeURIComponent(`Check out my verified business profile on InvoiceGenerator.ng: ${typeof window !== 'undefined' ? window.location.origin : ''}/businesses/${settings?.id || 'me'}`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex-1 sm:flex-none justify-center items-center gap-2 px-5 py-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-lg text-sm font-bold transition shadow-sm shadow-[#25D366]/30 flex"
+                 >
+                   <Share2 className="w-4 h-4" /> WhatsApp
+                 </a>
                </div>
             </div>
           </div>

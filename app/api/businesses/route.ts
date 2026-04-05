@@ -37,11 +37,19 @@ export async function GET(request: NextRequest) {
     const industry = searchParams.get('industry');
     const size = searchParams.get('size');
     const status = searchParams.get('status');
+    const queryTerm = searchParams.get('q');
 
     // ONLY queried users who have explicitly opted into the directory
     const whereClause: any = {
       directoryOptIn: true
     };
+
+    if (queryTerm) {
+      whereClause.OR = [
+        { name: { contains: queryTerm, mode: 'insensitive' } },
+        { industry: { contains: queryTerm, mode: 'insensitive' } }
+      ];
+    }
 
     if (industry) {
       whereClause.industry = industry;

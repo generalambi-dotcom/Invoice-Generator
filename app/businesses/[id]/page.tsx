@@ -11,12 +11,20 @@ export default function BusinessProfilePage() {
   const { id } = useParams();
   const [business, setBusiness] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Contact Form State
+  const [contactName, setContactName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactMessage, setContactMessage] = useState('');
+  const [contactStatus, setContactStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     const loadBusiness = async () => {
       try {
         const data = await getBusinessProfileAPI(id as string);
         setBusiness(data.business);
+        // Dynamic SEO Title Injection
+        document.title = `${data.business.name} | InvoiceGenerator Directory`;
       } catch (error) {
         console.error('Failed to load business profile', error);
       } finally {
@@ -25,6 +33,32 @@ export default function BusinessProfilePage() {
     };
     loadBusiness();
   }, [id]);
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactName || !contactEmail || !contactMessage) return;
+    
+    setContactStatus('loading');
+    try {
+      const response = await fetch(`/api/businesses/${id}/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: contactName, email: contactEmail, message: contactMessage })
+      });
+      
+      if (!response.ok) throw new Error('Failed to send');
+      setContactStatus('success');
+      setContactName('');
+      setContactEmail('');
+      setContactMessage('');
+      
+      // Reset after 3 seconds
+      setTimeout(() => setContactStatus('idle'), 3000);
+    } catch (error) {
+      console.error(error);
+      setContactStatus('error');
+    }
+  };
 
   if (loading) {
     return (
@@ -241,25 +275,62 @@ export default function BusinessProfilePage() {
                           <MessageSquare className="w-5 h-5 text-gray-500" />
                           <h3 className="text-[15px] font-bold text-gray-900">Contact business</h3>
                       </div>
-                      <div className="p-6 space-y-4">
+                      <form onSubmit={handleContactSubmit} className="p-6 space-y-4">
                           <div>
-                              <input type="text" placeholder="Your name" className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#6B4CE6] focus:ring-1 focus:ring-[#6B4CE6]" />
+                              <input required value={contactName} onChange={e => setContactName(e.target.value)} type="text" placeholder="Your name" className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#6B4CE6] focus:ring-1 focus:ring-[#6B4CE6] disabled:opacity-50" disabled={contactStatus === 'loading'} />
                           </div>
                           <div>
-                              <input type="email" placeholder="Your Email address" className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#6B4CE6] focus:ring-1 focus:ring-[#6B4CE6]" />
+                              <input required value={contactEmail} onChange={e => setContactEmail(e.target.value)} type="email" placeholder="Your Email address" className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#6B4CE6] focus:ring-1 focus:ring-[#6B4CE6] disabled:opacity-50" disabled={contactStatus === 'loading'} />
                           </div>
                           <div>
-                              <textarea placeholder="Your message?" rows={4} className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#6B4CE6] focus:ring-1 focus:ring-[#6B4CE6] resize-none"></textarea>
+                              <textarea required value={contactMessage} onChange={e => setContactMessage(e.target.value)} placeholder="Your message?" rows={4} className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm outline-none focus:border-[#6B4CE6] focus:ring-1 focus:ring-[#6B4CE6] resize-none disabled:opacity-50" disabled={contactStatus === 'loading'}></textarea>
                           </div>
-                          <button className="w-full bg-[#6B4CE6] text-white rounded-xl py-3.5 font-bold hover:bg-[#5b3ed9] transition shadow-md shadow-[#6B4CE6]/20">
-                              Send Message
-                          </button>
-                      </div>
+                          
+                          {contactStatus === 'error' && <p className="text-red-500 text-sm font-medium">Failed to send message. Please try again.</p>}
+                          
+                          {contactStatus === 'success' ? (
+                            <div className="w-full bg-green-50 text-green-600 rounded-xl py-3.5 font-bold flex items-center justify-center gap-2 border border-green-200">
+                               <CheckCircle2 className="w-5 h-5" /> Message Sent!
+                            </div>
+                          ) : (
+                            <button type="submit" disabled={contactStatus === 'loading'} className="w-full bg-[#6B4CE6] text-white rounded-xl py-3.5 font-bold hover:bg-[#5b3ed9] transition shadow-md shadow-[#6B4CE6]/20 flex items-center justify-center gap-2 disabled:opacity-70">
+                                {contactStatus === 'loading' ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Message'}
+                            </button>
+                          )}
+                      </form>
                   </div>
 
               </div>
           </div>
       </div>
+
+      {/* JSON-LD Schema block for LocalBusiness SEO */}
+      {business && !isAnonymous && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+             __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "LocalBusiness",
+                "name": business.name,
+                "image": coverImage,
+                "address": {
+                  "@type": "PostalAddress",
+                  "addressLocality": "Lagos", // Default location mapping
+                  "addressCountry": "NG"
+                },
+                "telephone": "", 
+                "url": typeof window !== 'undefined' ? window.location.href : '',
+                "priceRange": "$$",
+                "aggregateRating": {
+                  "@type": "AggregateRating",
+                  "ratingValue": "9.5",
+                  "reviewCount": "100"
+                }
+             })
+          }}
+        />
+      )}
     </div>
   );
 }

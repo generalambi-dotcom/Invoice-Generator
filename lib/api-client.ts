@@ -1419,11 +1419,12 @@ export const updateDirectorySettingsAPI = async (data: any) => {
   return response.json();
 };
 
-export const getBusinessesAPI = async (filters: { industry?: string, size?: string, status?: string }) => {
+export const getBusinessesAPI = async (filters: { industry?: string, size?: string, status?: string, q?: string }) => {
   const params = new URLSearchParams();
   if (filters.industry) params.append('industry', filters.industry);
   if (filters.size) params.append('size', filters.size);
   if (filters.status) params.append('status', filters.status);
+  if (filters.q) params.append('q', filters.q);
 
   const url = `/api/businesses${params.toString() ? '?' + params.toString() : ''}`;
   

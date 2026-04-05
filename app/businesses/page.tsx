@@ -13,8 +13,12 @@ export default function BusinessesDirectoryPage() {
   const [filters, setFilters] = useState({
     industry: '',
     size: '',
-    status: ''
+    status: '',
+    q: ''
   });
+
+  const [searchInput, setSearchInput] = useState('');
+  const [locationInput, setLocationInput] = useState('Lagos, Nigeria');
 
   const loadBusinesses = async () => {
     setLoading(true);
@@ -77,7 +81,7 @@ export default function BusinessesDirectoryPage() {
           <div className="bg-white p-2 rounded-2xl shadow-2xl flex flex-col md:flex-row gap-2 max-w-4xl mx-auto">
              <div className="flex-1 flex items-center px-4 py-3 md:border-r border-gray-100">
                 <MapPin className="text-gray-400 w-5 h-5 mr-3 shrink-0" />
-                <input type="text" placeholder="Where to look?" className="w-full text-gray-700 outline-none placeholder-gray-400 font-medium" defaultValue="Lagos, Nigeria" />
+                <input type="text" value={locationInput} onChange={(e) => setLocationInput(e.target.value)} placeholder="Where to look?" className="w-full text-gray-700 outline-none placeholder-gray-400 font-medium" />
              </div>
              
              <div className="flex-1 flex items-center px-4 py-3 md:border-r border-gray-100">
@@ -96,10 +100,10 @@ export default function BusinessesDirectoryPage() {
 
              <div className="flex-1 flex items-center px-4 py-3">
                 <Search className="text-gray-400 w-5 h-5 mr-3 shrink-0" />
-                <input type="text" placeholder="What are you looking for?" className="w-full text-gray-700 outline-none placeholder-gray-400 font-medium" />
+                <input type="text" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') setFilters({...filters, q: searchInput}) }} placeholder="What are you looking for?" className="w-full text-gray-700 outline-none placeholder-gray-400 font-medium" />
              </div>
              
-             <button className="bg-[#6B4CE6] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#5b3ed9] transition-colors flex items-center justify-center gap-2 shadow-lg shadow-[#6B4CE6]/30">
+             <button onClick={() => setFilters({...filters, q: searchInput})} className="bg-[#6B4CE6] text-white px-8 py-4 rounded-xl font-bold hover:bg-[#5b3ed9] transition-colors flex items-center justify-center gap-2 shadow-lg shadow-[#6B4CE6]/30">
                <Search className="w-5 h-5" />
                Search
              </button>

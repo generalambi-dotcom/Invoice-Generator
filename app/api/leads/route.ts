@@ -51,9 +51,7 @@ export async function GET(request: NextRequest) {
       select: {
           dirCity: true,
           dirState: true,
-          companyDefaults: {
-              select: { industry: true }
-          }
+          industry: true,
       }
     });
 
@@ -61,7 +59,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const businessIndustry = businessUser.companyDefaults?.industry;
+    const businessIndustry = businessUser.industry;
 
     const url = new URL(request.url);
     const filterTab = url.searchParams.get('tab') || 'available'; // 'available' or 'applied'

@@ -142,6 +142,11 @@ export default function OnboardingModal({ onComplete, onSkip }: OnboardingModalP
   const regionConfig = getRegionConfig('USD'); // Default neutral fallback
 
   const handleSubmit = async () => {
+    if (!companyName.trim()) {
+      toast.error('Company Name is required to continue');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const res = await fetch('/api/onboarding', {
@@ -239,7 +244,7 @@ export default function OnboardingModal({ onComplete, onSkip }: OnboardingModalP
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company Name <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   value={companyName}

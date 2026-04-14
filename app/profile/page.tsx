@@ -138,6 +138,11 @@ export default function ProfilePage() {
     };
 
     const handleSave = async () => {
+        if (!businessInfo.name.trim()) {
+            toast.error('Company Name is required');
+            return;
+        }
+
         setIsSaving(true);
         try {
             // 1. Save Company Defaults (including hacked profile image)
@@ -262,7 +267,7 @@ export default function ProfilePage() {
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Company Name <span className="text-red-500">*</span></label>
                             <input
                                 type="text"
                                 value={businessInfo.name}

@@ -77,6 +77,16 @@ export async function POST(request: NextRequest) {
     }
 
     if (!stripeSecretKey) {
+      // Log this configuration error
+      await prisma.systemLog.create({
+        data: {
+          level: 'error',
+          category: 'payment',
+          message: 'Failed to initiate Stripe payment: Stripe is not configured',
+          metadata: { userId, plan, action: 'create_checkout', isTrial: trial }
+        }
+      });
+
       return NextResponse.json(
         { error: 'Stripe is not configured. Please configure Stripe in Admin Dashboard or set STRIPE_SECRET_KEY in environment variables.' },
         { status: 500 }
@@ -146,6 +156,20 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error creating Stripe checkout session:', error);
+    
+    try {
+      await prisma.systemLog.create({
+        data: {
+          level: 'error',
+          category: 'payment',
+          message: 'Error creating Stripe checkout session',
+          metadata: { error: error.message || 'Unknown error' }
+        }
+      });
+    } catch (logError) {
+      console.error('Failed to write to SystemLog:', logError);
+    }
+
     return NextResponse.json(
       {
         error: 'Failed to create checkout session',

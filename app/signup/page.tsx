@@ -7,6 +7,7 @@ import { checkPasswordStrength, validatePassword } from '@/lib/password-validato
 import AuthLayout from '@/components/AuthLayout';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import { createSession } from '@/lib/session';
+import { trackEvent } from '@/lib/tracking';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -71,6 +72,7 @@ export default function SignUpPage() {
       document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
 
       createSession(data.user);
+      trackEvent('sign_up', { method: 'email' });
 
       // Redirect to email verification or dashboard
       if (data.requiresVerification) {

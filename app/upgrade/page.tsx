@@ -8,6 +8,7 @@ import { initiatePayment } from '@/lib/payments';
 import { validateCoupon, applyCoupon } from '@/lib/coupons';
 import { getPricing, formatPrice, detectUserRegion } from '@/lib/pricing';
 import { toast } from 'react-hot-toast';
+import { trackEvent } from '@/lib/tracking';
 
 export default function UpgradePage() {
   const router = useRouter();
@@ -63,6 +64,9 @@ export default function UpgradePage() {
           // Stripe payment successful - refresh user data
           const updatedUser = getCurrentUser();
           setUser(updatedUser);
+          
+          trackEvent('purchase', { transaction_id: sessionId, value: pricing?.premiumPrice, currency: pricing?.currency });
+          
           // Show success message
           toast.success('Payment successful! Your premium subscription is now active.');
           // Clean URL
@@ -86,6 +90,7 @@ export default function UpgradePage() {
     setRegion(detectedRegion);
     const priceData = await getPricing(detectedRegion);
     setPricing(priceData);
+    trackEvent('view_item', { item_name: 'Premium Subscription', value: priceData.premiumPrice, currency: priceData.currency });
   };
 
   const loadAvailableProviders = async () => {
@@ -136,6 +141,7 @@ export default function UpgradePage() {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
+          trackEvent('purchase', { transaction_id: token, value: pricing?.premiumPrice, currency: pricing?.currency });
           toast.success('Payment successful! Your premium subscription is now active.');
           // Refresh user data
           const updatedUser = getCurrentUser();
@@ -173,6 +179,7 @@ export default function UpgradePage() {
     try {
       const result = applyCoupon(couponCode.trim(), user.id);
       if (result.success) {
+        trackEvent('apply_coupon', { coupon: couponCode.trim() });
         setCouponSuccess(true);
         setCouponCode('');
         // Refresh user data
@@ -203,6 +210,7 @@ export default function UpgradePage() {
 
     setLoading(true);
     setPaymentProvider(provider);
+    trackEvent('begin_checkout', { provider, value: pricing.premiumPrice, currency: pricing.currency });
 
     try {
       const paymentLink = await initiatePayment({

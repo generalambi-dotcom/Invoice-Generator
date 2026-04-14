@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { INDUSTRY_OPTIONS } from '@/lib/profile-completeness';
 import { getRegionConfig } from '@/lib/regionalization';
+import { trackEvent } from '@/lib/tracking';
 
 interface OnboardingModalProps {
   onComplete: () => void;
@@ -154,6 +155,7 @@ export default function OnboardingModal({ onComplete, onSkip }: OnboardingModalP
         })
       });
       if (!res.ok) throw new Error('Failed to save settings');
+      trackEvent('tutorial_complete');
       toast.success('Your defaults have been saved!');
       onComplete();
     } catch (e: any) {

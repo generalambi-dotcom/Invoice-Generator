@@ -53,6 +53,7 @@ import { format } from 'date-fns';
 import { getCurrentUser } from '@/lib/auth';
 import { isPremiumUser } from '@/lib/payments';
 import ImageUpload from '@/components/ImageUpload';
+import { trackEvent } from '@/lib/tracking';
 
 function InvoiceFormContent() {
   const searchParams = useSearchParams();
@@ -763,6 +764,7 @@ function InvoiceFormContent() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
+      trackEvent('download_invoice');
       toast.success('Invoice downloaded successfully!');
       if (!user) {
         // Track guest invoice download in Google Analytics

@@ -5,6 +5,7 @@ import { updateDirectorySettingsAPI } from '@/lib/api-client';
 import { Briefcase, MapPin, Users, Check, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import clsx from 'clsx';
+import { trackEvent } from '@/lib/tracking';
 
 export default function DirectoryOptInModal({ settings, onComplete }: { settings: any, onComplete: (newSettings: any) => void }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -38,6 +39,10 @@ export default function DirectoryOptInModal({ settings, onComplete }: { settings
         dirShowSize: showSize,
         dirShowActivity: showActivity
       });
+      
+      if (optIn) {
+        trackEvent('generate_lead', { source: 'directory_optin_modal' });
+      }
       
       toast.success(optIn ? 'Your business is now listed!' : 'Preferences saved');
       setIsOpen(false);

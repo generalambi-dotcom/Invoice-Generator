@@ -7,6 +7,7 @@ import { signIn } from '@/lib/auth';
 import { createSession, setupSessionTracking } from '@/lib/session';
 import AuthLayout from '@/components/AuthLayout';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import { trackEvent } from '@/lib/tracking';
 
 function SignInContent() {
   const router = useRouter();
@@ -46,6 +47,8 @@ function SignInContent() {
         localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
         document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
         createSession(data.user);
+        
+        trackEvent('login', { method: 'email' });
 
         const redirectUrl = searchParams.get('redirect') || '/dashboard';
         window.location.href = redirectUrl;

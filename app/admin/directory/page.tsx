@@ -12,7 +12,7 @@ export default function AdminDirectoryPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ total: 0, pages: 1 });
+  const [pagination, setPagination] = useState({ total: 0, pages: 1, page: 1, limit: 50 });
 
   useEffect(() => {
     const currentUser = getCurrentUser();

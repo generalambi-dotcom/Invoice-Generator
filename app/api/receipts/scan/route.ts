@@ -1,6 +1,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
+import { generateText } from 'ai';
+import { openai } from '@ai-sdk/openai';
 
 export async function POST(request: NextRequest) {
     try {
@@ -17,29 +19,55 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 });
         }
 
-        // TODO: Integrate actual AI Vision API (e.g., OpenAI GPT-4o or Google Gemini)
-        // For now, we simulate a "scan" delay and return reasonable mock data
-        // to verify the frontend integration.
+        // Fallback to mock logic if no API key
+        if (!process.env.OPENAI_API_KEY) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            return NextResponse.json({
+                success: true,
+                data: {
+                    merchantName: 'Uber Ride',
+                    date: new Date().toISOString(),
+                    total: 24.50,
+                    currency: 'USD',
+                    items: [
+                        { description: 'Trip Fare', amount: 20.00 },
+                        { description: 'Tip', amount: 4.50 }
+                    ],
+                    confidence: 0.92
+                },
+                note: 'FALLBACK mock data used. Configure OPENAI_API_KEY to enable real AI scanning.'
+            });
+        }
 
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate processing time
+        // Real AI Vision Parsing
+        const buffer = Buffer.from(await (file as File).arrayBuffer());
 
-        // Mock Extraction Result
-        const mockResult = {
-            merchantName: 'Uber Ride',
-            date: new Date().toISOString(),
-            total: 24.50,
-            currency: 'USD',
-            items: [
-                { description: 'Trip Fare', amount: 20.00 },
-                { description: 'Tip', amount: 4.50 }
-            ],
-            confidence: 0.92
-        };
+        const { text } = await generateText({
+            model: openai('gpt-4o'),
+            messages: [
+                {
+                    role: 'user',
+                    content: [
+                        { type: 'text', text: 'Extract receipt data from this image. Return ONLY valid JSON exactly matching this structure: {"merchantName": "string", "date": "ISO-string", "total": number, "currency": "USD", "items": [{"description": "string", "amount": number}], "confidence": number}. Do not include markdown format blocks (```json), just the raw JSON object.' },
+                        { type: 'image', image: buffer }
+                    ]
+                }
+            ]
+        });
+
+        // Safely parse the returned text
+        let extractedData;
+        try {
+            const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            extractedData = JSON.parse(cleanText);
+        } catch (e) {
+            console.error('Failed to parse AI output:', text);
+            throw new Error('Failed to parse AI response into JSON');
+        }
 
         return NextResponse.json({
             success: true,
-            data: mockResult,
-            note: 'This is valid mock data. Configure OPENAI_API_KEY to enable real scanning.'
+            data: extractedData
         });
 
     } catch (error) {

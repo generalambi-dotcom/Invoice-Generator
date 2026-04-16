@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
+import { Resend } from 'resend';
+
+// Only init Resend if key exists (prevents build failures if empty locally)
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // POST: Public endpoint to create a new lead
 export async function POST(request: NextRequest) {
@@ -28,6 +32,48 @@ export async function POST(request: NextRequest) {
         currentResponses: 0,
       }
     });
+
+    // Notify matching businesses
+    try {
+        const matchingBusinesses = await prisma.user.findMany({
+            where: {
+                // Must be opted into directory
+                dirOptIn: true,
+                // Match industry if provided
+                ...(body.industry ? { industry: body.industry } : {}),
+                // Location matching logic (if not remote mode)
+                OR: [
+                    body.isRemote ? {} : { dirState: { equals: body.locationState, mode: 'insensitive' } },
+                    { dirState: null } // Or they operate nationwide
+                ].filter(condition => Object.keys(condition).length > 0) as any[]
+            },
+            select: { email: true, name: true }
+        });
+
+        if (matchingBusinesses.length > 0 && resend) {
+            const bccEmails = matchingBusinesses.map(b => b.email).filter(Boolean);
+            
+            // Send in batches of 50 via Resend BCC to preserve privacy
+            if (bccEmails.length > 0) {
+               await resend.emails.send({
+                   from: 'InvoiceGenerator Leads <leads@invoicegenerator.ng>',
+                   to: ['hello@invoicegenerator.ng'], // Dummy primary recipient
+                   bcc: bccEmails.slice(0, 50), // Cap at 50 for API limits
+                   subject: `New Lead: ${body.industry} Request in ${body.locationState || 'your area'}`,
+                   html: `
+                    <h2>New Lead Opportunity!</h2>
+                    <p>A new customer is actively looking for services in your industry.</p>
+                    <p><strong>Service Requested:</strong> ${body.serviceReq}</p>
+                    <p><strong>Urgency:</strong> ${body.urgency}</p>
+                    <br/>
+                    <p>Log into your <a href="https://www.invoicegenerator.ng/dashboard/leads">Dashboard</a> now to claim this lead before the 10-applicant cap is reached!</p>
+                   `
+               });
+            }
+        }
+    } catch (notifyError) {
+        console.error('[Leads] Non-fatal error notifying businesses:', notifyError);
+    }
 
     return NextResponse.json({ success: true, leadId: lead.id }, { status: 201 });
   } catch (error) {

@@ -75,11 +75,10 @@ export default function RecurringInvoiceForm({ initialData, isEditing = false }:
         if (!isEditing) {
             fetchDefaults();
             // Set default start date only on client side to avoid hydration mismatch
-            if (!startDate) {
-                setStartDate(new Date().toISOString().split('T')[0]);
-            }
+            setStartDate(prev => prev || new Date().toISOString().split('T')[0]);
         }
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isEditing]);
 
     const fetchClients = async () => {
         try {

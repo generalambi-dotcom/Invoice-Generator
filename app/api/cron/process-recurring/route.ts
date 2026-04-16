@@ -2,6 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getNextInvoiceNumber, incrementInvoiceNumber } from '@/lib/invoice-number';
 import { addDays, addWeeks, addMonths, addYears } from 'date-fns';
+import { addDays, addWeeks, addMonths, addYears } from 'date-fns';
+
+function parseTermsToDays(terms?: string): number {
+    if (!terms) return 7; // Default
+    const t = terms.toLowerCase();
+    if (t.includes('due on receipt') || t.includes('immediately')) return 0;
+    if (t.includes('net 7') || t.includes('7 days')) return 7;
+    if (t.includes('net 10') || t.includes('10 days')) return 10;
+    if (t.includes('net 14') || t.includes('14 days') || t.includes('2 weeks')) return 14;
+    if (t.includes('net 15') || t.includes('15 days')) return 15;
+    if (t.includes('net 30') || t.includes('30 days') || t.includes('1 month')) return 30;
+    if (t.includes('net 45') || t.includes('45 days')) return 45;
+    if (t.includes('net 60') || t.includes('60 days') || t.includes('2 months')) return 60;
+    if (t.includes('net 90') || t.includes('90 days') || t.includes('3 months')) return 90;
+    
+    // Extract any obvious number
+    const match = terms.match(/(?:due in\s+|net\s+)?(\d+)\s*(?:days?)?/i);
+    if (match && match[1]) {
+        return parseInt(match[1], 10);
+    }
+    
+    return 7; // Fallback
+}
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -46,13 +69,9 @@ export async function GET(req: NextRequest) {
                 const invoiceData = recurring.invoiceData as any; // Cast to access properties
                 const newInvoiceDate = new Date();
 
-                // Calculate due date based on terms or existing logic (e.g. 7 days from now)
-                // If terms are "Net 30", dd = date + 30.
-                // For simplicity, let's default to 7 days if not parsed from terms efficiently here,
-                // or re-use the gap between original invoiceDate and dueDate if available in template?
-                // Let's assume Net 7 for now or try to parse 'terms'.
-                let dueDate = addDays(newInvoiceDate, 7);
-                // TODO: Smart term parsing
+                // Parse due date correctly from the terms string
+                const daysToAdd = parseTermsToDays(invoiceData.terms);
+                let dueDate = addDays(newInvoiceDate, daysToAdd);
 
                 const newInvoice = await prisma.invoice.create({
                     data: {

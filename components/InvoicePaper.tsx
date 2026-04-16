@@ -6,6 +6,7 @@ import { formatCurrency } from '@/lib/calculations';
 import { format } from 'date-fns';
 import LineItems from './LineItems';
 import ImageUpload from '@/components/ImageUpload';
+import Image from 'next/image';
 
 interface InvoicePaperProps {
     invoice: Partial<Invoice>;
@@ -60,10 +61,12 @@ export default function InvoicePaper({
                             logoUpload
                         ) : invoice.company?.logo ? (
                             <div className="relative w-32 h-32 group">
-                                <img
+                                <Image
                                     src={invoice.company.logo}
                                     alt="Company Logo"
-                                    className="w-full h-full object-contain rounded-lg"
+                                    fill
+                                    unoptimized
+                                    className="object-contain rounded-lg"
                                 />
                             </div>
                         ) : (

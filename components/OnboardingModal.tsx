@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Layout, Theme } from '@/types/invoice';
 import ImageUpload from './ImageUpload';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { INDUSTRY_OPTIONS } from '@/lib/profile-completeness';
 import { getRegionConfig } from '@/lib/regionalization';
@@ -238,7 +239,7 @@ export default function OnboardingModal({ onComplete, onSkip }: OnboardingModalP
                     onImageUpload={(url: string) => setLogo(url)}
                   />
                   {logo && (
-                    <img src={logo} alt="Logo" className="absolute inset-0 w-full h-full object-contain rounded bg-white shadow-sm ring-1 ring-gray-200 pointer-events-none" />
+                    <Image src={logo} alt="Logo" fill unoptimized className="object-contain rounded bg-white shadow-sm ring-1 ring-gray-200 pointer-events-none" />
                   )}
                 </div>
               </div>

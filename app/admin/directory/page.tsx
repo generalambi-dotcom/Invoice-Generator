@@ -115,13 +115,14 @@ export default function AdminDirectoryPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Industry</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Privacy Settings</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {loading ? (
-                   <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">Loading directory...</td></tr>
+                   <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">Loading directory...</td></tr>
                 ) : businesses.length === 0 ? (
-                   <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">No matching businesses found.</td></tr>
+                   <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No matching businesses found.</td></tr>
                 ) : (
                   businesses.map((biz) => (
                     <tr key={biz.id} className="hover:bg-gray-50 transition-colors">
@@ -139,6 +140,15 @@ export default function AdminDirectoryPage() {
                            {biz.dirShowLocation && <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded">Location</span>}
                            {biz.dirShowSize && <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded">Size</span>}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Link 
+                           href={`/businesses/${biz.id}`} 
+                           target="_blank" 
+                           className="text-white bg-[#6B4CE6] px-3 py-1.5 rounded-lg text-xs hover:bg-[#5b3ed9] transition-colors"
+                        >
+                           View Profile
+                        </Link>
                       </td>
                     </tr>
                   ))

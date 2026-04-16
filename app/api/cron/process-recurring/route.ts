@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getNextInvoiceNumber, incrementInvoiceNumber } from '@/lib/invoice-number';
 import { addDays, addWeeks, addMonths, addYears } from 'date-fns';
-import { addDays, addWeeks, addMonths, addYears } from 'date-fns';
 
 function parseTermsToDays(terms?: string): number {
     if (!terms) return 7; // Default

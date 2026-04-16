@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         const matchingBusinesses = await prisma.user.findMany({
             where: {
                 // Must be opted into directory
-                dirOptIn: true,
+                directoryOptIn: true,
                 // Match industry if provided
                 ...(body.industry ? { industry: body.industry } : {}),
                 // Location matching logic (if not remote mode)

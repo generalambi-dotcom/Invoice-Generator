@@ -4,25 +4,14 @@
  */
 
 import puppeteer from 'puppeteer';
-import { renderToStaticMarkup } from 'react-dom/server';
-import InvoicePaper from '@/components/InvoicePaper';
 
 /**
- * Generate PDF buffer for invoice using Puppeteer and InvoicePaper
+ * Generate PDF buffer for invoice using Puppeteer
  */
 export async function generateInvoicePDFBuffer(invoice: any): Promise<Buffer | null> {
-  try {
-    const htmlContent = renderToStaticMarkup(
-      <html>
-        <head>
-          <script src="https://cdn.tailwindcss.com"></script>
-        </head>
-        <body className="bg-white p-8">
-          <InvoicePaper invoice={invoice} isEditable={false} />
-        </body>
-      </html>
-    );
+  if (!invoice || !invoice.id) return null;
 
+  try {
     const executablePath = process.env.CHROME_EXECUTABLE_PATH || undefined;
 
     const browser = await puppeteer.launch({
@@ -31,9 +20,23 @@ export async function generateInvoicePDFBuffer(invoice: any): Promise<Buffer | n
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
     });
 
+    // Resolve URL based on environment
+    let appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    if (!process.env.NEXT_PUBLIC_APP_URL && process.env.VERCEL_URL) {
+        appUrl = `https://${process.env.VERCEL_URL}`;
+    }
+    
+    // Point to the dedicated public print view.
+    // The print layout handles hiding all UI buttons natively via Tailwind 'print:hidden' classes.
+    const url = `${appUrl.replace(/\/$/, '')}/invoice/${invoice.id}`;
+
     const page = await browser.newPage();
-    // Use networkidle0 to ensure Tailwind script evaluates completely
-    await page.setContent('<!DOCTYPE html>' + htmlContent, { waitUntil: 'networkidle0' });
+    
+    // Wait until network is mostly idle to ensure React data fetching finishes
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 15000 });
+    
+    // Extra safety: wait for the loading spinner to disappear
+    await page.waitForFunction(() => !document.querySelector('.animate-spin'), { timeout: 5000 }).catch(() => {});
     
     const pdf = await page.pdf({
       format: 'A4',

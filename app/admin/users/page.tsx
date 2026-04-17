@@ -29,6 +29,7 @@ export default function AdminUsersPage() {
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalUsersCount, setTotalUsersCount] = useState(0);
     const [activeTab, setActiveTab] = useState<'users' | 'settings'>('users');
 
     // Modal States
@@ -61,6 +62,7 @@ export default function AdminUsersPage() {
                 const data = await res.json();
                 setUsers(data.users);
                 setTotalPages(data.pagination.pages);
+                setTotalUsersCount(data.pagination.total);
             }
         } catch (error) {
             console.error('Error fetching users:', error);
@@ -168,7 +170,14 @@ export default function AdminUsersPage() {
         <div className="p-6 max-w-7xl mx-auto">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+                        {activeTab === 'users' && !loading && (
+                            <span className="bg-indigo-100 text-indigo-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                {totalUsersCount} Total
+                            </span>
+                        )}
+                    </div>
                     <p className="text-gray-500">Manage users, subscriptions, and pricing</p>
                 </div>
                 {activeTab === 'users' && (

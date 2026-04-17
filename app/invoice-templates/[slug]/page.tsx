@@ -145,11 +145,8 @@ export default function TemplateSlugPage({ params }: { params: { slug: string } 
              <div className="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden" style={{ minHeight: '800px', position: 'relative' }}>
                 <div className="absolute inset-0 pointer-events-none z-10" style={{ transform: 'scale(0.85)', transformOrigin: 'top center', width: '117.6%', height: '117.6%' }}>
                   <InvoicePaper 
-                    invoice={dummyInvoice} 
+                    invoice={dummyInvoice as any} 
                     isEditable={false} 
-                    onChange={() => {}} 
-                    onDownloadPDF={() => {}} 
-                    logoUpload={null} 
                   />
                   {/* Overlay to prevent clicking */}
                   <div className="absolute inset-0 z-20 cursor-default"></div>

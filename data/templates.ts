@@ -22,7 +22,7 @@ export const invoiceTemplates: InvoiceTemplateMeta[] = [
     h2FeatureTitle: "The perfect standard invoice for any job.",
     featureDescription: "This template includes everything you need to bill your clients effectively: clear line items, tax calculations, and payment terms.",
     metaKeywords: ["standard invoice", "basic invoice template", "free invoice", "pdf", "word"],
-    themeColor: "emerald",
+    themeColor: "green",
     previewData: {
       items: [
         { description: "General Services", quantity: 1, rate: 500, amount: 500 },
@@ -74,7 +74,7 @@ export const invoiceTemplates: InvoiceTemplateMeta[] = [
     h2FeatureTitle: "Stay completely tax compliant.",
     featureDescription: "Whether you need to outline VAT or GST, this tax invoice clearly separates the baseline cost from the tax amount, ensuring your business stays on the right side of the law.",
     metaKeywords: ["tax invoice template", "vat invoice", "gst bill template", "pdf"],
-    themeColor: "rose",
+    themeColor: "red",
     previewData: {
       taxRate: 7.5,
       items: [
@@ -93,7 +93,7 @@ export const invoiceTemplates: InvoiceTemplateMeta[] = [
     h2FeatureTitle: "Get paid faster for your freelance work.",
     featureDescription: "When you're running a solo business, cash flow is everything. This template is designed to look professional while clearly highlighting your payment instructions.",
     metaKeywords: ["freelance invoice template", "independent contractor bill", "sole proprietor invoice"],
-    themeColor: "indigo",
+    themeColor: "purple",
     previewData: {
       items: [
         { description: "Website Development - Week 1", quantity: 40, rate: 65, amount: 2600 }
@@ -109,7 +109,7 @@ export const invoiceTemplates: InvoiceTemplateMeta[] = [
     h2FeatureTitle: "A picture-perfect billing experience.",
     featureDescription: "Charge for your time behind the lens, post-processing edits, and digital delivery with a sleek invoice that matches your creative brand.",
     metaKeywords: ["photography invoice template", "photographer bill", "wedding photography invoice"],
-    themeColor: "amber",
+    themeColor: "slate",
     previewData: {
       items: [
         { description: "Wedding Day Coverage (8 Hours)", quantity: 1, rate: 2500, amount: 2500 },
@@ -127,7 +127,7 @@ export const invoiceTemplates: InvoiceTemplateMeta[] = [
     h2FeatureTitle: "An invoice as well-designed as your work.",
     featureDescription: "Don't send a clunky, ugly bill when you're selling design. This template gives your billing a modern, structured aesthetic that reinforces your value.",
     metaKeywords: ["graphic design invoice", "designer bill template", "agency invoice"],
-    themeColor: "fuchsia",
+    themeColor: "purple",
     previewData: {
       items: [
         { description: "Logo Concept & Revision Package", quantity: 1, rate: 1200, amount: 1200 },
@@ -146,7 +146,7 @@ export const invoiceTemplates: InvoiceTemplateMeta[] = [
     h2FeatureTitle: "Built solid, just like your projects.",
     featureDescription: "In construction, transparency is key. Use this template to clearly break down labor hours, raw material costs, and equipment rentals to avoid client disputes.",
     metaKeywords: ["construction invoice template", "contractor bill", "builder invoice pdf"],
-    themeColor: "orange",
+    themeColor: "red",
     previewData: {
       items: [
         { description: "Drywall Installation Labor", quantity: 30, rate: 45, amount: 1350 },
@@ -163,7 +163,7 @@ export const invoiceTemplates: InvoiceTemplateMeta[] = [
     h2FeatureTitle: "Keep your cash flow flowing.",
     featureDescription: "Ensure you get paid immediately after the job is done. This plumber's template includes sections for emergency dispatch fees alongside standard labor and parts.",
     metaKeywords: ["plumbing invoice template", "plumber bill pdf", "repair invoice"],
-    themeColor: "cyan",
+    themeColor: "blue",
     previewData: {
       items: [
         { description: "Emergency Call-Out Fee", quantity: 1, rate: 150, amount: 150 },
@@ -181,7 +181,7 @@ export const invoiceTemplates: InvoiceTemplateMeta[] = [
     h2FeatureTitle: "Cool fast invoices for HVAC pros.",
     featureDescription: "Whether doing a routine AC maintenance check or a full furnace installation, this HVAC-specific template keeps your charges clear and concise.",
     metaKeywords: ["hvac invoice template", "ac repair bill", "heating contractor invoice"],
-    themeColor: "sky",
+    themeColor: "blue",
     previewData: {
       items: [
         { description: "AC Unit Diagnostic Check", quantity: 1, rate: 89, amount: 89 },
@@ -198,7 +198,7 @@ export const invoiceTemplates: InvoiceTemplateMeta[] = [
     h2FeatureTitle: "Grow your landscaping business.",
     featureDescription: "Detail everything from weekly lawn mowing to massive retaining wall installations. Make your pricing crystal clear to homeowners and property managers.",
     metaKeywords: ["landscaping invoice template", "lawn care bill", "landscaper pdf"],
-    themeColor: "lime",
+    themeColor: "green",
     previewData: {
       items: [
         { description: "Spring Yard Cleanup", quantity: 1, rate: 250, amount: 250 },
@@ -235,7 +235,7 @@ export const invoiceTemplates: InvoiceTemplateMeta[] = [
     h2FeatureTitle: "Deliver the goods, secure the bag.",
     featureDescription: "Logistics requires intense detail. Use this template to log weight, distance travelled, fuel surcharges, and the final destination.",
     metaKeywords: ["freight invoice template", "trucking bill", "logistics invoice", "courier pdf"],
-    themeColor: "stone",
+    themeColor: "slate",
     previewData: {
       items: [
         { description: "LTL Freight Transport (NY to CHI)", quantity: 1, rate: 1850, amount: 1850 },
@@ -271,7 +271,7 @@ export const invoiceTemplates: InvoiceTemplateMeta[] = [
     h2FeatureTitle: "The verdict on fast legal billing.",
     featureDescription: "Provide your clients with exact transparent documentation of billable hours, filing fees, and research time.",
     metaKeywords: ["legal invoice template", "lawyer bill", "attorney invoice pdf"],
-    themeColor: "zinc",
+    themeColor: "slate",
     previewData: {
       items: [
         { description: "Initial Client Consultation", quantity: 1.5, rate: 400, amount: 600 },
@@ -289,7 +289,7 @@ export const invoiceTemplates: InvoiceTemplateMeta[] = [
     h2FeatureTitle: "Serve up an incredible billing experience.",
     featureDescription: "Weddings, corporate functions, and private parties. This catering invoice accurately captures guest counts, menu choices, and setup fees.",
     metaKeywords: ["catering invoice template", "food service bill", "chef invoice pdf"],
-    themeColor: "orange",
+    themeColor: "red",
     previewData: {
       items: [
         { description: "Plated Dinner Service (Per Guest)", quantity: 150, rate: 65, amount: 9750 },

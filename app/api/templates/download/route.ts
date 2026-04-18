@@ -11,22 +11,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid download parameters' }, { status: 400 });
   }
 
-  // Define the path to our master generic templates
-  const masterFileMap: Record<string, string> = {
-    pdf: 'master-template.pdf',
-    docx: 'master-template.docx',
-    xlsx: 'master-template.xlsx',
-  };
-
   // Find where public folder is in current environment
   const publicDir = path.join(process.cwd(), 'public', 'templates');
-  const filePath = path.join(publicDir, masterFileMap[type]);
 
-  // Make sure the master file exists, otherwise return 404
+  // Look up by slug first (e.g. plumbing-invoice-template.pdf), fall back to master
+  const slugPath = path.join(publicDir, `${slug}.${type}`);
+  const masterPath = path.join(publicDir, `master-template.${type}`);
+  const filePath = existsSync(slugPath) ? slugPath : masterPath;
+
+  // If neither the slug-specific file nor the master fallback exists, 404
   if (!existsSync(filePath)) {
-    return NextResponse.json({ 
-        error: 'Master template file not found on server.', 
-        details: `Missing: public/templates/${masterFileMap[type]}`
+    return NextResponse.json({
+        error: 'Template file not found on server.',
+        details: `Missing: public/templates/${slug}.${type} (and fallback master-template.${type})`
     }, { status: 404 });
   }
 

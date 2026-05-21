@@ -361,6 +361,12 @@ export default function AdminDashboard() {
           <h2 className="text-xl font-semibold mb-4">Admin Quick Links</h2>
           <div className="flex flex-wrap gap-4">
             <Link
+              href="/admin/blog"
+              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+            >
+              Blog Posts
+            </Link>
+            <Link
               href="/admin/directory"
               className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
             >

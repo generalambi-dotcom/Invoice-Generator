@@ -99,7 +99,7 @@ export default function InvoicePaper({
                 {/* Right: INVOICE Details */}
                 <div className="text-right w-full sm:w-auto flex flex-col items-end">
                     <h1 className="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight mb-6 uppercase opacity-10">
-                        Invoice
+                        {invoice.type === 'receipt' ? 'Receipt' : invoice.type === 'estimate' ? 'Estimate' : invoice.type === 'credit_note' ? 'Credit Note' : 'Invoice'}
                     </h1>
                     <div className="space-y-2 w-full sm:w-64">
                         <div className="flex items-center gap-4 justify-end">

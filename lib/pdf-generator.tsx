@@ -263,7 +263,7 @@ export const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
           {/* Right: Invoice Title & Meta */}
           <View style={styles.headerRight}>
             <Text style={styles.invoiceTitle}>
-              {invoice.type === 'estimate' ? 'ESTIMATE' : invoice.type === 'credit_note' ? 'CREDIT NOTE' : 'INVOICE'}
+              {invoice.type === 'receipt' ? 'RECEIPT' : invoice.type === 'estimate' ? 'ESTIMATE' : invoice.type === 'credit_note' ? 'CREDIT NOTE' : 'INVOICE'}
             </Text>
 
             <View style={styles.metaRow}>

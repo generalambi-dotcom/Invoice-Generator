@@ -9,7 +9,7 @@ import { prisma } from '../../lib/db';
 // Flagship posts shown in the featured hero section
 const FEATURED_SLUGS = [
     'firs-invoice-requirements-nigeria-2026',
-    'how-to-register-for-vat-nigeria-firs-guide',
+    'firs-vat-registration-certificate-online-nigeria',
     'vat-invoice-format-nigeria',
     'invoice-generator-freelancers-nigeria',
     'best-invoice-app-small-businesses-nigeria',

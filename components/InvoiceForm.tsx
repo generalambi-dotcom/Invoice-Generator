@@ -55,7 +55,11 @@ import { isPremiumUser } from '@/lib/payments';
 import ImageUpload from '@/components/ImageUpload';
 import { trackEvent } from '@/lib/tracking';
 
-function InvoiceFormContent() {
+interface InvoiceFormContentProps {
+  initialType?: 'invoice' | 'estimate' | 'credit_note' | 'receipt';
+}
+
+function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -109,6 +113,7 @@ function InvoiceFormContent() {
     notes: '',
     bankDetails: '',
     terms: '',
+    type: initialType,
   });
 
   const [showShipTo, setShowShipTo] = useState(false);
@@ -3150,14 +3155,18 @@ function InvoiceFormContent() {
   );
 }
 
-export default function InvoiceForm() {
+interface InvoiceFormProps {
+  initialType?: 'invoice' | 'estimate' | 'credit_note' | 'receipt';
+}
+
+export default function InvoiceForm({ initialType = 'invoice' }: InvoiceFormProps) {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-gray-600">Loading...</div>
       </div>
     }>
-      <InvoiceFormContent />
+      <InvoiceFormContent initialType={initialType} />
     </Suspense>
   );
 }

@@ -73,11 +73,11 @@ export default function LandingPage() {
               Create Professional &{' '}
               <Link href="/free-invoice-generator-nigeria" className="italic text-teal-800 hover:text-teal-600 transition-colors underline underline-offset-4 decoration-teal-300/50">Free Invoices</Link>
               <br className="hidden md:block" />
-              in Seconds
+              in Naira (₦) for Nigeria
             </h1>
 
             <p className="text-gray-500 mb-8 max-w-xl mx-auto animate-fade-in-up animation-delay-200" style={{ fontSize: '0.9rem', lineHeight: '1.6' }}>
-              Simple, fast, and 100% free <Link href="/invoice-generator-nigeria" className="text-teal-700 hover:text-teal-900 font-medium underline underline-offset-2 transition-colors">invoice generator for Nigerian businesses</Link>. No sign-up required to get started.
+              Simple, fast, and 100% free <Link href="/invoice-generator-nigeria" className="text-teal-700 hover:text-teal-900 font-medium underline underline-offset-2 transition-colors">invoice generator for Nigerian businesses</Link>. Easily calculate FIRS VAT, add your local bank details, and get paid faster. No sign-up required.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-in-up animation-delay-300">
@@ -114,7 +114,7 @@ export default function LandingPage() {
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">Everything You Need for Professional Invoicing</h2>
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">Everything Nigerian Businesses Need for Professional Invoicing</h2>
             <p className="text-gray-500 max-w-2xl mx-auto text-sm leading-relaxed">
               InvoiceGenerator combines powerful invoice management features with simplicity to
               help freelancers and small businesses manage their invoicing workflow efficiently
@@ -130,8 +130,8 @@ export default function LandingPage() {
               <h3 className="font-bold text-gray-900 mb-2">Professional Invoice Creation</h3>
               <p className="text-gray-500 text-sm leading-relaxed mb-4">Create beautiful invoices with your logo and company branding. Support for 50+ currencies, automatic tax and discount calculations.</p>
               <div className="flex flex-wrap gap-2">
-                <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">✓ 6 color themes</span>
-                <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">✓ 50+ currencies</span>
+                <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">✓ Naira (₦) support</span>
+                <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">✓ FIRS 7.5% VAT</span>
                 <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">✓ Auto calculations</span>
                 <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">✓ Company branding</span>
               </div>

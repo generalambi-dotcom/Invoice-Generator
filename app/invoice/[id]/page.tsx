@@ -9,6 +9,7 @@ import { pdf } from '@react-pdf/renderer';
 import { InvoicePDF } from '@/lib/pdf-generator';
 import { SendEmailModal } from '@/components/SendEmailModal';
 import { toast } from 'react-hot-toast';
+import { format } from 'date-fns';
 
 export default function InvoiceViewPage() {
     const params = useParams();
@@ -19,15 +20,33 @@ export default function InvoiceViewPage() {
     const [error, setError] = useState('');
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
+    // Payment history
+    const [payments, setPayments] = useState<any[]>([]);
+    const [refundingId, setRefundingId] = useState<string | null>(null);
+
+    const authHeader = () => ({
+        Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('auth_token') : ''}`,
+    });
+
     useEffect(() => {
         const fetchInvoice = async () => {
             try {
                 const response = await fetch(`/api/invoices/${id}`);
-                if (!response.ok) {
-                    throw new Error('Failed to load invoice');
-                }
+                if (!response.ok) throw new Error('Failed to load invoice');
                 const data = await response.json();
                 setInvoice(data.invoice);
+
+                // Load payment history (auth required)
+                const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : '';
+                if (token) {
+                    const pRes = await fetch(`/api/invoices/${id}/payments`, {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (pRes.ok) {
+                        const pData = await pRes.json();
+                        setPayments(pData.payments || []);
+                    }
+                }
             } catch (err: any) {
                 setError(err.message);
             } finally {
@@ -35,10 +54,30 @@ export default function InvoiceViewPage() {
             }
         };
 
-        if (id) {
-            fetchInvoice();
-        }
+        if (id) fetchInvoice();
     }, [id]);
+
+    const handleRefund = async (paymentId: string) => {
+        if (!confirm('Mark this payment as refunded? This will reduce the invoice paid amount.')) return;
+        setRefundingId(paymentId);
+        try {
+            const res = await fetch(`/api/payments/${paymentId}/refund`, {
+                method: 'POST',
+                headers: authHeader(),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Refund failed');
+            toast.success('Payment refunded successfully');
+            // Refresh invoice + payments
+            const invRes = await fetch(`/api/invoices/${id}`);
+            if (invRes.ok) setInvoice((await invRes.json()).invoice);
+            setPayments(prev => prev.map(p => p.id === paymentId ? { ...p, status: 'refunded' } : p));
+        } catch (err: any) {
+            toast.error(err.message);
+        } finally {
+            setRefundingId(null);
+        }
+    };
 
     const handleDownloadPDF = async () => {
         if (!invoice) return;
@@ -171,6 +210,78 @@ export default function InvoiceViewPage() {
                             logoUpload={null}
                         />
                     </div>
+
+                    {/* Payment History */}
+                    {payments.length > 0 && (
+                        <div className="mt-8 print:hidden">
+                            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                                Payment History
+                            </h2>
+                            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                                <table className="min-w-full divide-y divide-gray-100">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Method</th>
+                                            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {payments.map(payment => (
+                                            <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-5 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                                    {payment.paidAt
+                                                        ? format(new Date(payment.paidAt), 'dd MMM yyyy')
+                                                        : format(new Date(payment.createdAt), 'dd MMM yyyy')}
+                                                </td>
+                                                <td className="px-5 py-4 text-sm font-semibold text-gray-900 whitespace-nowrap">
+                                                    {payment.currency === 'NGN' ? '₦' : payment.currency === 'GBP' ? '£' : payment.currency === 'EUR' ? '€' : '$'}
+                                                    {payment.amount?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </td>
+                                                <td className="px-5 py-4">
+                                                    <span className="capitalize text-sm text-gray-600">
+                                                        {payment.provider || 'manual'}
+                                                    </span>
+                                                    {payment.reference && (
+                                                        <div className="text-xs text-gray-400 font-mono mt-0.5 truncate max-w-[120px]">{payment.reference}</div>
+                                                    )}
+                                                </td>
+                                                <td className="px-5 py-4">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                                                        payment.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                                                        payment.status === 'refunded'  ? 'bg-red-100 text-red-700' :
+                                                        payment.status === 'failed'    ? 'bg-gray-100 text-gray-600' :
+                                                        'bg-amber-100 text-amber-700'
+                                                    }`}>
+                                                        {payment.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-5 py-4 text-right">
+                                                    {payment.status === 'completed' && (
+                                                        <button
+                                                            onClick={() => handleRefund(payment.id)}
+                                                            disabled={refundingId === payment.id}
+                                                            className="text-xs font-semibold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                                                        >
+                                                            {refundingId === payment.id ? 'Refunding...' : 'Refund'}
+                                                        </button>
+                                                    )}
+                                                    {payment.status === 'refunded' && (
+                                                        <span className="text-xs text-gray-400">Refunded</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
             {invoice && (

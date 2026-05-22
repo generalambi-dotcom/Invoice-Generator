@@ -55,9 +55,13 @@ export default function EditBlogPostPage() {
         e.preventDefault();
         setSaving(true);
         try {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : '';
             const res = await fetch(`/api/blog/posts/${slug}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token || ''}`,
+                },
                 body: JSON.stringify(formData),
             });
             if (!res.ok) {

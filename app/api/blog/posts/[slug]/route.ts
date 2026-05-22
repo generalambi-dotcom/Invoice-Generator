@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../../../lib/db';
-import { getCurrentUser } from '../../../../../lib/auth';
+import { getAuthenticatedUser } from '../../../../../lib/api-auth';
 
 // GET /api/blog/posts/[slug] - Get single post (public)
 export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
 // PUT /api/blog/posts/[slug] - Update post (Admin only)
 export async function PUT(req: NextRequest, { params }: { params: { slug: string } }) {
     try {
-        const user = await getCurrentUser();
+        const user = getAuthenticatedUser(req);
 
         if (!user || !user.isAdmin) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -58,7 +58,7 @@ export async function PUT(req: NextRequest, { params }: { params: { slug: string
 // DELETE /api/blog/posts/[slug] - Delete post (Admin only)
 export async function DELETE(req: NextRequest, { params }: { params: { slug: string } }) {
     try {
-        const user = await getCurrentUser();
+        const user = getAuthenticatedUser(req);
 
         if (!user || !user.isAdmin) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

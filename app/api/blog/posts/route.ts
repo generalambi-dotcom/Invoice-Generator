@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../../lib/db';
-import { getCurrentUser } from '../../../../lib/auth';
+import { getAuthenticatedUser } from '../../../../lib/api-auth';
 
 // GET /api/blog/posts - List all published posts (public)
 export async function GET(req: NextRequest) {
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 // POST /api/blog/posts - Create a new post (Admin only)
 export async function POST(req: NextRequest) {
     try {
-        const user = await getCurrentUser();
+        const user = getAuthenticatedUser(req);
 
         // Check if user is admin
         if (!user || !user.isAdmin) {
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
                 excerpt,
                 coverImage,
                 published: published || false,
-                authorId: user.id,
+                authorId: user.userId,
             },
         });
 

@@ -42,9 +42,13 @@ export default function AdminBlogListPage() {
     async function togglePublished(post: Post) {
         setTogglingSlug(post.slug);
         try {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : '';
             const res = await fetch(`/api/blog/posts/${post.slug}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token || ''}`,
+                },
                 body: JSON.stringify({
                     title: post.title,
                     content: undefined,

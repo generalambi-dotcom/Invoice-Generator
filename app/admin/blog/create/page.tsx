@@ -60,9 +60,13 @@ export default function CreateBlogPost() {
         setLoading(true);
 
         try {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : '';
             const res = await fetch('/api/blog/posts', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token || ''}`,
+                },
                 body: JSON.stringify(formData),
             });
 

@@ -187,7 +187,7 @@ A correctly formatted invoice for mixed supplies looks like this:
 - **VAT (on taxable items only):** ₦37,500
 - **Total Due:** ₦587,500
 
-[InvoiceGenerator.ng](https://invoicegenerator.ng) handles this automatically — add a line item, mark it as exempt, and the system calculates VAT only on the applicable lines.
+[InvoiceGenerator.ng's Nigeria invoice generator](https://invoicegenerator.ng/invoice-generator-nigeria) handles this automatically — add a line item, mark it as exempt, and the system calculates VAT only on the applicable lines.
 
 ---
 
@@ -218,7 +218,7 @@ Yes. Security services are not on the exempt list and attract 7.5% VAT. A securi
 
 *Sources: Nigeria Tax Act 2025; VAT Act Cap V1 LFN 2004 as amended; NRS VAT guidance (nrs.gov.ng); Finance Acts 2019–2023.*
 
-[**Create a VAT-correct invoice for your Nigerian business — free →**](https://invoicegenerator.ng)`,
+[**Create a VAT-correct invoice for your Nigerian business — free →**](https://invoicegenerator.ng/free-invoice-generator-nigeria)`,
   },
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -427,7 +427,9 @@ These are guidelines. Actual rates depend on the client's budget, your experienc
 
 *Sources: Nigeria Tax Act 2025 (NTAA 2025); NRS WHT rate schedule; ICAN Nigeria Practice Guide; PwC Nigeria Tax Summary 2026.*
 
-[**Create your consulting invoice now — free →**](https://invoicegenerator.ng)`,
+[**Create your consulting invoice now — free →**](https://invoicegenerator.ng/free-invoice-generator-nigeria)
+
+Need a ready-made layout? Browse the [freelance invoice template for Nigerian contractors →](https://invoicegenerator.ng/freelance-invoice-template-ngn)`,
   },
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -445,7 +447,7 @@ These are guidelines. Actual rates depend on the client's budget, your experienc
 
 Different businesses invoice differently. An event planner's invoice looks nothing like a haulage company's, and a car dealer needs different line items from an electrical contractor. This guide provides ready-to-use invoice templates for the most common Nigerian business types — with realistic Naira amounts, correct VAT treatment, and the specific line items each industry uses.
 
-For each template, you can recreate it instantly at [InvoiceGenerator.ng](https://invoicegenerator.ng) — free, no sign-up, downloads as PDF in seconds.
+For each template, you can recreate it instantly at [InvoiceGenerator.ng](https://invoicegenerator.ng/free-invoice-generator-nigeria) — free, no sign-up, downloads as PDF in seconds.
 
 ---
 
@@ -626,7 +628,7 @@ Caterers invoice differently for walk-in customers (receipts) versus corporate c
 
 ## Create Any of These Invoices Instantly
 
-Every template above can be built in under 60 seconds at [InvoiceGenerator.ng](https://invoicegenerator.ng):
+Every template above can be built in under 60 seconds at [InvoiceGenerator.ng](https://invoicegenerator.ng/invoice-generator-nigeria):
 
 1. Enter your business details (saved for future invoices)
 2. Add the client's name and address
@@ -636,7 +638,7 @@ Every template above can be built in under 60 seconds at [InvoiceGenerator.ng](h
 
 No sign-up required. No watermarks. Completely free.
 
-[**Create your industry-specific invoice now →**](https://invoicegenerator.ng)`,
+Prefer to describe your invoice in plain English? Try the [AI invoice generator →](https://invoicegenerator.ng/invoice-generator-ai)`,
   },
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -794,9 +796,11 @@ Accounts departments will return the invoice. Reissue it matching the LPO detail
 
 ## Create Your LPO-Referenced Invoice
 
-Once your LPO arrives, creating the corresponding invoice takes under two minutes at [InvoiceGenerator.ng](https://invoicegenerator.ng). Add the LPO reference number in the invoice notes field, match your line items to the LPO, and download the PDF ready for submission.
+Once your LPO arrives, creating the corresponding invoice takes under two minutes at [InvoiceGenerator.ng](https://invoicegenerator.ng/free-invoice-generator-nigeria). Add the LPO reference number in the invoice notes field, match your line items to the LPO, and download the PDF ready for submission.
 
-[**Create your invoice against an LPO — free →**](https://invoicegenerator.ng)`,
+Need a ready-made layout? See the [Nigeria invoice generator](https://invoicegenerator.ng/invoice-generator-nigeria) for VAT-compliant templates with TIN and LPO reference fields built in.
+
+[**Create your invoice against an LPO — free →**](https://invoicegenerator.ng/free-invoice-generator-nigeria)`,
   },
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -919,7 +923,7 @@ Before filing, you need:
 - Total VAT paid on purchases (input VAT) = purchases × 7.5%
 - Net VAT payable = output VAT minus input VAT
 
-Your invoices are the source of your output VAT figures. This is why creating proper VAT invoices throughout the month — using a tool like [InvoiceGenerator.ng](https://invoicegenerator.ng) — makes filing your VAT return significantly easier.
+Your invoices are the source of your output VAT figures. This is why creating proper VAT invoices throughout the month — using a tool like [InvoiceGenerator.ng](https://invoicegenerator.ng/invoice-generator-nigeria) — makes filing your VAT return significantly easier.
 
 **Step 2: Log in and navigate to VAT filing**
 Dashboard → Tax Obligations → VAT → File Return → Select the period (month and year)
@@ -987,9 +991,9 @@ Before you can accurately complete your monthly VAT return, you need:
 2. The VAT amount on each invoice
 3. A record of all purchase invoices received (for input VAT)
 
-[InvoiceGenerator.ng](https://invoicegenerator.ng) keeps all your issued invoices in one place, with VAT calculated automatically. At month-end, your total output VAT for the TaxPro Max return is right there in your dashboard.
+[InvoiceGenerator.ng](https://invoicegenerator.ng/free-invoice-generator-nigeria) keeps all your issued invoices in one place, with VAT calculated automatically. At month-end, your total output VAT for the TaxPro Max return is right there in your dashboard.
 
-[**Create VAT-compliant invoices ready for TaxPro Max filing →**](https://invoicegenerator.ng)
+[**Create VAT-compliant invoices ready for TaxPro Max filing →**](https://invoicegenerator.ng/naira-invoice-generator)
 
 ---
 
@@ -1227,7 +1231,7 @@ Every figure on your VAT return traces back to your invoices:
 
 This is why maintaining clean invoice records throughout the month is essential — not just for getting paid, but for accurate VAT compliance.
 
-[InvoiceGenerator.ng](https://invoicegenerator.ng) tracks all your issued invoices with VAT amounts calculated automatically. At month-end, your total output VAT is visible in your reports dashboard — ready to enter directly into TaxPro Max.
+[InvoiceGenerator.ng](https://invoicegenerator.ng/invoice-generator-nigeria) tracks all your issued invoices with VAT amounts calculated automatically. At month-end, your total output VAT is visible in your reports dashboard — ready to enter directly into TaxPro Max.
 
 ---
 
@@ -1252,7 +1256,7 @@ This is why maintaining clean invoice records throughout the month is essential 
 
 *Sources: Nigeria Tax Act 2025; NRS VAT Regulations; TaxPro Max User Guide; ICAN Nigeria Tax Practice Notes.*
 
-[**Create VAT invoices that make your monthly return easy →**](https://invoicegenerator.ng)`,
+[**Create VAT invoices that make your monthly return easy →**](https://invoicegenerator.ng/free-invoice-generator-nigeria)`,
   },
 ];
 

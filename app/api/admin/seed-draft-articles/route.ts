@@ -734,7 +734,7 @@ Features that sole traders specifically find useful:
 - **WhatsApp sharing** — send the PDF directly from the tool to your client's chat
 - **Recurring invoices** — set up monthly retainer invoices that send automatically
 
-[Create your free sole trader invoice now →](https://invoicegenerator.ng/free-invoice-generator-nigeria)
+[Create your free sole trader invoice now →](https://invoicegenerator.ng/invoice-generator-nigeria)
 
 ---
 
@@ -920,7 +920,7 @@ The single most important thing you can do to protect your WHT position is to in
 2. Ensures WHT credits are filed under your name (not "unknown supplier")
 3. Reduces client hesitancy to process your payments
 
-[InvoiceGenerator.ng](https://invoicegenerator.ng/free-invoice-generator-nigeria) lets you save your TIN in your company profile so it auto-prints on every invoice. [Set it up here](https://invoicegenerator.ng/free-invoice-generator-nigeria) — free, takes two minutes.
+[InvoiceGenerator.ng](https://invoicegenerator.ng/free-invoice-generator-nigeria) lets you save your TIN in your company profile so it auto-prints on every invoice. [See a ready-made freelancer invoice template here](https://invoicegenerator.ng/freelance-invoice-template-ngn) — free, takes two minutes to fill in.
 
 ---
 
@@ -1037,7 +1037,7 @@ Includes: project name, phase/milestone, materials breakdown, WHT note
 
 ### Option 1: InvoiceGenerator.ng (Best Option — No Downloads Needed)
 
-Rather than maintaining a static template, [InvoiceGenerator.ng](https://invoicegenerator.ng) gives you a live, browser-based invoice generator that:
+Rather than maintaining a static template, [InvoiceGenerator.ng](https://invoicegenerator.ng/invoice-generator-nigeria) gives you a live, browser-based invoice generator that:
 - Handles all Naira formatting automatically
 - Calculates 7.5% VAT with one toggle
 - Stores your TIN and bank details permanently
@@ -1120,7 +1120,7 @@ Templates are fine when you have fewer than 10 clients. Once you are beyond that
 - **Sending reminders** must be done manually
 - **Tax reports** (required for annual filing) require manually adding up every invoice
 
-[InvoiceGenerator.ng](https://invoicegenerator.ng) solves all three — it tracks payment status, sends automated reminders, and generates monthly revenue summaries automatically. The free plan handles most freelancer and small business needs. [Sign up free here](https://invoicegenerator.ng).`,
+[InvoiceGenerator.ng](https://invoicegenerator.ng/naira-invoice-generator) solves all three — it tracks payment status, sends automated reminders, and generates monthly revenue summaries automatically. The free plan handles most freelancer and small business needs. [Sign up free here](https://invoicegenerator.ng/free-invoice-generator-nigeria).`,
   },
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1272,7 +1272,7 @@ Stallion Group — Projects Division
 
 [InvoiceGenerator.ng](https://invoicegenerator.ng/free-invoice-generator-nigeria) lets you create a proforma invoice by selecting the "Proforma Invoice" document type from the selector at the top of the form. Your line items, company details, and Naira formatting all carry over — you simply change the title and add the validity date.
 
-The output is a clean, professional PDF you can email or share via WhatsApp. [Create your proforma invoice here →](https://invoicegenerator.ng/free-invoice-generator-nigeria)
+The output is a clean, professional PDF you can email or share via WhatsApp. [Create your proforma invoice here →](https://invoicegenerator.ng/naira-invoice-generator)
 
 ---
 
@@ -1900,7 +1900,7 @@ Plot 1075, Diplomatic Drive, Central District, Abuja
 
 ## Create Your Own Invoice Using These as a Guide
 
-Each of these sample invoices can be replicated in minutes using [InvoiceGenerator.ng](https://invoicegenerator.ng/free-invoice-generator-nigeria):
+Each of these sample invoices can be replicated in minutes using [InvoiceGenerator.ng](https://invoicegenerator.ng/invoice-generator-nigeria):
 
 - Select your invoice type (standard, tax invoice, proforma)
 - Fill in your Nigerian business details once — they save for every future invoice
@@ -1946,7 +1946,7 @@ The AI invoice generator solves all four. You describe the project in plain lang
 
 ## How the AI Invoice Generator Works
 
-The AI at [invoicegenerator.ng/invoice-generator-ai](https://invoicegenerator.ng/invoice-generator-ai) is powered by a large language model trained to understand invoicing terminology, Nigerian business contexts, and local currency formatting.
+The AI at [invoicegenerator.ng/invoice-generator-ai](https://invoicegenerator.ng/free-invoice-generator-nigeria) is powered by a large language model trained to understand invoicing terminology, Nigerian business contexts, and local currency formatting. You can also use the standard [Nigeria invoice generator](https://invoicegenerator.ng/invoice-generator-nigeria) if you prefer to fill in fields manually.
 
 **Here is the process:**
 

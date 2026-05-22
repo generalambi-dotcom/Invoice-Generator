@@ -18,7 +18,7 @@ import DirectoryOptInModal from '@/components/DirectoryOptInModal';
 import DirectorySettingsCard from '@/components/DirectorySettingsCard';
 import {
   Plus, BarChart3, FileText, Eye, CreditCard,
-  Trash2, RefreshCcw, MoreHorizontal
+  Trash2, RefreshCcw, MoreHorizontal, Sparkles
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -913,6 +913,14 @@ export default function DashboardPage() {
                   >
                     <Plus className="w-4 h-4 md:w-5 md:h-5" />
                     New Document
+                  </Link>
+                  <Link
+                    href="/invoice-generator-ai"
+                    className="flex-1 md:flex-none justify-center px-3 py-2 md:px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all flex items-center gap-2 text-xs md:text-sm font-medium shadow-indigo-200 shadow-lg whitespace-nowrap"
+                  >
+                    <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
+                    <span className="hidden sm:inline">Generate with AI</span>
+                    <span className="sm:hidden">AI</span>
                   </Link>
                   <Link
                     href="/reports"

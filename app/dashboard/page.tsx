@@ -92,6 +92,15 @@ export default function DashboardPage() {
 
       // Update overdue invoices on mount (background)
       updateOverdueInvoicesAPI().then(() => loadInvoiceData()).catch(e => console.error(e));
+
+      // Show post-payment success messages
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('payment') === 'success' || params.get('upgrade') === 'success') {
+          toast.success('🎉 Payment successful! Your premium subscription is now active.');
+          window.history.replaceState({}, '', '/dashboard');
+        }
+      }
     };
 
     checkAuth();

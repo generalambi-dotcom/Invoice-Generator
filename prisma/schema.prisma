@@ -98,6 +98,7 @@ model User {
   invoiceTemplates       InvoiceTemplate[]
   directoryEvents        DirectoryEvent[]
   leadResponses          LeadResponse[]
+  products               Product[]
 }
 
 model InvoiceReminderSettings {
@@ -772,5 +773,23 @@ model DirectoryEvent {
 
   @@index([businessId, type])
   @@index([businessId, createdAt])
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  defaultRate Float    @default(0)
+  unit        String?  // e.g. "hour", "kg", "piece", "day"
+  taxable     Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([name])
 }
 

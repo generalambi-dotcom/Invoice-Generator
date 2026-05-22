@@ -1,7 +1,16 @@
 'use client';
 
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { LineItem } from '@/types/invoice';
+
+interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  defaultRate: number;
+  unit: string | null;
+  taxable: boolean;
+}
 
 interface LineItemsProps {
   lineItems: LineItem[];
@@ -12,6 +21,59 @@ interface LineItemsProps {
 
 export default function LineItems({ lineItems, onUpdate, currency, currencySymbol }: LineItemsProps) {
   const textareaRefs = useRef<Map<string, HTMLTextAreaElement>>(new Map());
+
+  // ─── Catalogue state ────────────────────────────────────────────────────────
+  const [showCatalogue, setShowCatalogue] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [catalogueLoaded, setCatalogueLoaded] = useState(false);
+  const [catalogueSearch, setCatalogueSearch] = useState('');
+  const catalogueRef = useRef<HTMLDivElement>(null);
+
+  // Close catalogue on outside click
+  useEffect(() => {
+    if (!showCatalogue) return;
+    function handleClick(e: MouseEvent) {
+      if (catalogueRef.current && !catalogueRef.current.contains(e.target as Node)) {
+        setShowCatalogue(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showCatalogue]);
+
+  async function openCatalogue() {
+    setShowCatalogue(v => !v);
+    if (!catalogueLoaded) {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : '';
+        const res = await fetch('/api/products', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) setProducts(await res.json());
+      } catch { /* silent — catalogue may be empty */ }
+      setCatalogueLoaded(true);
+    }
+  }
+
+  function insertFromCatalogue(product: Product) {
+    const newItem: LineItem = {
+      id: Date.now().toString(),
+      description: product.description
+        ? `${product.name}\n${product.description}`
+        : product.name,
+      quantity: 1,
+      rate: product.defaultRate,
+      amount: product.defaultRate,
+    };
+    onUpdate([...lineItems, newItem]);
+    setShowCatalogue(false);
+    setCatalogueSearch('');
+  }
+
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(catalogueSearch.toLowerCase()) ||
+    (p.description || '').toLowerCase().includes(catalogueSearch.toLowerCase())
+  );
 
   const autoResize = useCallback((el: HTMLTextAreaElement | null) => {
     if (!el) return;
@@ -226,14 +288,97 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
           </div>
         )}
       </div>
-      <div className="mt-4">
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        {/* Add blank line item */}
         <button
           onClick={addItem}
-          className="w-full md:w-auto px-6 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-black transition-all flex items-center justify-center gap-2 text-sm font-semibold"
+          className="px-6 py-2.5 bg-gray-900 text-white rounded-xl hover:bg-black transition-all flex items-center gap-2 text-sm font-semibold"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
           Add Line Item
         </button>
+
+        {/* Add from catalogue */}
+        <div className="relative" ref={catalogueRef}>
+          <button
+            onClick={openCatalogue}
+            className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all flex items-center gap-2 text-sm font-semibold"
+          >
+            <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            Add from Catalogue
+          </button>
+
+          {showCatalogue && (
+            <div className="absolute left-0 bottom-full mb-2 w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+              <div className="p-3 border-b border-gray-100">
+                <input
+                  type="text"
+                  value={catalogueSearch}
+                  onChange={e => setCatalogueSearch(e.target.value)}
+                  placeholder="Search products..."
+                  className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  autoFocus
+                />
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                {!catalogueLoaded ? (
+                  <div className="p-4 text-center text-sm text-gray-400">Loading...</div>
+                ) : filteredProducts.length === 0 ? (
+                  <div className="p-4 text-center">
+                    <p className="text-sm text-gray-500 mb-2">
+                      {products.length === 0 ? 'No products saved yet.' : 'No matches found.'}
+                    </p>
+                    {products.length === 0 && (
+                      <a
+                        href="/settings/products"
+                        className="text-xs text-teal-600 hover:underline"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Set up your catalogue →
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  filteredProducts.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => insertFromCatalogue(p)}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">{p.name}</div>
+                          {p.description && (
+                            <div className="text-xs text-gray-400 truncate">{p.description}</div>
+                          )}
+                        </div>
+                        {p.defaultRate > 0 && (
+                          <div className="flex-shrink-0 text-sm font-semibold text-gray-700">
+                            {currencySymbol}{p.defaultRate.toLocaleString()}
+                            {p.unit && <span className="text-gray-400 font-normal text-xs">/{p.unit}</span>}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+              <div className="px-4 py-2 border-t border-gray-100 bg-gray-50">
+                <a
+                  href="/settings/products"
+                  className="text-xs text-gray-500 hover:text-teal-600 transition-colors"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Manage catalogue →
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

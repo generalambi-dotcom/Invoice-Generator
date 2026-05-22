@@ -117,16 +117,36 @@ function initializePaystack(
     const handler = (window as any).PaystackPop.setup({
       key: publicKey,
       email: params.userEmail,
-      amount: params.amount * 100, // Convert to kobo/pesewas (smallest currency unit)
+      amount: params.amount * 100, // Convert to kobo (smallest currency unit)
       currency: params.currency === 'NGN' ? 'NGN' : 'USD',
-      ref: `invoice_${Date.now()}`,
+      ref: `sub_${params.userId}_${Date.now()}`,
       metadata: {
         userId: params.userId,
         plan: params.plan,
       },
-      callback: (response: any) => {
-        // Handle success
-        handlePaymentSuccess(params.userId, params.plan, 'paystack', response);
+      callback: async (response: any) => {
+        try {
+          // Verify on the server and activate subscription in the database
+          const verifyRes = await fetch('/api/subscriptions/paystack-verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              reference: response.reference,
+              userId: params.userId,
+              plan: params.plan,
+            }),
+          });
+
+          if (!verifyRes.ok) {
+            const errData = await verifyRes.json().catch(() => ({}));
+            console.error('Paystack verify failed:', errData);
+            // Still redirect — webhook will act as fallback activator
+          }
+        } catch (verifyErr) {
+          console.error('Error calling paystack-verify:', verifyErr);
+          // Webhook fallback will handle activation if this call fails
+        }
+
         resolve('/dashboard?payment=success');
       },
       onClose: () => {
@@ -140,34 +160,6 @@ function initializePaystack(
   }
 }
 
-/**
- * Handle payment success
- */
-function handlePaymentSuccess(
-  userId: string,
-  plan: string,
-  provider: 'paypal' | 'paystack' | 'stripe',
-  response: any
-): void {
-  // Update user subscription
-  const { updateUserSubscription } = require('./admin');
-  updateUserSubscription(userId, 'premium', 'active');
-
-  // Store payment record
-  const paymentRecord = {
-    userId,
-    plan,
-    provider,
-    amount: response.amount || 0,
-    transactionRef: response.reference || response.id,
-    status: 'completed',
-    date: new Date().toISOString(),
-  };
-
-  const payments = JSON.parse(localStorage.getItem('invoice-payments') || '[]');
-  payments.push(paymentRecord);
-  localStorage.setItem('invoice-payments', JSON.stringify(payments));
-}
 
 /**
  * Create payment link for invoice

@@ -27,17 +27,15 @@ export async function POST(request: NextRequest) {
     const { event, data } = body;
 
     if (event === 'charge.success') {
-      // Payment successful
       const { reference, amount, customer, metadata } = data;
-      
-      // Find payment by reference
+
+      // ── Path A: Invoice payment ───────────────────────────────────────────
       const payment = await prisma.payment.findUnique({
         where: { reference },
         include: { invoice: true },
       });
 
       if (payment) {
-        // Update payment status
         await prisma.payment.update({
           where: { id: payment.id },
           data: {
@@ -48,15 +46,64 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        // Update invoice
         await prisma.invoice.update({
           where: { id: payment.invoiceId },
           data: {
             paymentStatus: 'paid',
-            paidAmount: amount / 100, // Paystack amounts are in kobo/pesewas
+            paidAmount: amount / 100, // kobo → naira
             paymentDate: new Date(),
           },
         });
+
+        console.log(`✅ Invoice payment confirmed via webhook: ref=${reference}`);
+      }
+
+      // ── Path B: Subscription payment (fallback activator) ─────────────────
+      // The primary activation path is the /api/subscriptions/paystack-verify
+      // endpoint called immediately after the Inline popup succeeds. This
+      // webhook acts as a safety net in case that call failed (network issue,
+      // tab closed, etc.).
+      const metaUserId: string | undefined = metadata?.userId;
+      const metaPlan: string | undefined = metadata?.plan || 'premium';
+
+      if (metaUserId) {
+        const targetUser = await prisma.user.findUnique({
+          where: { id: metaUserId },
+          select: { id: true, subscriptionStatus: true, subscriptionStartDate: true },
+        });
+
+        if (targetUser) {
+          // Only activate if not already active (avoid overwriting a fresh activation)
+          const alreadyActive = targetUser.subscriptionStatus === 'active';
+          if (!alreadyActive) {
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + 30);
+
+            await prisma.user.update({
+              where: { id: metaUserId },
+              data: {
+                subscriptionPlan: metaPlan,
+                subscriptionStatus: 'active',
+                subscriptionStartDate: new Date(),
+                subscriptionEndDate: endDate,
+                subscriptionPaymentMethod: 'paystack',
+              },
+            });
+
+            console.log(`✅ Subscription activated via webhook fallback for user ${metaUserId}: ref=${reference}`);
+
+            try {
+              await prisma.systemLog.create({
+                data: {
+                  level: 'info',
+                  category: 'payment',
+                  message: `Paystack subscription activated via webhook for user ${metaUserId}`,
+                  metadata: { reference, plan: metaPlan, amount: amount / 100 },
+                },
+              });
+            } catch (_) { /* non-critical */ }
+          }
+        }
       }
     }
 

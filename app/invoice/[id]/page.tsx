@@ -113,7 +113,7 @@ export default function InvoiceViewPage() {
     };
 
     const handleSharePortal = async () => {
-        const clientEmail = invoice?.client?.email || (invoice?.clientInfo as any)?.email;
+        const clientEmail = invoice?.client?.email || (invoice as any)?.clientInfo?.email;
         if (!clientEmail) {
             toast.error('No client email on this invoice to generate a portal link');
             return;

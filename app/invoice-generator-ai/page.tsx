@@ -15,7 +15,7 @@ export default function AILandingPage() {
         if (!prompt.trim()) return;
 
         // Redirect to the main generator with the prompt in the URL query
-        router.push(`/invoice-generator?prompt=${encodeURIComponent(prompt.trim())}`);
+        router.push(`/free-invoice-generator?prompt=${encodeURIComponent(prompt.trim())}`);
     };
 
     const handleChipClick = (text: string) => {
@@ -213,7 +213,7 @@ export default function AILandingPage() {
             <section className="py-20 bg-gray-50 text-center border-t border-gray-100">
                 <div className="container mx-auto px-4">
                     <h2 className="text-3xl font-bold text-gray-900 mb-6">Ready to upgrade your workflow?</h2>
-                    <Link href="/invoice-generator" className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-full bg-teal-800 text-white hover:bg-teal-700 transition-all shadow-sm hover:shadow-md">
+                    <Link href="/free-invoice-generator" className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-full bg-teal-800 text-white hover:bg-teal-700 transition-all shadow-sm hover:shadow-md">
                         Go to the Generator
                         <ArrowRight className="w-4 h-4" />
                     </Link>

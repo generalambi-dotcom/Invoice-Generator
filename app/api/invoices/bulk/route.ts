@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
-import { sendInvoiceReminderEmail } from '@/lib/email';
+import { sendInvoiceReminderEmail, sendInvoiceEmail } from '@/lib/email';
+import { generateInvoicePDFBuffer } from '@/lib/pdf-server';
 
 // POST - Handle bulk actions on invoices
 export async function POST(request: NextRequest) {
@@ -141,6 +142,99 @@ export async function POST(request: NextRequest) {
                         'Content-Type': 'text/csv',
                         'Content-Disposition': `attachment; filename=invoices-export-${new Date().toISOString().split('T')[0]}.csv`,
                     },
+                });
+            }
+
+            case 'send': {
+                // Bulk send invoice emails — each to its own client email
+                const fullInvoices = await prisma.invoice.findMany({
+                    where: { id: { in: invoiceIds }, userId: user.userId },
+                    include: { user: true },
+                });
+
+                let sent = 0;
+                let failed = 0;
+                const errors: string[] = [];
+
+                for (const invoice of fullInvoices) {
+                    const clientEmail = (invoice.clientInfo as any)?.email;
+                    if (!clientEmail) {
+                        failed++;
+                        errors.push(`${invoice.invoiceNumber}: No client email`);
+                        continue;
+                    }
+
+                    try {
+                        // Generate PDF attachment
+                        const pdfInvoice = {
+                            id: invoice.id,
+                            invoiceNumber: invoice.invoiceNumber,
+                            invoiceDate: invoice.invoiceDate,
+                            dueDate: invoice.dueDate,
+                            purchaseOrder: invoice.purchaseOrder,
+                            company: invoice.companyInfo,
+                            client: invoice.clientInfo,
+                            lineItems: invoice.lineItems,
+                            subtotal: invoice.subtotal,
+                            taxRate: invoice.taxRate,
+                            taxAmount: invoice.taxAmount,
+                            discountRate: invoice.discountRate,
+                            discountAmount: invoice.discountAmount,
+                            shipping: invoice.shipping,
+                            total: invoice.total,
+                            currency: invoice.currency,
+                            theme: invoice.theme,
+                            notes: invoice.notes,
+                            bankDetails: invoice.bankDetails,
+                            terms: invoice.terms,
+                        };
+                        const pdfBuffer = await generateInvoicePDFBuffer(pdfInvoice).catch(() => null);
+
+                        const result = await sendInvoiceEmail({
+                            invoice,
+                            to: clientEmail,
+                            message: '',
+                            pdfBuffer: pdfBuffer || undefined,
+                        });
+
+                        if (result.success) {
+                            await prisma.invoice.update({
+                                where: { id: invoice.id },
+                                data: { sentAt: new Date() },
+                            });
+                            sent++;
+                        } else {
+                            failed++;
+                            errors.push(`${invoice.invoiceNumber}: ${result.error}`);
+                        }
+                    } catch (err: any) {
+                        failed++;
+                        errors.push(`${invoice.invoiceNumber}: ${err.message}`);
+                    }
+                }
+
+                return NextResponse.json({
+                    success: true,
+                    action: 'send',
+                    results: { sent, failed, errors, total: fullInvoices.length },
+                });
+            }
+
+            case 'delete': {
+                // Soft-delete: mark as cancelled
+                const updated = await prisma.invoice.updateMany({
+                    where: {
+                        id: { in: invoiceIds },
+                        userId: user.userId,
+                        paymentStatus: { not: 'cancelled' },
+                    },
+                    data: { paymentStatus: 'cancelled' },
+                });
+
+                return NextResponse.json({
+                    success: true,
+                    action: 'delete',
+                    results: { updated: updated.count, total: invoiceIds.length },
                 });
             }
 

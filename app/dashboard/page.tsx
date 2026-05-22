@@ -43,6 +43,10 @@ export default function DashboardPage() {
   const [directorySettings, setDirectorySettings] = useState<any>(null);
   const [directoryMetrics, setDirectoryMetrics] = useState<any>(null);
 
+  // ── Bulk selection ───────────────────────────────────────────────────────────
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+
   useEffect(() => {
     const checkAuth = async () => {
       // Check for token first
@@ -105,6 +109,9 @@ export default function DashboardPage() {
 
     checkAuth();
   }, [router]);
+
+  // Clear selection whenever the user switches tabs or views
+  useEffect(() => { setSelectedIds(new Set()); }, [activeTab, showDeleted]);
 
   const loadCompanySettings = async () => {
     try {
@@ -431,6 +438,85 @@ export default function DashboardPage() {
     );
   };
 
+  // ── Bulk action helpers ──────────────────────────────────────────────────────
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = (ids: string[]) => {
+    if (ids.every(id => selectedIds.has(id))) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(ids));
+    }
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const handleBulkAction = async (action: string) => {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    const token = localStorage.getItem('auth_token');
+
+    // Confirmation for destructive actions
+    if (action === 'delete' && !confirm(`Delete ${ids.length} invoice${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
+    if (action === 'send' && !confirm(`Send ${ids.length} invoice${ids.length > 1 ? 's' : ''} to their clients now?`)) return;
+
+    setBulkLoading(true);
+    try {
+      if (action === 'export-csv') {
+        // CSV export — download directly
+        const res = await fetch('/api/invoices/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ action: 'export-csv', invoiceIds: ids }),
+        });
+        if (!res.ok) throw new Error('Export failed');
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `invoices-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success(`Exported ${ids.length} invoice${ids.length > 1 ? 's' : ''}`);
+        clearSelection();
+        return;
+      }
+
+      const res = await fetch('/api/invoices/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action, invoiceIds: ids }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Bulk action failed');
+
+      const r = data.results;
+      if (action === 'send') {
+        toast.success(`Sent ${r.sent} invoice${r.sent !== 1 ? 's' : ''}${r.failed > 0 ? `, ${r.failed} failed` : ''}`);
+      } else if (action === 'mark-paid') {
+        toast.success(`Marked ${r.updated} invoice${r.updated !== 1 ? 's' : ''} as paid`);
+      } else if (action === 'delete') {
+        toast.success(`Deleted ${r.updated} invoice${r.updated !== 1 ? 's' : ''}`);
+      } else if (action === 'send-reminders') {
+        toast.success(`Sent ${r.sent} reminder${r.sent !== 1 ? 's' : ''}${r.failed > 0 ? `, ${r.failed} failed` : ''}`);
+      }
+
+      clearSelection();
+      await loadInvoiceData();
+    } catch (err: any) {
+      toast.error(err.message || 'Bulk action failed');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -698,6 +784,60 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Bulk action toolbar — only visible when items are selected */}
+        {selectedIds.size > 0 && !showDeleted && activeTab === 'invoices' && (
+          <div className="mb-4 flex items-center gap-3 flex-wrap bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+            <span className="text-sm font-semibold text-emerald-800">
+              {selectedIds.size} selected
+            </span>
+            <div className="h-4 w-px bg-emerald-200" />
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => handleBulkAction('send')}
+                disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                Send
+              </button>
+              <button
+                onClick={() => handleBulkAction('send-reminders')}
+                disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                Send Reminder
+              </button>
+              <button
+                onClick={() => handleBulkAction('mark-paid')}
+                disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Mark Paid
+              </button>
+              <button
+                onClick={() => handleBulkAction('export-csv')}
+                disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Export CSV
+              </button>
+              <button
+                onClick={() => handleBulkAction('delete')}
+                disabled={bulkLoading}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                Delete
+              </button>
+            </div>
+            {bulkLoading && <span className="text-xs text-emerald-700 ml-1 animate-pulse">Processing...</span>}
+            <button onClick={clearSelection} className="ml-auto text-xs text-gray-500 hover:text-gray-700">✕ Clear</button>
+          </div>
+        )}
+
         {/* Invoice List */}
         {invoices.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-16 text-center">
@@ -728,6 +868,18 @@ export default function DashboardPage() {
               <table className="min-w-full divide-y divide-gray-100">
                 <thead className="bg-gray-50/50">
                   <tr>
+                    {/* Select-all checkbox — only shown on invoices tab (not estimates/credit notes/deleted) */}
+                    {!showDeleted && activeTab === 'invoices' && (
+                      <th className="pl-4 pr-0 py-4 w-10">
+                        <input
+                          type="checkbox"
+                          checked={invoices.length > 0 && invoices.every(inv => selectedIds.has(inv.id!))}
+                          onChange={() => toggleSelectAll(invoices.map(inv => inv.id!))}
+                          className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                          title="Select all"
+                        />
+                      </th>
+                    )}
                     <th className="px-3 md:px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Customer
                     </th>
@@ -753,7 +905,21 @@ export default function DashboardPage() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
                   {invoices.map((invoice) => (
-                    <tr key={invoice.id} className="hover:bg-gray-50/80 transition-colors group">
+                    <tr
+                      key={invoice.id}
+                      className={`hover:bg-gray-50/80 transition-colors group ${!showDeleted && activeTab === 'invoices' && selectedIds.has(invoice.id!) ? 'bg-emerald-50/60' : ''}`}
+                    >
+                      {/* Row checkbox */}
+                      {!showDeleted && activeTab === 'invoices' && (
+                        <td className="pl-4 pr-0 py-4 w-10" onClick={e => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(invoice.id!)}
+                            onChange={() => toggleSelect(invoice.id!)}
+                            className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                          />
+                        </td>
+                      )}
                       <td className="px-3 md:px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-700 font-bold text-[10px] md:text-xs mr-2 md:mr-3">

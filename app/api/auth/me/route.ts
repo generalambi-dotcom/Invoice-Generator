@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
         subscriptionStartDate: true,
         subscriptionEndDate: true,
         subscriptionPaymentMethod: true,
+        twoFactorEnabled: true,
       },
     });
 
@@ -43,6 +44,7 @@ export async function GET(request: NextRequest) {
         email: dbUser.email,
         name: dbUser.name,
         isAdmin: dbUser.isAdmin,
+        twoFactorEnabled: dbUser.twoFactorEnabled,
         subscription: dbUser.subscriptionPlan ? {
           plan: dbUser.subscriptionPlan,
           status: dbUser.subscriptionStatus,

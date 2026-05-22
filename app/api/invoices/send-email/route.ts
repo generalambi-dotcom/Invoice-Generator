@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from '@/lib/api-auth';
 import { generateInvoicePDFBuffer } from '@/lib/pdf-server';
 import { rateLimit, rateLimitConfigs, getClientIdentifier } from '@/lib/rate-limit';
 import { logRequest, logError } from '@/lib/request-logger';
+import { logInvoiceEvent } from '@/lib/invoice-events';
 
 // POST - Send invoice via email
 export async function POST(request: NextRequest) {
@@ -129,6 +130,16 @@ export async function POST(request: NextRequest) {
     await prisma.invoice.update({
       where: { id: invoiceId },
       data: { sentAt: new Date() },
+    });
+
+    // Log sent event (fire-and-forget)
+    logInvoiceEvent({
+      invoiceId,
+      userId: user.userId,
+      eventType: 'sent',
+      description: `Invoice emailed to ${recipientEmail}`,
+      newValue: recipientEmail,
+      actor: 'owner',
     });
 
     if (!emailResult.success) {

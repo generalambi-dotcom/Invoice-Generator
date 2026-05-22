@@ -585,7 +585,206 @@ export default function ProfilePage() {
                 </button>
             </div>
 
+            {/* ── Two-Factor Authentication ── */}
+            <TwoFactorSection />
+
             <div className="h-12"></div> {/* Spacer */}
         </div>
+    );
+}
+
+// ── 2FA sub-component ──────────────────────────────────────────────────────────
+
+function TwoFactorSection() {
+    const [status, setStatus] = useState<'idle' | 'setup' | 'enabled'>('idle');
+    const [loading, setLoading] = useState(true);
+    const [secret, setSecret] = useState('');
+    const [qrCodeUrl, setQrCodeUrl] = useState('');
+    const [code, setCode] = useState('');
+    const [disableCode, setDisableCode] = useState('');
+    const [saving, setSaving] = useState(false);
+    const [showDisable, setShowDisable] = useState(false);
+
+    const token = () => typeof window !== 'undefined' ? localStorage.getItem('auth_token') : '';
+    const headers = () => ({ 'Content-Type': 'application/json', Authorization: `Bearer ${token()}` });
+
+    React.useEffect(() => {
+        // Check current 2FA status from the /api/auth/me endpoint
+        fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token()}` } })
+            .then(r => r.json())
+            .then(data => {
+                setStatus(data.user?.twoFactorEnabled ? 'enabled' : 'idle');
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, []);
+
+    const startSetup = async () => {
+        setSaving(true);
+        try {
+            const res = await fetch('/api/auth/2fa/setup', { method: 'POST', headers: headers() });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            setSecret(data.secret);
+            setQrCodeUrl(data.qrCodeUrl);
+            setCode('');
+            setStatus('setup');
+        } catch (err: any) {
+            toast.error(err.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const confirmEnable = async () => {
+        if (code.length !== 6) { toast.error('Enter the 6-digit code'); return; }
+        setSaving(true);
+        try {
+            const res = await fetch('/api/auth/2fa/enable', {
+                method: 'POST', headers: headers(),
+                body: JSON.stringify({ code }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            toast.success('2FA enabled! Your account is now more secure.');
+            setStatus('enabled');
+            setCode('');
+        } catch (err: any) {
+            toast.error(err.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const confirmDisable = async () => {
+        if (!disableCode) { toast.error('Enter your authenticator code to confirm'); return; }
+        setSaving(true);
+        try {
+            const res = await fetch('/api/auth/2fa/disable', {
+                method: 'POST', headers: headers(),
+                body: JSON.stringify({ code: disableCode }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            toast.success('2FA disabled.');
+            setStatus('idle');
+            setShowDisable(false);
+            setDisableCode('');
+        } catch (err: any) {
+            toast.error(err.message);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (loading) return null;
+
+    return (
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Two-Factor Authentication</h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                        Add an extra layer of security. You'll need your authenticator app every time you sign in.
+                    </p>
+                </div>
+                <span className={`shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                    status === 'enabled' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'
+                }`}>
+                    {status === 'enabled' ? '✓ Enabled' : 'Disabled'}
+                </span>
+            </div>
+
+            {status === 'idle' && (
+                <button
+                    onClick={startSetup}
+                    disabled={saving}
+                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors"
+                >
+                    {saving ? 'Setting up…' : 'Set Up 2FA'}
+                </button>
+            )}
+
+            {status === 'setup' && (
+                <div className="space-y-5">
+                    <p className="text-sm text-gray-600">
+                        <strong>Step 1.</strong> Scan this QR code with Google Authenticator, Authy, or any TOTP app.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-6 items-start">
+                        {qrCodeUrl && (
+                            <img src={qrCodeUrl} alt="2FA QR Code" className="w-48 h-48 border border-gray-200 rounded-xl" />
+                        )}
+                        <div>
+                            <p className="text-xs text-gray-500 mb-1">Or enter this code manually:</p>
+                            <code className="block text-sm font-mono bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 break-all select-all">
+                                {secret}
+                            </code>
+                        </div>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                        <strong>Step 2.</strong> Enter the 6-digit code shown in your app to confirm setup.
+                    </p>
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={6}
+                            value={code}
+                            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            placeholder="000000"
+                            className="w-36 px-3 py-2 border border-gray-300 rounded-lg text-center text-xl font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button
+                            onClick={confirmEnable}
+                            disabled={saving || code.length !== 6}
+                            className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-60 transition-colors"
+                        >
+                            {saving ? 'Verifying…' : 'Confirm & Enable'}
+                        </button>
+                        <button onClick={() => { setStatus('idle'); setCode(''); }}
+                            className="text-sm text-gray-500 hover:text-gray-700">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {status === 'enabled' && !showDisable && (
+                <button
+                    onClick={() => setShowDisable(true)}
+                    className="px-4 py-2 bg-white border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors"
+                >
+                    Disable 2FA
+                </button>
+            )}
+
+            {status === 'enabled' && showDisable && (
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-600">Enter your current authenticator code to disable 2FA:</p>
+                    <div className="flex items-center gap-3 flex-wrap">
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={6}
+                            value={disableCode}
+                            onChange={(e) => setDisableCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            placeholder="000000"
+                            className="w-36 px-3 py-2 border border-gray-300 rounded-lg text-center text-xl font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-red-500"
+                        />
+                        <button
+                            onClick={confirmDisable}
+                            disabled={saving || disableCode.length !== 6}
+                            className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-60 transition-colors"
+                        >
+                            {saving ? 'Disabling…' : 'Confirm Disable'}
+                        </button>
+                        <button onClick={() => { setShowDisable(false); setDisableCode(''); }}
+                            className="text-sm text-gray-500 hover:text-gray-700">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
+        </section>
     );
 }

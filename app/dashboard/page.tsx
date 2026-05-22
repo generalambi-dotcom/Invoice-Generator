@@ -217,6 +217,9 @@ export default function DashboardPage() {
         approvedBy: inv.approvedBy,
         approvedAt: inv.approvedAt,
         rejectionReason: inv.rejectionReason,
+        sentAt: inv.sentAt,
+        viewedAt: inv.viewedAt,
+        convertedToInvoiceId: inv.convertedToInvoiceId || null,
       })) as any[];
 
       // Extract unique currencies and merge with existing
@@ -307,6 +310,47 @@ export default function DashboardPage() {
     });
     const receivedThisMonthAmount = receivedThisMonth.reduce((sum, inv) => sum + (inv.paidAmount || inv.total), 0);
 
+    // ── NEW: Avg payment time (days from invoiceDate to paymentDate) ───────────
+    const paidWithDates = paidInvoices.filter(inv => inv.paymentDate && inv.invoiceDate);
+    const avgPaymentDays = paidWithDates.length > 0
+      ? Math.round(paidWithDates.reduce((sum, inv) => {
+          const created = new Date(inv.invoiceDate).getTime();
+          const paid = new Date(inv.paymentDate!).getTime();
+          return sum + Math.max(0, (paid - created) / (1000 * 60 * 60 * 24));
+        }, 0) / paidWithDates.length)
+      : null;
+
+    // ── NEW: Month-over-month revenue growth ───────────────────────────────────
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    const lastMonthRevenue = paidInvoices
+      .filter(inv => {
+        const d = inv.paymentDate ? new Date(inv.paymentDate) : (inv.updatedAt ? new Date(inv.updatedAt) : null);
+        return d && d >= lastMonthStart && d <= lastMonthEnd;
+      })
+      .reduce((sum, inv) => sum + (inv.paidAmount || inv.total), 0);
+    const momGrowthPct = lastMonthRevenue > 0
+      ? Math.round(((receivedThisMonthAmount - lastMonthRevenue) / lastMonthRevenue) * 100)
+      : (receivedThisMonthAmount > 0 ? 100 : null);
+
+    // ── NEW: Collection rate (paid invoices / total non-cancelled invoices) ────
+    const nonCancelledCount = invoices.filter(inv => inv.paymentStatus !== 'cancelled').length;
+    const estimateConversionRate = nonCancelledCount > 0
+      ? Math.round((paidInvoices.length / nonCancelledCount) * 100)
+      : null;
+    const estimateCount = nonCancelledCount;
+    const convertedEstimateCount = paidInvoices.length;
+
+    // ── NEW: AR ageing buckets (overdue invoices) ──────────────────────────────
+    const ageing = overdueInvoices.reduce((acc, inv) => {
+      const daysOverdue = Math.floor((now.getTime() - new Date(inv.dueDate).getTime()) / (1000 * 60 * 60 * 24));
+      const amount = inv.total - (inv.paidAmount || 0);
+      if (daysOverdue <= 30)       acc.bucket0_30 += amount;
+      else if (daysOverdue <= 60)  acc.bucket31_60 += amount;
+      else                          acc.bucket61plus += amount;
+      return acc;
+    }, { bucket0_30: 0, bucket31_60: 0, bucket61plus: 0 });
+
     return {
       totalInvoices,
       totalAmount,
@@ -320,6 +364,13 @@ export default function DashboardPage() {
       dueThisWeekAmount,
       receivedThisMonthCount: receivedThisMonth.length,
       receivedThisMonthAmount,
+      // Enhanced analytics
+      avgPaymentDays,
+      momGrowthPct,
+      estimateConversionRate,
+      estimateCount,
+      convertedEstimateCount,
+      ageing,
     };
   };
 
@@ -715,6 +766,98 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Enhanced Analytics Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          {/* Avg Payment Time */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 bg-violet-100 rounded-lg text-violet-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </div>
+              <h3 className="text-sm font-medium text-gray-500">Avg Payment Time</h3>
+            </div>
+            {stats.avgPaymentDays !== null ? (
+              <>
+                <p className="text-2xl font-bold text-gray-900 mb-1">{stats.avgPaymentDays} <span className="text-sm font-normal text-gray-400">days</span></p>
+                <p className="text-xs text-gray-400">from invoice to payment</p>
+              </>
+            ) : (
+              <p className="text-sm text-gray-400 mt-2">No paid invoices yet</p>
+            )}
+          </div>
+
+          {/* MoM Revenue Growth */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-2 mb-3">
+              <div className={`p-2 rounded-lg ${stats.momGrowthPct !== null && stats.momGrowthPct >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+              </div>
+              <h3 className="text-sm font-medium text-gray-500">Revenue Growth</h3>
+            </div>
+            {stats.momGrowthPct !== null ? (
+              <>
+                <p className={`text-2xl font-bold mb-1 ${stats.momGrowthPct >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {stats.momGrowthPct >= 0 ? '+' : ''}{stats.momGrowthPct}%
+                </p>
+                <p className="text-xs text-gray-400">vs last month</p>
+              </>
+            ) : (
+              <p className="text-sm text-gray-400 mt-2">No revenue data yet</p>
+            )}
+          </div>
+
+          {/* Estimate Conversion Rate */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 bg-sky-100 rounded-lg text-sky-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+              </div>
+              <h3 className="text-sm font-medium text-gray-500">Collection Rate</h3>
+            </div>
+            {stats.estimateConversionRate !== null ? (
+              <>
+                <p className="text-2xl font-bold text-gray-900 mb-1">{stats.estimateConversionRate}<span className="text-sm font-normal text-gray-400">%</span></p>
+                <p className="text-xs text-gray-400">{stats.convertedEstimateCount} of {stats.estimateCount} invoices paid</p>
+              </>
+            ) : (
+              <p className="text-sm text-gray-400 mt-2">No invoices yet</p>
+            )}
+          </div>
+
+          {/* AR Ageing */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 bg-orange-100 rounded-lg text-orange-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" /></svg>
+              </div>
+              <h3 className="text-sm font-medium text-gray-500">AR Ageing</h3>
+            </div>
+            {stats.overdueCount > 0 ? (
+              <div className="space-y-1.5 mt-1">
+                {[
+                  { label: '0–30 days', amount: stats.ageing.bucket0_30, color: 'bg-amber-400' },
+                  { label: '31–60 days', amount: stats.ageing.bucket31_60, color: 'bg-orange-500' },
+                  { label: '60+ days', amount: stats.ageing.bucket61plus, color: 'bg-red-600' },
+                ].map(({ label, amount, color }) => (
+                  amount > 0 ? (
+                    <div key={label} className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1.5 text-gray-500">
+                        <span className={`w-2 h-2 rounded-full ${color}`} />
+                        {label}
+                      </span>
+                      <span className="font-semibold text-gray-700">
+                        {currencySymbols[currency as Currency] || '$'}{formatCurrency(amount, currency)}
+                      </span>
+                    </div>
+                  ) : null
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-emerald-600 font-medium mt-2">All current ✓</p>
+            )}
+          </div>
+        </div>
+
         {/* Charts Section */}
         <DashboardCharts invoices={activeInvoices} currency={currency} />
 
@@ -958,16 +1101,30 @@ export default function DashboardPage() {
                         </div>
                       </td>
                       <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 text-xs font-bold rounded-full border ${invoice.paymentStatus === 'paid'
-                          ? 'bg-green-50 text-green-700 border-green-200'
-                          : invoice.paymentStatus === 'overdue'
-                            ? 'bg-red-50 text-red-700 border-red-200'
-                            : invoice.paymentStatus === 'cancelled'
-                              ? 'bg-gray-50 text-gray-600 border-gray-200 line-through'
-                              : 'bg-amber-50 text-amber-700 border-amber-200'
-                          }`}>
-                          {invoice.paymentStatus || 'pending'}
-                        </span>
+                        <div className="flex flex-col gap-1.5 items-start">
+                          <span className={`px-3 py-1 text-xs font-bold rounded-full border ${invoice.paymentStatus === 'paid'
+                            ? 'bg-green-50 text-green-700 border-green-200'
+                            : invoice.paymentStatus === 'overdue'
+                              ? 'bg-red-50 text-red-700 border-red-200'
+                              : invoice.paymentStatus === 'cancelled'
+                                ? 'bg-gray-50 text-gray-600 border-gray-200 line-through'
+                                : 'bg-amber-50 text-amber-700 border-amber-200'
+                            }`}>
+                            {invoice.paymentStatus || 'pending'}
+                          </span>
+                          {invoice.viewedAt && (
+                            <span
+                              className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full bg-blue-50 text-blue-600 border border-blue-100"
+                              title={`Opened ${new Date(invoice.viewedAt).toLocaleString()}`}
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              Seen
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-3 md:px-6 py-4 whitespace-nowrap text-center">
                         {/* Simplified Actions for cleaner look */}

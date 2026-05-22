@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { autoGeneratePaymentLink } from '@/lib/auto-payment-link';
+import { logInvoicePatchEvents } from '@/lib/invoice-events';
 
 // GET - Get single invoice (public, for payment page)
 export async function GET(
@@ -241,7 +242,15 @@ export async function PATCH(
       }
     }
 
-    // Phase 1 Data Gravity: Update lastActiveAt and bump score 
+    // Log audit trail events (fire-and-forget)
+    logInvoicePatchEvents({
+      invoiceId,
+      userId: user.userId,
+      before: existingInvoice as any,
+      after: body,
+    });
+
+    // Phase 1 Data Gravity: Update lastActiveAt and bump score
     await prisma.user.update({
       where: { id: user.userId },
       data: {

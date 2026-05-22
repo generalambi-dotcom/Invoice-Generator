@@ -19,6 +19,11 @@ function SignInContent() {
   const [errorDetails, setErrorDetails] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // 2FA state
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [tempToken, setTempToken] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+
   useEffect(() => {
     setupSessionTracking();
     const expired = searchParams.get('expired');
@@ -42,12 +47,21 @@ function SignInContent() {
 
       if (response.ok) {
         const data = await response.json();
+
+        // 2FA required — show the TOTP step
+        if (data.requires2FA) {
+          setTempToken(data.tempToken);
+          setRequires2FA(true);
+          setIsLoading(false);
+          return;
+        }
+
         localStorage.setItem('auth_token', data.token);
         if (data.refreshToken) localStorage.setItem('refresh_token', data.refreshToken);
         localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
         document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
         createSession(data.user);
-        
+
         trackEvent('login', { method: 'email' });
 
         const redirectUrl = searchParams.get('redirect') || '/dashboard';
@@ -71,6 +85,76 @@ function SignInContent() {
       setIsLoading(false);
     }
   };
+
+  const handle2FASubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!totpCode || totpCode.length !== 6) {
+      setError('Please enter the 6-digit code from your authenticator app.');
+      return;
+    }
+    setError('');
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/2fa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tempToken, code: totpCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Invalid code.'); return; }
+      localStorage.setItem('auth_token', data.token);
+      if (data.refreshToken) localStorage.setItem('refresh_token', data.refreshToken);
+      localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
+      document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
+      createSession(data.user);
+      trackEvent('login', { method: '2fa' });
+      const redirectUrl = searchParams.get('redirect') || '/dashboard';
+      window.location.href = redirectUrl;
+    } catch (err: any) {
+      setError(err.message || 'Verification failed.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 2FA verification step
+  if (requires2FA) {
+    return (
+      <AuthLayout heading="Two-Factor Authentication" subheading="Enter the 6-digit code from your authenticator app.">
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">{error}</div>
+        )}
+        <form onSubmit={handle2FASubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Authentication Code</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              pattern="\d{6}"
+              required
+              autoFocus
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#1F4D45] focus:border-[#1F4D45] transition-all bg-gray-50 focus:bg-white text-center text-2xl tracking-widest font-mono"
+              placeholder="000000"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={isLoading || totpCode.length !== 6}
+            className="w-full py-3.5 px-4 bg-[#1F4D45] hover:bg-[#163832] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Verifying…' : 'Verify & Sign In'}
+          </button>
+          <button type="button" onClick={() => { setRequires2FA(false); setTotpCode(''); setError(''); }}
+            className="w-full py-2 text-sm text-gray-500 hover:text-gray-700">
+            ← Back to sign in
+          </button>
+        </form>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout

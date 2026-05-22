@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generateToken } from '@/lib/auth-jwt';
 import { createRefreshToken } from '@/lib/refresh-token';
+import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
 // POST - Login user and return JWT token
@@ -103,6 +104,18 @@ export async function POST(request: NextRequest) {
           lockedUntil: null,
         },
       });
+    }
+
+    // 2FA gate — if enabled, return a short-lived temp token instead of the full JWT
+    if (user.twoFactorEnabled) {
+      const JWT_SECRET = process.env.JWT_SECRET;
+      if (!JWT_SECRET) throw new Error('JWT_SECRET not set');
+      const tempToken = jwt.sign(
+        { userId: user.id, email: user.email, pending2FA: true },
+        JWT_SECRET,
+        { expiresIn: '5m' }
+      );
+      return NextResponse.json({ requires2FA: true, tempToken });
     }
 
     // Generate access token

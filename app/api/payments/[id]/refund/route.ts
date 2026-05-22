@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
+import { logInvoiceEvent } from '@/lib/invoice-events';
 
 export const dynamic = 'force-dynamic';
 
@@ -111,6 +112,18 @@ export async function POST(
     });
 
     console.log(`✅ Payment ${payment.id} refunded for user ${user.userId}`);
+
+    // Log refund event (fire-and-forget)
+    const sym = payment.currency === 'NGN' ? '₦' : payment.currency === 'GBP' ? '£' : payment.currency === 'EUR' ? '€' : '$';
+    logInvoiceEvent({
+      invoiceId: payment.invoiceId,
+      userId: user.userId,
+      eventType: 'payment_refunded',
+      description: `Payment of ${sym}${payment.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} refunded${stripeRefundId ? ` (Stripe: ${stripeRefundId})` : ''}`,
+      oldValue: String(payment.amount),
+      newValue: 'refunded',
+      actor: 'owner',
+    });
 
     return NextResponse.json({
       success: true,

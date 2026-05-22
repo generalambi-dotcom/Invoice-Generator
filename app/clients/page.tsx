@@ -40,6 +40,7 @@ export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [generatingPortalFor, setGeneratingPortalFor] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -125,6 +126,33 @@ export default function ClientsPage() {
       loadClients();
     } catch (error: any) {
       toast.error('Failed to delete client: ' + error.message);
+    }
+  };
+
+  const handleSharePortal = async (client: Client) => {
+    if (!client.email) {
+      toast.error('This client has no email address. Add one to share a portal link.');
+      return;
+    }
+    setGeneratingPortalFor(client.id);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : '';
+      const res = await fetch('/api/portal/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ clientEmail: client.email, clientName: client.name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to generate link');
+      await navigator.clipboard.writeText(data.portalUrl);
+      toast.success(`Portal link copied! Expires in 90 days.`);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to generate portal link');
+    } finally {
+      setGeneratingPortalFor(null);
     }
   };
 
@@ -281,7 +309,19 @@ export default function ClientsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex items-center justify-center gap-3">
+                        <div className="flex items-center justify-center gap-3 flex-wrap">
+                          <button
+                            onClick={() => handleSharePortal(client)}
+                            disabled={generatingPortalFor === client.id}
+                            title={client.email ? 'Copy portal link to clipboard' : 'Client needs an email to share a portal'}
+                            className={`text-sm font-medium transition-colors ${
+                              client.email
+                                ? 'text-emerald-600 hover:text-emerald-800'
+                                : 'text-gray-300 cursor-not-allowed'
+                            }`}
+                          >
+                            {generatingPortalFor === client.id ? '…' : 'Share Portal'}
+                          </button>
                           <button
                             onClick={() => handleEdit(client)}
                             className="text-blue-600 hover:text-blue-800 font-medium text-sm"

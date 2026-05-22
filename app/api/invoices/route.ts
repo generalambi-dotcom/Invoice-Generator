@@ -5,6 +5,7 @@ import { rateLimit, rateLimitConfigs, getClientIdentifier } from '@/lib/rate-lim
 import { logRequest, logError } from '@/lib/request-logger';
 import { autoGeneratePaymentLink } from '@/lib/auto-payment-link';
 import { sendLimitWarningEmail } from '@/lib/email';
+import { logInvoiceEvent } from '@/lib/invoice-events';
 
 // GET - Get user's invoices
 export async function GET(request: NextRequest) {
@@ -203,6 +204,15 @@ export async function POST(request: NextRequest) {
       });
 
       console.log(`✅ Invoice created: ${invoice.id} for user ${user.userId} (${invoiceNumber})`);
+
+      // Log creation event (fire-and-forget)
+      logInvoiceEvent({
+        invoiceId: invoice.id,
+        userId: user.userId,
+        eventType: 'created',
+        description: `${type === 'estimate' ? 'Estimate' : type === 'credit_note' ? 'Credit note' : 'Invoice'} ${invoiceNumber} created`,
+        actor: 'owner',
+      });
 
       // Update Phase 1 Data Gravity Signals
       await prisma.user.update({

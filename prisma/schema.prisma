@@ -33,6 +33,10 @@ model User {
   resetToken    String?   @unique
   resetTokenExpiry DateTime?
 
+  // Two-Factor Authentication
+  twoFactorEnabled Boolean  @default(false)
+  twoFactorSecret  String?  // Encrypted TOTP secret
+
   // Account lockout
   failedLoginAttempts        Int       @default(0)
   lockedUntil                DateTime?
@@ -99,6 +103,8 @@ model User {
   directoryEvents        DirectoryEvent[]
   leadResponses          LeadResponse[]
   products               Product[]
+  clientPortalTokens     ClientPortalToken[]
+  expenses               Expense[]
 }
 
 model InvoiceReminderSettings {
@@ -213,7 +219,7 @@ model Invoice {
   
   // Relations
   creditNotes           CreditNote[]
-  
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -221,6 +227,7 @@ model Invoice {
   client        Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
   payments      Payment[]
   timeLogs      TimeLog[]
+  events        InvoiceEvent[]
 
   @@index([userId])
   @@index([invoiceNumber])
@@ -791,5 +798,62 @@ model Product {
 
   @@index([userId])
   @@index([name])
+}
+
+model InvoiceEvent {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  userId      String
+  eventType   String   // 'created' | 'status_changed' | 'total_changed' | 'due_date_changed' | 'sent' | 'viewed' | 'payment_received' | 'payment_refunded' | 'edited'
+  description String
+  oldValue    String?
+  newValue    String?
+  actor       String?  // 'owner' | 'system' | 'client'
+  createdAt   DateTime @default(now())
+
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Float
+  currency    String   @default("NGN")
+  category    String   // see EXPENSE_CATEGORIES constant
+  date        DateTime
+  description String
+  vendor      String?
+  notes       String?
+  receiptUrl  String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([category])
+  @@index([date])
+  @@index([userId, date])
+}
+
+model ClientPortalToken {
+  id             String    @id @default(cuid())
+  token          String    @unique @default(cuid())
+  userId         String
+  clientEmail    String
+  clientName     String?
+  expiresAt      DateTime
+  lastAccessedAt DateTime?
+  createdAt      DateTime  @default(now())
+
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId, clientEmail])
 }
 

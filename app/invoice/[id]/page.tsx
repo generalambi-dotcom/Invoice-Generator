@@ -19,10 +19,15 @@ export default function InvoiceViewPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+    const [generatingPortal, setGeneratingPortal] = useState(false);
 
     // Payment history
     const [payments, setPayments] = useState<any[]>([]);
     const [refundingId, setRefundingId] = useState<string | null>(null);
+
+    // Activity / audit trail
+    const [events, setEvents] = useState<any[]>([]);
+    const [showActivity, setShowActivity] = useState(false);
 
     const authHeader = () => ({
         Authorization: `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('auth_token') : ''}`,
@@ -39,12 +44,17 @@ export default function InvoiceViewPage() {
                 // Load payment history (auth required)
                 const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : '';
                 if (token) {
-                    const pRes = await fetch(`/api/invoices/${id}/payments`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                    });
+                    const [pRes, eRes] = await Promise.all([
+                        fetch(`/api/invoices/${id}/payments`, { headers: { Authorization: `Bearer ${token}` } }),
+                        fetch(`/api/invoices/${id}/events`, { headers: { Authorization: `Bearer ${token}` } }),
+                    ]);
                     if (pRes.ok) {
                         const pData = await pRes.json();
                         setPayments(pData.payments || []);
+                    }
+                    if (eRes.ok) {
+                        const eData = await eRes.json();
+                        setEvents(eData.events || []);
                     }
                 }
             } catch (err: any) {
@@ -102,6 +112,37 @@ export default function InvoiceViewPage() {
         window.print();
     };
 
+    const handleSharePortal = async () => {
+        const clientEmail = invoice?.client?.email || (invoice?.clientInfo as any)?.email;
+        if (!clientEmail) {
+            toast.error('No client email on this invoice to generate a portal link');
+            return;
+        }
+        setGeneratingPortal(true);
+        try {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : '';
+            const res = await fetch('/api/portal/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    clientEmail,
+                    clientName: invoice?.client?.name || (invoice?.clientInfo as any)?.name,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to generate link');
+            await navigator.clipboard.writeText(data.portalUrl);
+            toast.success('Client portal link copied to clipboard!');
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to generate portal link');
+        } finally {
+            setGeneratingPortal(false);
+        }
+    };
+
     const handleWhatsAppShare = () => {
         if (!invoice) return;
         const url = `${window.location.origin}/invoice/${invoice.id}`;
@@ -149,9 +190,28 @@ export default function InvoiceViewPage() {
                                 <h1 className="text-2xl font-bold text-gray-900">
                                     Invoice {invoice.invoiceNumber}
                                 </h1>
-                                <p className="text-sm text-gray-500">
-                                    Created on {new Date(invoice.createdAt || invoice.invoiceDate).toLocaleDateString()}
-                                </p>
+                                <div className="flex items-center gap-3 mt-1 flex-wrap">
+                                    <p className="text-sm text-gray-500">
+                                        Created {new Date(invoice.createdAt || invoice.invoiceDate).toLocaleDateString()}
+                                    </p>
+                                    {invoice.sentAt && (
+                                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                            Sent {format(new Date(invoice.sentAt), 'dd MMM yyyy')}
+                                        </span>
+                                    )}
+                                    {invoice.viewedAt ? (
+                                        <span className="flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                            Seen {format(new Date(invoice.viewedAt), 'dd MMM yyyy, h:mm a')}
+                                        </span>
+                                    ) : invoice.sentAt ? (
+                                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                            Not yet opened
+                                        </span>
+                                    ) : null}
+                                </div>
                             </div>
                         </div>
 
@@ -183,6 +243,15 @@ export default function InvoiceViewPage() {
                             >
                                 <Share2 className="w-4 h-4 mr-2" />
                                 WhatsApp
+                            </button>
+                            <button
+                                onClick={handleSharePortal}
+                                disabled={generatingPortal}
+                                title="Copy client portal link to clipboard"
+                                className="inline-flex items-center px-4 py-2 bg-white border border-emerald-200 rounded-lg shadow-sm text-sm font-medium text-emerald-700 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-60"
+                            >
+                                <Share2 className="w-4 h-4 mr-2" />
+                                {generatingPortal ? 'Copying…' : 'Client Portal'}
                             </button>
                             <button
                                 onClick={() => setIsEmailModalOpen(true)}
@@ -282,6 +351,58 @@ export default function InvoiceViewPage() {
                             </div>
                         </div>
                     )}
+                {/* Activity / Audit Trail */}
+                {events.length > 0 && (
+                    <div className="mt-6 print:hidden">
+                        <button
+                            onClick={() => setShowActivity(v => !v)}
+                            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900 mb-3 group"
+                        >
+                            <svg className="w-4 h-4 text-gray-400 group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Activity
+                            <span className="text-xs text-gray-400 font-normal">({events.length})</span>
+                            <svg className={`w-4 h-4 text-gray-400 transition-transform ${showActivity ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+
+                        {showActivity && (
+                            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+                                <ol className="relative border-l border-gray-200 ml-3 space-y-5">
+                                    {events.map((event) => {
+                                        const iconMap: Record<string, { icon: string; color: string }> = {
+                                            created:          { icon: '✦', color: 'bg-emerald-100 text-emerald-600' },
+                                            status_changed:   { icon: '⇄', color: 'bg-blue-100 text-blue-600' },
+                                            total_changed:    { icon: '₊', color: 'bg-amber-100 text-amber-700' },
+                                            due_date_changed: { icon: '📅', color: 'bg-purple-100 text-purple-600' },
+                                            sent:             { icon: '✉', color: 'bg-sky-100 text-sky-600' },
+                                            viewed:           { icon: '👁', color: 'bg-indigo-100 text-indigo-600' },
+                                            payment_received: { icon: '✓', color: 'bg-emerald-100 text-emerald-600' },
+                                            payment_refunded: { icon: '↩', color: 'bg-red-100 text-red-600' },
+                                            edited:           { icon: '✎', color: 'bg-gray-100 text-gray-500' },
+                                        };
+                                        const cfg = iconMap[event.eventType] || iconMap.edited;
+                                        return (
+                                            <li key={event.id} className="ml-6">
+                                                <span className={`absolute -left-3 flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${cfg.color}`}>
+                                                    {cfg.icon}
+                                                </span>
+                                                <div className="flex items-start justify-between gap-3">
+                                                    <p className="text-sm text-gray-700">{event.description}</p>
+                                                    <time className="text-xs text-gray-400 whitespace-nowrap shrink-0">
+                                                        {format(new Date(event.createdAt), 'dd MMM yyyy, h:mm a')}
+                                                    </time>
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
+                                </ol>
+                            </div>
+                        )}
+                    </div>
+                )}
                 </div>
             </div>
             {invoice && (

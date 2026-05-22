@@ -256,6 +256,93 @@ export function validateParsedInvoice(data: ParsedInvoiceData): { valid: boolean
   };
 }
 
+// ─── Client Reply Classification ──────────────────────────────────────────────
+
+export type ClientReplyIntent =
+  | 'payment_confirmation' // "I've paid" / "sent money"
+  | 'resend_request'       // "resend" / "didn't receive"
+  | 'payment_query'        // "can I pay later?" / "installments?"
+  | 'dispute'              // "wrong amount" / "I disagree"
+  | 'general_reply';       // anything else
+
+/**
+ * Classify an inbound WhatsApp message from a client into one of the known intents.
+ * Used to decide how to auto-reply and what to tell the invoice owner.
+ */
+export function classifyClientReply(message: string): ClientReplyIntent {
+  const m = message.toLowerCase().trim();
+
+  if (/\b(paid|i.?ve paid|payment sent|transferred|sent the money|already paid|i paid|done paying|payment made|completed payment)\b/.test(m)) {
+    return 'payment_confirmation';
+  }
+
+  if (/\b(resend|send again|didn.?t receive|not received|haven.?t received|missing invoice|re-?send|pls send|please send|where is|where.?s my invoice)\b/.test(m)) {
+    return 'resend_request';
+  }
+
+  if (/\b(extension|more time|pay later|installment|part payment|partial|when (do|can|should) i pay|how (do|can) i pay|payment plan|two weeks|next month)\b/.test(m)) {
+    return 'payment_query';
+  }
+
+  if (/\b(wrong (amount|total|price)|dispute|not correct|incorrect|error|mistake|overcharged|charge too much|disagree)\b/.test(m)) {
+    return 'dispute';
+  }
+
+  return 'general_reply';
+}
+
+/**
+ * Build the auto-reply message sent back to the client on WhatsApp.
+ */
+export function buildClientAutoReply(
+  intent: ClientReplyIntent,
+  invoiceNumber: string,
+  baseUrl: string,
+  invoiceId: string,
+): string {
+  switch (intent) {
+    case 'payment_confirmation':
+      return (
+        `✅ Thank you! We've received your payment confirmation for Invoice *${invoiceNumber}*.\n\n` +
+        `We'll update the invoice status shortly. You'll hear back from the sender soon.`
+      );
+    case 'resend_request':
+      return (
+        `📄 No problem! Here's your invoice link:\n` +
+        `${baseUrl}/invoice/${invoiceId}\n\n` +
+        `You can view and download the PDF directly from that link.`
+      );
+    case 'payment_query':
+      return (
+        `💬 Thanks for reaching out about Invoice *${invoiceNumber}*.\n\n` +
+        `We've notified the sender of your message. They'll get back to you shortly to discuss payment arrangements.`
+      );
+    case 'dispute':
+      return (
+        `⚠️ We're sorry to hear there may be an issue with Invoice *${invoiceNumber}*.\n\n` +
+        `We've flagged this for the sender who will review and respond to you shortly.`
+      );
+    default:
+      return (
+        `💬 Thank you for your message! We've forwarded it to the sender.\n\n` +
+        `They'll get back to you as soon as possible.`
+      );
+  }
+}
+
+/**
+ * Human-readable label for each intent (used in notification emails).
+ */
+export function intentLabel(intent: ClientReplyIntent): string {
+  switch (intent) {
+    case 'payment_confirmation': return '💰 Payment Confirmation';
+    case 'resend_request':       return '📄 Resend Request';
+    case 'payment_query':        return '🗓 Payment Query / Extension';
+    case 'dispute':              return '⚠️ Invoice Dispute';
+    default:                     return '💬 General Reply';
+  }
+}
+
 /**
  * Generate a helpful response message for incomplete invoice data
  */

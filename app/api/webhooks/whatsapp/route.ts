@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { parseInvoiceCommand, validateParsedInvoice } from '@/lib/whatsapp-nlp';
+import { parseInvoiceCommand, validateParsedInvoice, classifyClientReply, buildClientAutoReply, intentLabel } from '@/lib/whatsapp-nlp';
 import { sendWhatsAppMessage } from '@/lib/whatsapp-sender';
+import { sendWhatsAppReplyNotification } from '@/lib/email';
 import { saveInvoiceAPI } from '@/lib/api-client';
 import { logInfo, logError, logWarn } from '@/lib/system-logger';
 
@@ -138,14 +139,8 @@ async function handleTwilioWebhook(body: any) {
   }
 
   if (!credential) {
-    console.log(`⚠️ No WhatsApp credential found for ${from} (raw: ${fromRaw})`);
-    // Log all active credentials for debugging
-    const allCredentials = await prisma.whatsAppCredential.findMany({
-      where: { isActive: true },
-      select: { phoneNumber: true, userId: true, isVerified: true },
-    });
-    console.log('📋 Active credentials in database:', allCredentials);
-    return NextResponse.json({ message: 'Not connected' }, { status: 200 });
+    console.log(`⚠️ No WhatsApp credential found for ${from} (raw: ${fromRaw}) — checking client replies`);
+    return await handleClientReply(from, message, 'twilio');
   }
 
   console.log(`✅ Found credential for ${credential.phoneNumber} (user: ${credential.userId})`);
@@ -265,14 +260,8 @@ async function handleMetaWebhook(body: any) {
   }
 
   if (!credential) {
-    console.log(`⚠️ No WhatsApp credential found for ${from} (raw: ${fromRaw})`);
-    // Log all active credentials for debugging
-    const allCredentials = await prisma.whatsAppCredential.findMany({
-      where: { isActive: true },
-      select: { phoneNumber: true, userId: true, isVerified: true },
-    });
-    console.log('📋 Active credentials in database:', allCredentials);
-    return NextResponse.json({ message: 'Not connected' }, { status: 200 });
+    console.log(`⚠️ No WhatsApp credential found for ${from} (raw: ${fromRaw}) — checking client replies`);
+    return await handleClientReply(from, text, 'meta');
   }
 
   console.log(`✅ Found credential for ${credential.phoneNumber} (user: ${credential.userId})`);
@@ -346,6 +335,95 @@ function getHelpMessage(): string {
     `- Include client name\n` +
     `- List items with quantities and prices\n` +
     `- Specify due date if needed`;
+}
+
+/**
+ * Handle inbound WhatsApp message from a CLIENT (not the app owner).
+ *
+ * Called when the sender's phone number is not found in WhatsAppCredential.
+ * We search for invoices where clientInfo.phone matches the sender, then:
+ *   1. Classify the message intent (payment confirmation, resend, query, etc.)
+ *   2. Auto-reply to the client with an appropriate message
+ *   3. Send an email notification to the invoice owner
+ */
+async function handleClientReply(from: string, message: string, provider: 'twilio' | 'meta') {
+  try {
+    const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://invoicegenerator.ng';
+
+    // Build phone variants to increase match rate across formats
+    const digitsOnly = from.replace(/\D/g, '');
+    const last10 = digitsOnly.slice(-10);
+
+    // Prisma 7 JSON path filtering — search clientInfo.phone for any variant
+    const invoices = await prisma.invoice.findMany({
+      where: {
+        OR: [
+          { clientInfo: { path: ['phone'], string_contains: digitsOnly } },
+          { clientInfo: { path: ['phone'], string_contains: last10 } },
+          { clientInfo: { path: ['phone'], string_contains: from } },
+        ],
+        type: 'invoice',
+      },
+      include: {
+        user: {
+          select: { id: true, email: true, name: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 3,
+    });
+
+    if (invoices.length === 0) {
+      // Sender not recognised as any client — send a polite fallback
+      await sendWhatsAppMessage(
+        from,
+        `👋 Thanks for your message! We don't have a record matching your number. If you received an invoice, please reply with the invoice number and we'll look it up.`,
+      ).catch(() => {});
+      return NextResponse.json({ message: 'Unknown sender' }, { status: 200 });
+    }
+
+    const invoice = invoices[0];
+    const owner = invoice.user;
+    const clientInfo = (invoice.clientInfo as any) || {};
+    const clientName = clientInfo.name || 'Client';
+
+    // 1. Classify intent
+    const intent = classifyClientReply(message);
+    const label = intentLabel(intent);
+
+    // 2. Auto-reply to client
+    const autoReply = buildClientAutoReply(intent, invoice.invoiceNumber, BASE_URL, invoice.id);
+    await sendWhatsAppMessage(from, autoReply).catch(err =>
+      console.error('Failed to send client auto-reply:', err)
+    );
+
+    // 3. Notify owner by email (fire and forget)
+    sendWhatsAppReplyNotification({
+      ownerEmail: owner.email,
+      ownerName: owner.name || '',
+      clientName,
+      clientPhone: from,
+      invoiceNumber: invoice.invoiceNumber,
+      invoiceId: invoice.id,
+      message,
+      intentLabel: label,
+      baseUrl: BASE_URL,
+    }).catch(err => console.error('Failed to send owner notification:', err));
+
+    // 4. Log the event
+    await logInfo('whatsapp', `Client reply received`, {
+      clientPhone: from,
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      intent,
+      messagePreview: message.slice(0, 100),
+    });
+
+    return NextResponse.json({ message: 'Client reply handled', intent }, { status: 200 });
+  } catch (error: any) {
+    await logError('whatsapp', 'Error handling client reply', error);
+    return NextResponse.json({ message: 'Error handled' }, { status: 200 });
+  }
 }
 
 /**

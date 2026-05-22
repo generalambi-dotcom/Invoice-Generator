@@ -1027,3 +1027,113 @@ export async function sendLimitWarningEmail({
     return { success: false, error: error.message };
   }
 }
+
+// ─── WhatsApp Client Reply Notification ───────────────────────────────────────
+
+interface WhatsAppReplyNotificationParams {
+  ownerEmail: string;
+  ownerName: string;
+  clientName: string;
+  clientPhone: string;
+  invoiceNumber: string;
+  invoiceId: string;
+  message: string;
+  intentLabel: string;
+  baseUrl: string;
+}
+
+/**
+ * Notify the invoice owner when a client replies to their WhatsApp invoice message.
+ */
+export async function sendWhatsAppReplyNotification({
+  ownerEmail,
+  ownerName,
+  clientName,
+  clientPhone,
+  invoiceNumber,
+  invoiceId,
+  message,
+  intentLabel,
+  baseUrl,
+}: WhatsAppReplyNotificationParams): Promise<{ success: boolean; error?: string }> {
+  try {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.log('WhatsApp reply notification (dev):', { ownerEmail, clientName, invoiceNumber, message });
+      return { success: true };
+    }
+
+    const resend = new Resend(apiKey);
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
+    const invoiceUrl = `${baseUrl}/invoice/${invoiceId}`;
+    const safeMessage = message.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    const content = `
+      <div style="background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 30px;">
+        <div style="font-size: 40px; margin-bottom: 8px;">💬</div>
+        <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 700;">WhatsApp Reply Received</h1>
+        <p style="color: rgba(255,255,255,0.85); margin: 8px 0 0; font-size: 14px;">${intentLabel}</p>
+      </div>
+
+      <p style="color: #374151; font-size: 15px;">Hi ${ownerName || 'there'},</p>
+      <p style="color: #374151; font-size: 15px;">
+        Your client <strong>${clientName}</strong> has replied to your WhatsApp invoice message.
+      </p>
+
+      <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; margin: 24px 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 13px; width: 40%;">Client</td>
+            <td style="padding: 8px 0; color: #111827; font-weight: 600; font-size: 14px;">${clientName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Phone</td>
+            <td style="padding: 8px 0; color: #111827; font-size: 14px;">${clientPhone}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Invoice</td>
+            <td style="padding: 8px 0; color: #111827; font-size: 14px;">${invoiceNumber}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Intent</td>
+            <td style="padding: 8px 0; color: #111827; font-size: 14px;">${intentLabel}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div style="background: #fff8e1; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 20px 0;">
+        <p style="margin: 0 0 6px; color: #92400e; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Their Message</p>
+        <p style="margin: 0; color: #1f2937; font-size: 15px; line-height: 1.6;">${safeMessage}</p>
+      </div>
+
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${invoiceUrl}"
+           style="display: inline-block; background: #1F4D45; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 15px;">
+          View Invoice ${invoiceNumber}
+        </a>
+      </div>
+
+      <p style="color: #6b7280; font-size: 13px; text-align: center;">
+        An auto-reply was sent to your client via WhatsApp.
+      </p>
+    `;
+
+    const emailHtml = await getEmailLayout({
+      content,
+      title: `WhatsApp reply from ${clientName}`,
+      previewText: `${clientName} replied to Invoice ${invoiceNumber}: "${message.slice(0, 80)}"`,
+    });
+
+    await resend.emails.send({
+      from: `Invoice Generator <${fromEmail}>`,
+      to: ownerEmail,
+      subject: `💬 ${clientName} replied to Invoice ${invoiceNumber}`,
+      html: emailHtml,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error sending WhatsApp reply notification:', error);
+    return { success: false, error: error.message };
+  }
+}

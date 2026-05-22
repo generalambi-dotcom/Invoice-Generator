@@ -1062,10 +1062,10 @@ Word templates are available from invoice.ng and proinvoice.co — search "Niger
 Excel is popular for Nigerian product sellers because it handles calculations automatically. To set up a Nigerian Excel invoice template:
 
 1. **Format currency cells:** Select amount cells → Format Cells → Currency → ₦ symbol → 2 decimal places
-2. **Auto-total formula:** In the Total cell, enter `=SUM(D10:D20)` (adjust range for your line items)
-3. **VAT formula:** `=B_subtotal_cell * 0.075` for the 7.5% VAT cell
-4. **Grand total:** `=subtotal + vat - discount + shipping`
-5. **Invoice number auto-increment:** Use `=TEXT(ROW()-9,"INV-2026-000")` to generate sequential numbers
+2. **Auto-total formula:** In the Total cell, enter \`=SUM(D10:D20)\` (adjust range for your line items)
+3. **VAT formula:** \`=B_subtotal_cell * 0.075\` for the 7.5% VAT cell
+4. **Grand total:** \`=subtotal + vat - discount + shipping\`
+5. **Invoice number auto-increment:** Use \`=TEXT(ROW()-9,"INV-2026-000")\` to generate sequential numbers
 
 Save as an Excel Template (.xltx) and share with colleagues.
 
@@ -1097,7 +1097,7 @@ If you prefer Google Docs (ideal for remote collaboration and online access from
 
 Whether you use Word, Excel, or PDF, adopt a consistent filing system:
 
-```
+\`\`\`
 Invoices/
   2026/
     Clients/
@@ -1106,7 +1106,7 @@ Invoices/
     Templates/
       Nigerian-Invoice-Template-2026.docx
       Nigerian-VAT-Invoice-Template-2026.xlsx
-```
+\`\`\`
 
 Keep templates in a separate "Templates" folder so they are never accidentally edited.
 
@@ -1529,27 +1529,27 @@ Hit **Download PDF** for a high-resolution PDF, or click the **WhatsApp button**
 ## Naira Invoice Examples for Different Business Types
 
 ### Freelance Designer
-```
+\`\`\`
 Logo Design (1 concept + 3 revisions)  1 × ₦180,000  = ₦180,000
 Brand Guidelines Document              1 × ₦70,000   = ₦70,000
 Business Card Design                   1 × ₦35,000   = ₦35,000
 ─────────────────────────────────────────────────────────────────
 Subtotal                                                ₦285,000
 Total Due                                               ₦285,000
-```
+\`\`\`
 
 ### IT Consultant (VAT-Registered)
-```
+\`\`\`
 Network Infrastructure Audit           1 × ₦500,000  = ₦500,000
 Security Assessment Report             1 × ₦250,000  = ₦250,000
 ─────────────────────────────────────────────────────────────────
 Subtotal                                                ₦750,000
 VAT (7.5%)                                              ₦56,250
 Total Due                                               ₦806,250
-```
+\`\`\`
 
 ### Events Planner
-```
+\`\`\`
 Event Coordination (2-day conference)  1 × ₦800,000  = ₦800,000
 Venue Sourcing                         1 × ₦150,000  = ₦150,000
 Catering Management (250 guests)       250 × ₦4,500  = ₦1,125,000
@@ -1557,7 +1557,7 @@ Catering Management (250 guests)       250 × ₦4,500  = ₦1,125,000
 Subtotal                                              ₦2,075,000
 Deposit Received                                       -₦1,000,000
 Balance Due                                            ₦1,075,000
-```
+\`\`\`
 
 ---
 

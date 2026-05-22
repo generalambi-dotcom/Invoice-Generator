@@ -129,7 +129,7 @@ export default function InvoiceViewPage() {
                 },
                 body: JSON.stringify({
                     clientEmail,
-                    clientName: invoice?.client?.name || (invoice?.clientInfo as any)?.name,
+                    clientName: invoice?.client?.name || (invoice as any)?.clientInfo?.name,
                 }),
             });
             const data = await res.json();

@@ -40,61 +40,158 @@ export async function sendInvoiceEmail({
     // Initialize Resend client lazily
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    // Build email content
-    const content = `
-      <div style="text-align: center; margin-bottom: 20px;">
-        <h2>Invoice ${invoice.invoiceNumber || 'N/A'}</h2>
-      </div>
+    // ── Derived values ──────────────────────────────────────────────────────
+    const invoiceNum   = invoice.invoiceNumber || 'N/A';
+    const clientName   = invoice.clientInfo?.name || invoice.client?.name || '';
+    const companyName  = invoice.companyInfo?.name || invoice.company?.name || 'InvoiceGenerator.ng';
+    const currency     = invoice.currency || 'USD';
+    const total        = (invoice.total ?? 0).toFixed(2);
+    const subtotal     = (invoice.subtotal ?? 0).toFixed(2);
+    const taxAmount    = invoice.taxAmount ?? 0;
+    const taxRate      = invoice.taxRate ?? 0;
+    const discountAmt  = invoice.discountAmount ?? 0;
+    const discountRate = invoice.discountRate ?? 0;
+    const shipping     = invoice.shipping ?? 0;
+    const lineItems: any[] = invoice.lineItems || [];
 
-      ${message ? `<p>${message.replace(/\n/g, '<br>')}</p>` : ''}
-              
-      <table class="invoice-details" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background: #fff; border: 1px solid #e5e7eb; border-radius: 6px;">
+    const fmtDate = (d: any) => {
+      try { return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); }
+      catch { return String(d); }
+    };
+
+    // ── Line items rows ─────────────────────────────────────────────────────
+    const itemRows = lineItems.map((item, i) => `
+      <tr style="background:${i % 2 === 1 ? '#FAFAFA' : '#FFFFFF'};">
+        <td style="padding:10px 12px;font-size:14px;color:#111827;border-bottom:1px solid #F3F4F6;">${item.description || ''}</td>
+        <td style="padding:10px 12px;font-size:14px;color:#6B7280;text-align:center;border-bottom:1px solid #F3F4F6;">${item.quantity ?? ''}</td>
+        <td style="padding:10px 12px;font-size:14px;color:#6B7280;text-align:right;border-bottom:1px solid #F3F4F6;">${currency} ${(item.rate ?? 0).toFixed(2)}</td>
+        <td style="padding:10px 12px;font-size:14px;color:#111827;font-weight:600;text-align:right;border-bottom:1px solid #F3F4F6;">${currency} ${(item.amount ?? 0).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    // ── Totals rows ─────────────────────────────────────────────────────────
+    const totalRows = [
+      `<tr><td style="padding:6px 0;font-size:13px;color:#6B7280;">Subtotal</td><td style="padding:6px 0;font-size:13px;color:#111827;font-weight:600;text-align:right;">${currency} ${subtotal}</td></tr>`,
+      discountAmt > 0 ? `<tr><td style="padding:6px 0;font-size:13px;color:#059669;">Discount${discountRate ? ` (${discountRate}%)` : ''}</td><td style="padding:6px 0;font-size:13px;color:#059669;font-weight:600;text-align:right;">-${currency} ${discountAmt.toFixed(2)}</td></tr>` : '',
+      taxAmount > 0   ? `<tr><td style="padding:6px 0;font-size:13px;color:#6B7280;">Tax${taxRate ? ` (${taxRate}%)` : ''}</td><td style="padding:6px 0;font-size:13px;color:#111827;font-weight:600;text-align:right;">${currency} ${taxAmount.toFixed(2)}</td></tr>` : '',
+      shipping > 0    ? `<tr><td style="padding:6px 0;font-size:13px;color:#6B7280;">Shipping</td><td style="padding:6px 0;font-size:13px;color:#111827;font-weight:600;text-align:right;">${currency} ${shipping.toFixed(2)}</td></tr>` : '',
+    ].filter(Boolean).join('');
+
+    // ── Build content ───────────────────────────────────────────────────────
+    const content = `
+      <!-- Greeting -->
+      <p style="font-size:16px;color:#374151;margin-bottom:4px;">
+        ${clientName ? `Hi <strong>${clientName}</strong>,` : 'Hello,'}
+      </p>
+      <p style="font-size:15px;color:#374151;margin-top:0;margin-bottom:24px;">
+        <strong>${companyName}</strong> has sent you an invoice.
+      </p>
+
+      ${message ? `
+      <!-- Custom message -->
+      <div style="background:#F9FAFB;border-left:3px solid #E5E7EB;padding:14px 16px;border-radius:4px;margin-bottom:24px;font-size:14px;color:#374151;line-height:1.6;">
+        ${message.replace(/\n/g, '<br>')}
+      </div>` : ''}
+
+      <!-- Invoice summary banner -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFF;border:1px solid #DBEAFE;border-radius:8px;margin-bottom:24px;">
         <tr>
-          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;"><strong>Invoice Number:</strong></td>
-          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">${invoice.invoiceNumber || 'N/A'}</td>
+          <td style="padding:20px 24px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding-bottom:4px;">
+                  <span style="font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:1px;">Invoice Number</span><br>
+                  <span style="font-size:17px;font-weight:700;color:#1E3A5F;">${invoiceNum}</span>
+                </td>
+                <td style="text-align:right;padding-bottom:4px;">
+                  <span style="font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:1px;">Amount Due</span><br>
+                  <span style="font-size:22px;font-weight:800;color:#1D4ED8;">${currency} ${total}</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-top:12px;">
+                  <span style="font-size:12px;color:#6B7280;">Date: <strong style="color:#374151;">${fmtDate(invoice.invoiceDate)}</strong></span>
+                </td>
+                <td style="text-align:right;padding-top:12px;">
+                  <span style="font-size:12px;color:#6B7280;">Due: <strong style="color:#DC2626;">${fmtDate(invoice.dueDate)}</strong></span>
+                </td>
+              </tr>
+            </table>
+          </td>
         </tr>
+      </table>
+
+      ${lineItems.length > 0 ? `
+      <!-- Line items -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E5E7EB;border-radius:8px;overflow:hidden;margin-bottom:16px;">
+        <thead>
+          <tr style="background:#1E3A5F;">
+            <th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:#FFFFFF;text-transform:uppercase;letter-spacing:0.8px;">Description</th>
+            <th style="padding:10px 12px;text-align:center;font-size:11px;font-weight:700;color:#FFFFFF;text-transform:uppercase;letter-spacing:0.8px;">Qty</th>
+            <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700;color:#FFFFFF;text-transform:uppercase;letter-spacing:0.8px;">Rate</th>
+            <th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700;color:#FFFFFF;text-transform:uppercase;letter-spacing:0.8px;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>${itemRows}</tbody>
+      </table>` : ''}
+
+      <!-- Totals -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
         <tr>
-          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;"><strong>Date:</strong></td>
-          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">${new Date(invoice.invoiceDate).toLocaleDateString()}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;"><strong>Due Date:</strong></td>
-          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; text-align: right;">${new Date(invoice.dueDate).toLocaleDateString()}</td>
-        </tr>
-        <tr>
-          <td style="padding: 10px;"><strong>Total Amount:</strong></td>
-          <td style="padding: 10px; text-align: right; font-weight: bold;">${invoice.currency || 'USD'} ${invoice.total?.toFixed(2) || '0.00'}</td>
+          <td width="55%"></td>
+          <td width="45%">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              ${totalRows}
+              <tr><td colspan="2" style="padding:4px 0;border-top:2px solid #111827;"></td></tr>
+              <tr>
+                <td style="padding:8px 0;font-size:14px;font-weight:800;color:#111827;text-transform:uppercase;letter-spacing:1px;">Total Due</td>
+                <td style="padding:8px 0;font-size:18px;font-weight:800;color:#1D4ED8;text-align:right;">${currency} ${total}</td>
+              </tr>
+            </table>
+          </td>
         </tr>
       </table>
 
       ${invoice.paymentLink ? `
-        <p>You can pay this invoice online:</p>
-        <div style="text-align: center;">
-            <a href="${invoice.paymentLink}" class="button">Pay Invoice</a>
-        </div>
-      ` : ''}
+      <!-- Pay now CTA -->
+      <div style="text-align:center;margin:28px 0;">
+        <a href="${invoice.paymentLink}" style="display:inline-block;padding:14px 36px;background:#1D4ED8;color:#FFFFFF;font-size:16px;font-weight:700;text-decoration:none;border-radius:8px;letter-spacing:0.5px;">
+          Pay Now →
+        </a>
+      </div>` : ''}
 
-      <p>Please find the invoice PDF attached to this email.</p>
-      
+      <!-- PDF note -->
+      <p style="font-size:13px;color:#9CA3AF;text-align:center;margin-top:8px;">
+        The full invoice PDF is attached to this email.
+      </p>
+
+      ${invoice.bankDetails ? `
+      <!-- Bank details -->
+      <div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:6px;padding:16px;margin-top:20px;">
+        <p style="font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Payment Details</p>
+        <p style="font-size:13px;color:#374151;margin:0;white-space:pre-line;">${invoice.bankDetails}</p>
+      </div>` : ''}
+
+      <!-- Tracking pixel -->
       <img src="https://www.invoicegenerator.ng/api/invoices/${invoice.id}/track?t=${Date.now()}" width="1" height="1" style="display:none" alt="" />
     `;
 
     // Wrap with layout
     const emailHtml = await getEmailLayout({
       content,
-      title: `Invoice ${invoice.invoiceNumber || 'N/A'}`,
-      previewText: `Invoice ${invoice.invoiceNumber} from Invoice Generator`,
+      title: `Invoice ${invoiceNum}`,
+      previewText: `${companyName} sent you Invoice ${invoiceNum} — ${currency} ${total} due ${fmtDate(invoice.dueDate)}`,
     });
 
     // Prep From Email
-    const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
-    const fromName = 'Invoice Generator';
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
+    const fromName = companyName;
 
     // Prepare email data
     const emailData: any = {
       from: `${fromName} <${fromEmail}>`,
       to,
-      subject: `Invoice ${invoice.invoiceNumber || 'N/A'}`,
+      subject: `Invoice ${invoiceNum} from ${companyName} — ${currency} ${total}`,
       html: emailHtml,
     };
 
@@ -173,10 +270,10 @@ export async function sendPasswordResetEmail({
     const emailHtml = await getPasswordResetEmailHtml(resetUrl, name);
     const emailText = getPasswordResetEmailText(resetUrl, name);
 
-    const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
 
     const emailData = {
-      from: `Invoice Generator <${fromEmail}>`,
+      from: `InvoiceGenerator.ng <${fromEmail}>`,
       to,
       subject: 'Reset Your Password - Invoice Generator Nigeria',
       html: emailHtml,
@@ -231,10 +328,10 @@ export async function sendVerificationEmail({
     const emailHtml = await getVerificationEmailHtml(verificationUrl, name);
     const emailText = getVerificationEmailText(verificationUrl, name);
 
-    const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
 
     const emailData = {
-      from: `Invoice Generator <${fromEmail}>`,
+      from: `InvoiceGenerator.ng <${fromEmail}>`,
       to,
       subject: 'Verify Your Email Address - Invoice Generator Nigeria',
       html: emailHtml,
@@ -309,8 +406,9 @@ export async function sendSupportEmail({
       previewText: `New message from ${name}`,
     });
 
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
     const emailData = {
-      from: 'Invoice Generator Contact <contact@resend.dev>', // Update in production
+      from: `InvoiceGenerator.ng <${fromEmail}>`,
       to: 'support@invoicegenerator.ng',
       reply_to: email, // Allow direct reply to user
       subject: `[Contact Form] ${subject}`,
@@ -415,8 +513,9 @@ export async function sendInvoiceReminderEmail({
       previewText: subject,
     });
 
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
     const emailData = {
-      from: 'Invoice Generator <reminders@resend.dev>',
+      from: `InvoiceGenerator.ng <${fromEmail}>`,
       to: invoice.clientInfo?.email,
       subject: subject,
       html: emailHtml,

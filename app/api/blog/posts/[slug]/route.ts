@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../../../lib/db';
 import { getAuthenticatedUser } from '../../../../../lib/api-auth';
+import { submitBlogPost } from '../../../../../lib/indexnow';
 
 // GET /api/blog/posts/[slug] - Get single post (public)
 export async function GET(req: NextRequest, { params }: { params: { slug: string } }) {
@@ -37,6 +38,9 @@ export async function PUT(req: NextRequest, { params }: { params: { slug: string
         const body = await req.json();
         const { title, content, excerpt, coverImage, published } = body;
 
+        // Fetch current state to detect a draft → published transition
+        const existing = await prisma.blogPost.findUnique({ where: { slug: params.slug }, select: { published: true } });
+
         const post = await prisma.blogPost.update({
             where: { slug: params.slug },
             data: {
@@ -47,6 +51,11 @@ export async function PUT(req: NextRequest, { params }: { params: { slug: string
                 published,
             },
         });
+
+        // Ping Bing IndexNow the moment a post goes live (fire-and-forget)
+        if (published && !existing?.published) {
+            submitBlogPost(params.slug);
+        }
 
         return NextResponse.json(post);
     } catch (error) {

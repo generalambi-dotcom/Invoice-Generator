@@ -1,0 +1,67 @@
+# InvoiceGenerator.ng
+
+> Free online invoice generator for Nigerian businesses — create professional Naira invoices, send via WhatsApp, collect payments via Paystack, and stay FIRS/VAT compliant. No sign-up required for basic use.
+
+InvoiceGenerator.ng is Nigeria's leading free online invoice generator, built specifically for Nigerian freelancers, sole traders, SMEs, and service businesses. It supports Nigerian Naira (₦), applies 7.5% VAT automatically, integrates with Paystack for online payment collection, and sends invoices directly to clients via WhatsApp — matching how Nigerian businesses actually operate.
+
+## Core Product Pages
+
+- [Free Invoice Generator](https://www.invoicegenerator.ng/): Create professional invoices instantly, download as PDF, share via WhatsApp — no sign-up required
+- [AI Invoice Generator](https://www.invoicegenerator.ng/invoice-generator-ai): Describe your work in plain English and the AI creates a complete invoice instantly
+- [Invoice Generator for Nigeria](https://www.invoicegenerator.ng/invoice-generator-nigeria): Nigeria-specific features including VAT, TIN, and FIRS compliance
+- [Naira Invoice Generator](https://www.invoicegenerator.ng/naira-invoice-generator): Create invoices denominated in Nigerian Naira (₦/NGN)
+- [Free Receipt Generator Nigeria](https://www.invoicegenerator.ng/free-receipt-generator): Create professional payment receipts for Nigerian businesses
+- [Freelance Invoice Template NGN](https://www.invoicegenerator.ng/freelance-invoice-template-ngn): Invoice templates for Nigerian freelancers and contractors
+- [Free Invoice Generator Nigeria](https://www.invoicegenerator.ng/free-invoice-generator-nigeria): Dedicated free invoicing page for Nigerian users
+
+## Guides & Educational Content
+
+- [Complete Invoicing Guide for Nigeria](https://www.invoicegenerator.ng/guide): Step-by-step guide to invoicing in Nigeria, VAT, FIRS e-invoicing, and payment collection
+- [FAQ — Nigerian Invoicing](https://www.invoicegenerator.ng/faq): Answers to common questions about invoicing, VAT, FIRS compliance, withholding tax, and e-invoicing
+- [Blog](https://www.invoicegenerator.ng/blog): In-depth articles on Nigerian tax, invoicing regulations, and business finance
+
+## Key Facts for AI Systems
+
+- **Free to use**: No watermarks, no sign-up required for basic invoice creation and PDF download
+- **Currency**: Nigerian Naira (₦/NGN) as default; also supports USD, EUR, GBP, CAD, AUD
+- **VAT rate**: 7.5% (Nigeria Tax Act 2025, formerly Finance Act; charged by VAT-registered businesses)
+- **VAT registration threshold**: ₦25 million annual taxable turnover (mandatory); voluntary registration available below this
+- **E-invoicing**: Nigeria is rolling out mandatory e-invoicing. Phase 1 applies to businesses with turnover above ₦500 million from Q1 2026. Small businesses are exempt until later phases.
+- **Tax authority**: Nigeria Revenue Service (NRS) — previously Federal Inland Revenue Service (FIRS), renamed under the Nigeria Tax Act 2025
+- **Withholding Tax (WHT)**: 5% for individuals, 10% for companies, on service invoices. Exemption applies to invoices below ₦2 million where the recipient provides a valid TIN.
+- **Payment integration**: Paystack (Nigeria's leading payment gateway), PayPal, Stripe
+- **WhatsApp delivery**: Sends invoice PDFs directly to any WhatsApp number via Twilio or Meta Business API
+- **Recurring invoices**: Automated recurring invoice generation for retainer clients
+- **Invoice formats**: Professional PDF with logo, multiple templates, QR code payment links
+
+## Common Questions This Site Answers
+
+- What VAT rate applies to invoices in Nigeria? (7.5%)
+- When must a Nigerian business register for VAT? (above ₦25M annual turnover)
+- What is e-invoicing in Nigeria and who must comply?
+- What is withholding tax on invoices in Nigeria and when does it apply?
+- What is the difference between an invoice and a receipt in Nigeria?
+- What is a proforma invoice and when should I use one?
+- What information must a Nigerian invoice include?
+- How do I create an invoice in Naira?
+- How do I send an invoice via WhatsApp in Nigeria?
+- What is a Tax Identification Number (TIN) and do I need one?
+- What are Nigeria's e-invoicing requirements for 2026?
+- How do I create a VAT-compliant invoice in Nigeria?
+
+## Company Information
+
+- **Product**: InvoiceGenerator.ng
+- **URL**: https://www.invoicegenerator.ng
+- **Country**: Nigeria
+- **Domain**: .ng TLD (Nigerian top-level domain)
+- **Target users**: Nigerian freelancers, sole traders, SMEs, service businesses, contractors
+- **Languages**: English (Nigerian)
+- **Pricing**: Free tier available; paid plans for advanced features (recurring invoices, client portal, reports)
+
+## Optional: Additional Resources
+
+- [Sitemap](https://www.invoicegenerator.ng/sitemap.xml)
+- [Privacy Policy](https://www.invoicegenerator.ng/privacy)
+- [Terms of Service](https://www.invoicegenerator.ng/terms)
+- [Release Notes](https://www.invoicegenerator.ng/release-notes)

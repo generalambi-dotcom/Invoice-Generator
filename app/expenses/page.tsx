@@ -8,7 +8,7 @@ import { Plus, Download, Pencil, Trash2, X, TrendingDown } from 'lucide-react';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-export const EXPENSE_CATEGORIES = [
+const EXPENSE_CATEGORIES = [
     { value: 'software',      label: 'Software & Tools',           color: 'bg-blue-100 text-blue-700' },
     { value: 'office',        label: 'Office & Supplies',          color: 'bg-amber-100 text-amber-700' },
     { value: 'travel',        label: 'Travel & Transport',         color: 'bg-sky-100 text-sky-700' },

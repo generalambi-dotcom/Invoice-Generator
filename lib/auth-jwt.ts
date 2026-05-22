@@ -36,10 +36,13 @@ function getJWTSecret(): string {
   return JWT_SECRET_ENV;
 }
 
-// Access token expires in 15 minutes
-const ACCESS_TOKEN_EXPIRES_IN = '15m';
-// Refresh token expires in 7 days
-const REFRESH_TOKEN_EXPIRES_IN = '7d';
+// Access token expires in 7 days
+// Note: refresh token infrastructure exists at /api/auth/refresh for future
+// sliding-session implementation. 15m was too aggressive for a web app with
+// no automatic refresh call — users were being silently logged out mid-session.
+const ACCESS_TOKEN_EXPIRES_IN = '7d';
+// Refresh token expires in 30 days
+const REFRESH_TOKEN_EXPIRES_IN = '30d';
 
 export interface JWTPayload {
   userId: string;

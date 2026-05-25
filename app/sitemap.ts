@@ -32,6 +32,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // DB unavailable during static build — blog URLs omitted
   }
 
+  // Fetch opted-in directory business profiles
+  let directoryUrls: MetadataRoute.Sitemap = [];
+  try {
+    const listings = await prisma.user.findMany({
+      where: {
+        directoryOptIn: true,
+        directoryFlagged: false,
+      },
+      select: { id: true, updatedAt: true },
+      orderBy: { updatedAt: 'desc' },
+    });
+    directoryUrls = listings.map((biz) => ({
+      url: `${baseUrl}/businesses/${biz.id}`,
+      lastModified: biz.updatedAt,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }));
+  } catch {
+    // DB unavailable during static build — directory URLs omitted
+  }
+
   return [
     {
       url: baseUrl,
@@ -40,6 +61,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     ...seoUrls,
+    // Directory
+    {
+      url: `${baseUrl}/businesses`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    ...directoryUrls,
     {
       url: `${baseUrl}/blog`,
       lastModified: new Date(),

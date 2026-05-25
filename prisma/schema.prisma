@@ -81,6 +81,21 @@ model User {
   dirCity             String?
   dirState            String?
 
+  // Directory — Verification & Trust
+  verificationStatus  String    @default("unverified") // unverified | pending | verified | rejected
+  verificationNotes   String?   // admin notes on verification decision
+
+  // Directory — Admin Moderation
+  directoryFeatured   Boolean   @default(false)  // surfaced at top of search
+  directoryFlagged    Boolean   @default(false)  // hidden from public pending review
+
+  // Directory — Categories (multi-select, e.g. ["plumber","electrician"])
+  directoryCategories String[]  @default([])
+
+  // Directory — Subscription tier (separate from app premium)
+  directoryTier           String?   // free | featured | pro
+  directoryTierExpiresAt  DateTime?
+
   // Relations
   paymentCredentials PaymentCredential[]
   invoices          Invoice[]
@@ -102,6 +117,7 @@ model User {
   invoiceTemplates       InvoiceTemplate[]
   directoryEvents        DirectoryEvent[]
   leadResponses          LeadResponse[]
+  businessReviews        BusinessReview[]
   products               Product[]
   clientPortalTokens     ClientPortalToken[]
   expenses               Expense[]
@@ -746,6 +762,11 @@ model LeadEnquiry {
   maxResponses    Int      @default(10)           // Cap at 10 businesses
   currentResponses Int     @default(0)            // Counter
 
+  // Closure tracking
+  acceptedResponseId  String?   // FK to the winning LeadResponse (denormalised for speed)
+  customerNotified    Boolean   @default(false)  // email sent when first business applied
+  reviewInviteSent    Boolean   @default(false)  // review invite emailed to customer
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -855,5 +876,45 @@ model ClientPortalToken {
 
   @@index([token])
   @@index([userId, clientEmail])
+}
+
+// ─── Directory: Business Reviews ──────────────────────────────────────────────
+model BusinessReview {
+  id            String   @id @default(cuid())
+  businessId    String
+  business      User     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  reviewerName  String
+  reviewerEmail String?
+  rating        Int      // 1–5 stars
+  comment       String?  @db.Text
+  verified      Boolean  @default(false) // true = linked to a completed LeadEnquiry
+  approved      Boolean  @default(false) // admin must approve before it shows publicly
+  leadId        String?  // optional link to the LeadEnquiry that prompted this review
+
+  createdAt     DateTime @default(now())
+
+  @@index([businessId])
+  @@index([businessId, approved])
+}
+
+// ─── B2B API Access Keys ───────────────────────────────────────────────────────
+model B2BApiKey {
+  id          String    @id @default(cuid())
+  companyName String
+  email       String
+  keyHash     String    @unique  // SHA-256 hash of the actual API key
+  keyPrefix   String             // First 12 chars of key for display (e.g. "b2b_xxxxxxxx")
+  tier        String    @default("free") // free | starter | growth | enterprise
+  dailyLimit  Int       @default(100)    // max API calls per day
+  callsToday  Int       @default(0)
+  callsResetAt DateTime @default(now())  // when callsToday last reset to 0
+  isActive    Boolean   @default(true)
+  notes       String?   // admin notes (e.g. "Paying customer, invoice #123")
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+
+  @@index([keyHash])
+  @@index([email])
 }
 

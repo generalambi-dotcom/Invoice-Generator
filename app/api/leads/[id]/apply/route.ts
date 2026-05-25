@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
+import { Resend } from 'resend';
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@invoicegenerator.ng';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.invoicegenerator.ng';
 
 // POST: Apply to a specific lead
 export async function POST(
@@ -70,6 +75,32 @@ export async function POST(
             where: { id },
             data: { status: 'closed' }
         });
+    }
+
+    // Notify customer on first application (fire-and-forget)
+    if (!lead.customerNotified && resend) {
+        const responsesUrl = `${BASE_URL}/businesses/leads/${id}?email=${encodeURIComponent(lead.customerEmail)}`;
+        resend.emails.send({
+            from: FROM_EMAIL,
+            to: lead.customerEmail,
+            subject: `A business has responded to your ${lead.industry} enquiry`,
+            html: `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+                <h2 style="color: #0f766e;">You have a response!</h2>
+                <p>Hi ${lead.customerName},</p>
+                <p>A business has responded to your enquiry for <strong>${lead.industry}</strong> services on the InvoiceGenerator.ng directory.</p>
+                <p>View all responses and choose the business you'd like to work with:</p>
+                <a href="${responsesUrl}" style="display: inline-block; background: #0f766e; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; margin: 16px 0;">View Responses</a>
+                <p style="color: #6b7280; font-size: 0.875rem;">You may receive up to ${lead.maxResponses} business responses before the lead closes.</p>
+              </div>
+            `,
+        }).then(() => {
+            // Mark customer as notified (non-blocking)
+            prisma.leadEnquiry.update({
+                where: { id },
+                data: { customerNotified: true }
+            }).catch(() => {});
+        }).catch((err: Error) => console.error('[apply] Failed to notify customer:', err));
     }
 
     return NextResponse.json({ success: true, responseId: response.id }, { status: 201 });

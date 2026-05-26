@@ -11,30 +11,32 @@ import BlogSidebar from '../../../components/blog/BlogSidebar';
 
 /**
  * Sanitize markdown content for MDX rendering.
- * MDX treats curly braces as JSX expressions, so raw JSON/structured-data
- * blocks embedded in the markdown crash the renderer.
- * This strips JSON-LD blocks and escapes remaining stray braces.
+ *
+ * Problems this solves:
+ * 1. <script type="application/ld+json"> blocks embedded in article content
+ *    produce duplicate / broken JSON-LD because:
+ *    a) the page component already emits correct JSON-LD, and
+ *    b) sanitizeMdxContent escapes the {} inside them, corrupting the JSON.
+ *    → Strip all <script> ... </script> blocks before rendering.
+ *
+ * 2. MDX treats bare { } as JSX expressions and crashes on raw JSON.
+ *    → Escape stray curly braces in non-code regions.
  */
 function sanitizeMdxContent(content: string): string {
-  // 1. Remove full JSON-LD / schema blocks (multi-line JSON objects)
-  let cleaned = content.replace(/```json[\s\S]*?```/g, (match) => match); // preserve fenced json
-  
-  // 2. Split by code fences so we only touch non-code content
+  // Step 1: remove ALL <script>...</script> blocks (case-insensitive, multiline)
+  let cleaned = content.replace(/<script[\s\S]*?<\/script>/gi, '');
+
+  // Step 2: split on code fences / inline code so we only touch prose
   const parts = cleaned.split(/(```[\s\S]*?```|`[^`]+`)/g);
-  
+
   const sanitized = parts.map((part, i) => {
     // Odd indices are code blocks — leave untouched
     if (i % 2 === 1) return part;
-    
-    // Remove standalone JSON-LD blocks (lines starting with { and ending with })
-    let text = part.replace(/^\s*\{[\s\S]*?^\s*\}/gm, '');
-    
-    // Escape any remaining stray curly braces
-    text = text.replace(/\{/g, '\\{').replace(/\}/g, '\\}');
-    
-    return text;
+
+    // Escape any remaining stray curly braces in prose
+    return part.replace(/\{/g, '\\{').replace(/\}/g, '\\}');
   });
-  
+
   return sanitized.join('');
 }
 
@@ -124,15 +126,14 @@ export default async function BlogPostPage({ params }: PageProps) {
                         image: post.coverImage ? [post.coverImage] : undefined,
                         datePublished: post.createdAt ? post.createdAt.toISOString() : undefined,
                         dateModified: post.updatedAt ? post.updatedAt.toISOString() : undefined,
-                        url: `https://www.invoicegenerator.ng/blog/${post.slug}`,
                         author: {
-                            '@type': 'Person',
-                            name: post.author?.name || 'Invoice Generator Team',
+                            '@type': 'Organization',
+                            name: 'InvoiceGenerator.ng',
                             url: 'https://www.invoicegenerator.ng',
                         },
                         publisher: {
                             '@type': 'Organization',
-                            name: 'Invoice Generator',
+                            name: 'InvoiceGenerator.ng',
                             url: 'https://www.invoicegenerator.ng',
                             logo: {
                                 '@type': 'ImageObject',

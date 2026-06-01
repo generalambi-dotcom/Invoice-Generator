@@ -8,8 +8,20 @@ const FAQS = [
     a: 'Yes. Naira is the default currency on every new invoice. You can also invoice in USD, GBP, EUR, and 50+ other currencies if you work with international clients.',
   },
   {
-    q: 'Is it FIRS VAT compliant?',
-    a: 'Yes. The 7.5% VAT rate is pre-loaded and applied automatically. The invoice format includes all fields required by the Federal Inland Revenue Service (FIRS) for Nigerian businesses.',
+    q: 'Can I create VAT invoices in Nigeria?',
+    a: 'Yes. The 7.5% VAT rate is pre-loaded and applied automatically to your line items, so every invoice shows the correct VAT amount and total for your Nigerian clients.',
+  },
+  {
+    q: 'Is this FIRS compliant?',
+    a: 'Yes. The invoice format includes all the fields required by the Federal Inland Revenue Service (FIRS) — business details, TIN, VAT breakdown, and itemised charges — for compliant Nigerian invoicing.',
+  },
+  {
+    q: 'Can freelancers use InvoiceGenerator.ng?',
+    a: 'Absolutely. It is built for Nigerian freelancers, solo professionals, agencies, and small businesses. You can bill by project or hourly rate, add your bank details, and send invoices in seconds.',
+  },
+  {
+    q: 'Is this better than using Excel?',
+    a: 'Yes. Unlike Excel, totals and 7.5% VAT calculate automatically, invoices look professional with your logo, you can send by email or WhatsApp, and you can track who has paid — all without formulas or formatting headaches.',
   },
   {
     q: 'Do I need to sign up to use it?',
@@ -24,8 +36,8 @@ const FAQS = [
     a: 'Yes, on Premium. Add a Paystack payment link to your invoice so Nigerian clients can pay by card, bank transfer, or USSD — without leaving the invoice.',
   },
   {
-    q: 'What is the Premium plan price?',
-    a: 'Premium is ₦3,000/month for users in Nigeria, or $9.99/month for international users. There is a 30-day free trial — no credit card required to start.',
+    q: 'What does Premium cost?',
+    a: 'Premium is a single affordable monthly fee with a 30-day free trial — no card required to start. You can see the exact price for your region in the pricing section above, and you can cancel anytime.',
   },
   {
     q: 'Can I add my logo and Nigerian bank details?',

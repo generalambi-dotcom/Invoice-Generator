@@ -19,8 +19,10 @@ export default function PricingSection() {
     }, []);
 
     const currencySymbol = region === 'nigeria' ? '₦' : '$';
-    const proPrice = pricing ? formatPrice(pricing.premiumPrice, pricing.currency) : (region === 'nigeria' ? '₦3,000' : '$9.99');
-    const freePrice = region === 'nigeria' ? '₦0' : '$0';
+    // Price comes entirely from the dynamic pricing source (admin-managed via /api/pricing).
+    // While it loads, show a neutral placeholder rather than a hardcoded amount.
+    const proPrice = pricing ? formatPrice(pricing.premiumPrice, pricing.currency) : '…';
+    const freePrice = `${currencySymbol}0`;
 
     return (
         <section className="py-20 bg-white">
@@ -59,9 +61,9 @@ export default function PricingSection() {
                         </Link>
                     </div>
                     {/* Pro Plan */}
-                    <div className="bg-white rounded-2xl border-2 border-purple-500 p-8 shadow-lg relative">
+                    <div className="bg-white rounded-2xl border-2 border-teal-600 p-8 shadow-xl relative ring-1 ring-teal-100">
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                            <span className="bg-purple-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">Most Popular</span>
+                            <span className="bg-teal-700 text-white text-[10px] font-bold px-3.5 py-1 rounded-full uppercase tracking-wider shadow-sm">★ Most Popular</span>
                         </div>
                         <div className="flex items-center justify-between mb-6">
                             <div>
@@ -69,21 +71,21 @@ export default function PricingSection() {
                                 <p className="text-sm text-gray-500">For growing businesses & agencies</p>
                             </div>
                             <div className="text-right">
-                                <span className="text-3xl font-bold text-purple-600">{proPrice}</span>
+                                <span className="text-3xl font-bold text-teal-700">{proPrice}</span>
                                 <span className="text-sm text-gray-400"> /month</span>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3 mb-6">
-                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-purple-600">✓</span> <strong>Unlimited clients</strong></span>
-                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-purple-600">✓</span> <strong>Unlimited invoices</strong></span>
-                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-purple-600">✓</span> Everything in Free</span>
-                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-purple-600">✓</span> WhatsApp integration</span>
-                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-purple-600">✓</span> Smart reports dashboard</span>
-                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-purple-600">✓</span> AI receipt scanning</span>
-                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-purple-600">✓</span> Recurring invoices</span>
-                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-purple-600">✓</span> Payment link generation</span>
+                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-teal-600">✓</span> <strong>Unlimited clients</strong></span>
+                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-teal-600">✓</span> <strong>Unlimited invoices</strong></span>
+                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-teal-600">✓</span> Everything in Free</span>
+                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-teal-600">✓</span> WhatsApp integration</span>
+                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-teal-600">✓</span> Smart reports dashboard</span>
+                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-teal-600">✓</span> AI receipt scanning</span>
+                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-teal-600">✓</span> Recurring invoices</span>
+                            <span className="text-sm text-gray-700 flex items-center gap-1.5"><span className="text-teal-600">✓</span> Payment link generation</span>
                         </div>
-                        <Link href="/upgrade" className="block w-full text-center py-3 rounded-xl bg-purple-600 text-white font-semibold text-sm hover:bg-purple-700 transition-colors shadow-md">
+                        <Link href="/upgrade" className="block w-full text-center py-3 rounded-xl bg-teal-800 text-white font-semibold text-sm hover:bg-teal-700 transition-colors shadow-md">
                             Choose Pro
                         </Link>
                     </div>

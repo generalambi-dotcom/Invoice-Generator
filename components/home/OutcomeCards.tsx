@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 const OUTCOMES = [
   {
     colour: 'teal',
@@ -40,7 +42,7 @@ const OUTCOMES = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
       </svg>
     ),
-    title: 'Never miscalculate VAT again',
+    title: 'Stop losing money to invoice mistakes',
     body: "7.5% FIRS VAT is pre-loaded and auto-applied to every line item. Correct totals every time — no spreadsheet errors, no underpaying.",
     tags: ['FIRS 7.5% VAT', 'Auto calculations', 'Naira (₦) default'],
   },
@@ -55,7 +57,7 @@ const OUTCOMES = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
       </svg>
     ),
-    title: 'Send where your clients are',
+    title: 'Send invoices where clients actually respond',
     body: 'Deliver invoices by email or WhatsApp. Nigerian clients on mobile can open, view, and pay instantly — no login required.',
     tags: ['Email delivery', 'WhatsApp (Premium)', 'Mobile-friendly'],
   },
@@ -70,8 +72,8 @@ const OUTCOMES = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
     ),
-    title: 'Know your money at a glance',
-    body: 'Your dashboard shows total invoiced, paid, overdue, and outstanding — updated in real time. Know exactly where your business stands today.',
+    title: 'Always know who owes you money',
+    body: 'Your dashboard shows total invoiced, paid, overdue, and outstanding — updated in real time. Know exactly who still owes you today.',
     tags: ['Live dashboard', 'Payment history', 'Revenue reports'],
   },
 ];
@@ -82,7 +84,7 @@ export default function OutcomeCards() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-14">
           <h2 className="text-3xl font-bold text-slate-900 mb-4">
-            Everything you need to get paid on time
+            Everything you need to get paid faster
           </h2>
           <p className="text-gray-500 max-w-2xl mx-auto text-sm leading-relaxed">
             Built for Nigerian freelancers and small businesses who want to spend less time on
@@ -110,6 +112,15 @@ export default function OutcomeCards() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="text-center mt-12">
+          <Link
+            href="/free-invoice-generator"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold rounded-full bg-teal-800 text-white hover:bg-teal-700 transition-all shadow-sm hover:shadow-md w-full sm:w-auto"
+          >
+            Create Free Invoice
+          </Link>
         </div>
       </div>
     </section>

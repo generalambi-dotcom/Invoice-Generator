@@ -1,14 +1,12 @@
 import Link from 'next/link';
 
 const USE_CASES = [
-  { emoji: '💻', industry: 'Freelancers & Designers', tagline: 'Bill clients by project or hourly rate' },
-  { emoji: '🏗️', industry: 'Construction & Contractors', tagline: 'Quote jobs, invoice stages, track retentions' },
-  { emoji: '🩺', industry: 'Healthcare Professionals', tagline: 'Invoice patients, clinics, and insurers' },
-  { emoji: '🎓', industry: 'Tutors & Educators', tagline: 'Recurring invoices for term fees' },
-  { emoji: '🛒', industry: 'Retailers & Traders', tagline: 'Itemised receipts with stock quantities' },
-  { emoji: '⚖️', industry: 'Legal & Consultants', tagline: 'Time-based billing with hourly rates' },
-  { emoji: '🏠', industry: 'Real Estate Agents', tagline: 'Commission invoices and lease statements' },
-  { emoji: '🎤', industry: 'Events & Entertainment', tagline: 'Deposit invoices and balance billing' },
+  { emoji: '💻', industry: 'Freelancers', tagline: 'Bill clients by project or hour and get paid without the back-and-forth' },
+  { emoji: '🏢', industry: 'Agencies', tagline: 'Invoice retainers and projects, and track which clients have paid' },
+  { emoji: '👗', industry: 'Fashion businesses', tagline: 'Send branded invoices for orders, deposits, and balance payments' },
+  { emoji: '🏗️', industry: 'Contractors', tagline: 'Quote jobs, invoice by stage, and track retentions cleanly' },
+  { emoji: '⚖️', industry: 'Consultants', tagline: 'Bill by the hour or by deliverable with professional records' },
+  { emoji: '🚚', industry: 'Logistics businesses', tagline: 'Invoice deliveries and recurring routes, paid via Paystack' },
 ];
 
 export default function UseCases() {
@@ -17,32 +15,37 @@ export default function UseCases() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-14">
           <h2 className="text-3xl font-bold text-slate-900 mb-4">
-            Who uses InvoiceGenerator.ng?
+            Built for Nigerian businesses
           </h2>
           <p className="text-gray-500 max-w-xl mx-auto text-sm leading-relaxed">
-            From solo freelancers to growing agencies — invoicing that fits your business.
+            Whether you&apos;re freelancing, running an agency or managing clients,
+            InvoiceGenerator.ng helps you get paid faster.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto">
           {USE_CASES.map((item) => (
             <div
               key={item.industry}
-              className="flex flex-col items-center text-center p-5 rounded-xl border border-gray-100 bg-gray-50 hover:bg-white hover:border-teal-200 hover:shadow-md transition-all group"
+              className="flex items-start gap-4 p-5 rounded-xl border border-gray-100 bg-gray-50 hover:bg-white hover:border-teal-200 hover:shadow-md transition-all group"
             >
-              <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">{item.emoji}</div>
-              <h3 className="font-bold text-gray-900 text-xs mb-1 leading-snug">{item.industry}</h3>
-              <p className="text-gray-400 text-[11px] leading-snug">{item.tagline}</p>
+              <div className="text-3xl shrink-0 group-hover:scale-110 transition-transform">{item.emoji}</div>
+              <div>
+                <h3 className="font-bold text-gray-900 text-sm mb-1">{item.industry}</h3>
+                <p className="text-gray-500 text-xs leading-relaxed">{item.tagline}</p>
+              </div>
             </div>
           ))}
         </div>
 
-        <p className="text-center mt-8 text-sm text-gray-500">
-          Not on the list?{' '}
-          <Link href="/free-invoice-generator" className="text-teal-700 font-semibold hover:underline underline-offset-2">
-            InvoiceGenerator.ng works for any Nigerian business →
+        <div className="text-center mt-12">
+          <Link
+            href="/free-invoice-generator"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold rounded-full bg-teal-800 text-white hover:bg-teal-700 transition-all shadow-sm hover:shadow-md w-full sm:w-auto"
+          >
+            Create Free Invoice
           </Link>
-        </p>
+        </div>
       </div>
     </section>
   );

@@ -3,7 +3,13 @@
 import { useEffect, useState } from 'react';
 import AnimatedCounter from './AnimatedCounter';
 
-export default function GlobalInvoiceCounter() {
+/**
+ * Live count of invoices generated across the platform.
+ * - Default: styled inline "pill" for use on light backgrounds.
+ * - `plain`: renders just the number, inheriting the parent's text colour
+ *   (use inside coloured stat blocks, e.g. the dark TrustBar).
+ */
+export default function GlobalInvoiceCounter({ plain = false }: { plain?: boolean }) {
     const [total, setTotal] = useState<number | null>(null);
 
     useEffect(() => {
@@ -21,6 +27,13 @@ export default function GlobalInvoiceCounter() {
 
         fetchTotal();
     }, []);
+
+    if (plain) {
+        if (total === null) {
+            return <span className="animate-pulse">200,512+</span>;
+        }
+        return <AnimatedCounter end={total} duration={2500} suffix="+" />;
+    }
 
     if (total === null) {
         return (

@@ -3,6 +3,13 @@
  */
 
 /**
+ * Premium free-trial length in days. Single source of truth so trial
+ * messaging stays consistent across the homepage, upgrade page, etc.
+ * (There is no admin-configurable trial field; this centralises the value.)
+ */
+export const TRIAL_DAYS = 30;
+
+/**
  * Detect user region based on various methods
  */
 export function detectUserRegion(): 'nigeria' | 'rest-of-world' {

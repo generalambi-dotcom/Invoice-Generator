@@ -3,6 +3,7 @@ import Script from 'next/script';
 import InvoiceFormPreview from '@/components/InvoiceFormPreview';
 import PricingSection from '@/components/PricingSection';
 import GlobalInvoiceCounter from '@/components/GlobalInvoiceCounter';
+import TrustCategories from '@/components/home/TrustCategories';
 import TrustBar from '@/components/home/TrustBar';
 import HowItWorks from '@/components/home/HowItWorks';
 import OutcomeCards from '@/components/home/OutcomeCards';
@@ -14,6 +15,7 @@ import HomeFAQ from '@/components/home/HomeFAQ';
 import FinalCTA from '@/components/home/FinalCTA';
 import StickyMobileCTA from '@/components/home/StickyMobileCTA';
 import { Sparkles, MessageCircle } from 'lucide-react';
+import { TRIAL_DAYS } from '@/lib/pricing';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -88,10 +90,34 @@ const homepageSchema = [
       },
       {
         '@type': 'Question',
-        name: 'Is it FIRS VAT compliant?',
+        name: 'Can I create VAT invoices in Nigeria?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Yes. The 7.5% VAT rate is pre-loaded. The invoice format meets FIRS requirements for Nigerian businesses.',
+          text: 'Yes. The 7.5% VAT rate is pre-loaded and applied automatically to your line items, so every invoice shows the correct VAT amount and total for your Nigerian clients.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Is this FIRS compliant?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Yes. The invoice format includes all the fields required by the Federal Inland Revenue Service (FIRS) — business details, TIN, VAT breakdown, and itemised charges — for compliant Nigerian invoicing.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Can freelancers use InvoiceGenerator.ng?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Absolutely. It is built for Nigerian freelancers, solo professionals, agencies, and small businesses. You can bill by project or hourly rate, add your bank details, and send invoices in seconds.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Is this better than using Excel?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Yes. Unlike Excel, totals and 7.5% VAT calculate automatically, invoices look professional with your logo, you can send by email or WhatsApp, and you can track who has paid — all without formulas or formatting headaches.',
         },
       },
       {
@@ -120,10 +146,10 @@ const homepageSchema = [
       },
       {
         '@type': 'Question',
-        name: 'What is the Premium plan price?',
+        name: 'What does Premium cost?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Premium is ₦3,000/month for Nigerian users, or $9.99/month for international users. There is a 30-day free trial.',
+          text: 'Premium is a single affordable monthly fee with a 30-day free trial — no card required to start. You can see the exact price for your region in the pricing section, and you can cancel anytime.',
         },
       },
       {
@@ -194,32 +220,45 @@ export default function LandingPage() {
               className="text-gray-500 mb-8 max-w-xl mx-auto animate-fade-in-up animation-delay-200"
               style={{ fontSize: '0.95rem', lineHeight: '1.7' }}
             >
-              The{' '}
+              Create{' '}
               <Link
                 href="/invoice-generator-nigeria"
                 className="text-teal-700 hover:text-teal-900 font-medium underline underline-offset-2 transition-colors"
               >
-                free invoice generator for Nigerian businesses
-              </Link>{' '}
-              — Naira support, 7.5% FIRS VAT, Paystack payments, and WhatsApp delivery in one place.
+                professional invoices
+              </Link>
+              , send them via WhatsApp, and get paid faster by Nigerian clients — no signup required.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 animate-fade-in-up animation-delay-300">
               <Link
                 href="/free-invoice-generator"
-                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-full bg-teal-800 text-white hover:bg-teal-700 transition-all shadow-sm hover:shadow-md"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-semibold rounded-full bg-teal-800 text-white hover:bg-teal-700 transition-all shadow-sm hover:shadow-md"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
                 </svg>
-                Create Your First Invoice
+                Create Free Invoice
               </Link>
               <a
                 href="#how-it-works"
-                className="px-6 py-3 text-sm font-semibold rounded-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 text-sm font-semibold rounded-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all"
               >
-                See how it works ↓
+                See How It Works
               </a>
+            </div>
+
+            {/* Trust indicators */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-gray-500 animate-fade-in-up animation-delay-400">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="text-teal-600">✓</span> No signup required
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="text-teal-600">✓</span> Free forever
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="text-teal-600">✓</span> Create in 60 seconds
+              </span>
             </div>
           </div>
 
@@ -232,7 +271,7 @@ export default function LandingPage() {
               href="/upgrade"
               className="text-gray-900 font-bold hover:underline transition-colors decoration-2 underline-offset-2 decoration-amber-400"
             >
-              Try Premium 30 days free
+              Try Premium {TRIAL_DAYS} days free
             </Link>
             <span>
               — smarter invoices with{' '}
@@ -258,6 +297,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Trust Categories (lightweight chips below hero) ───── */}
+      <TrustCategories />
 
       {/* ── Trust Bar ─────────────────────────────────────────── */}
       <TrustBar />

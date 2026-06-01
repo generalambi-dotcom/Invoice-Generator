@@ -20,51 +20,39 @@ export default function DashboardGreeting({ userName, totalStats }: DashboardGre
 
         if (hour < 12) {
             setGreeting('Good Morning');
-            setIcon(<Sun className="w-8 h-8 text-yellow-300 animate-pulse" />);
+            setIcon(<Sun className="w-5 h-5 text-yellow-300" />);
         } else if (hour < 18) {
             setGreeting('Good Afternoon');
-            setIcon(<CloudSun className="w-8 h-8 text-orange-300" />);
+            setIcon(<CloudSun className="w-5 h-5 text-orange-300" />);
         } else {
             setGreeting('Good Evening');
-            setIcon(<Moon className="w-8 h-8 text-blue-200" />);
+            setIcon(<Moon className="w-5 h-5 text-blue-200" />);
         }
     }, []);
 
-    return (
-        <div className="relative overflow-hidden bg-gradient-to-r from-emerald-800 to-teal-600 rounded-2xl md:rounded-3xl p-5 md:p-8 mb-6 md:mb-8 text-white shadow-xl">
-            {/* Decorative Circles */}
-            <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-white opacity-5"></div>
-            <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-60 h-60 rounded-full bg-white opacity-5"></div>
+    const unpaid = totalStats?.unpaid || 0;
 
-            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                        {icon}
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+    return (
+        <div className="relative overflow-hidden bg-gradient-to-r from-emerald-800 to-teal-600 rounded-2xl px-5 py-3.5 mb-6 text-white shadow-md">
+            <div className="relative z-10 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="flex-shrink-0">{icon}</span>
+                    <div className="min-w-0">
+                        <h1 className="text-base md:text-lg font-bold tracking-tight leading-tight truncate">
                             {greeting}, {userName?.split(' ')[0] || 'There'}!
                         </h1>
-                    </div>
-                    <p className="text-emerald-50 text-sm md:text-lg opacity-90 max-w-xl">
-                        Here's what's happening with your store today. You have <span className="font-bold text-white">{totalStats?.unpaid || 0} unpaid</span> invoices pending.
-                    </p>
-
-                    <div className="mt-4 md:mt-8 flex gap-4">
-                        <button
-                            onClick={() => document.getElementById('new-invoice-btn')?.click()}
-                            className="bg-white text-emerald-900 px-5 py-2 md:px-6 md:py-2.5 rounded-full text-sm md:text-base font-semibold shadow-emerald-900/20 shadow-lg hover:bg-emerald-50 transition-all active:scale-95 flex items-center gap-2"
-                        >
-                            Create Invoice →
-                        </button>
+                        <p className="text-emerald-50/90 text-xs leading-tight">
+                            {unpaid > 0
+                                ? <><span className="font-semibold text-white">{unpaid}</span> unpaid invoice{unpaid !== 1 ? 's' : ''} pending</>
+                                : 'You\'re all caught up — no unpaid invoices'}
+                        </p>
                     </div>
                 </div>
 
-                {/* Illustration/Graphic area - simplified for CSS-only solution */}
-                <div className="hidden md:block">
-                    {/* You could add an SVG illustration here or keep it clean */}
-                    <div className="w-48 h-32 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/10 p-4 flex flex-col justify-center items-center">
-                        <span className="text-3xl font-bold">{totalStats?.paid || 0}</span>
-                        <span className="text-xs uppercase tracking-wider opacity-70 mt-1">Paid Invoices</span>
-                    </div>
+                {/* Compact paid-count chip */}
+                <div className="flex-shrink-0 text-center px-3.5 py-1.5 rounded-xl bg-white/10 border border-white/10">
+                    <span className="block text-lg font-bold leading-none">{totalStats?.paid || 0}</span>
+                    <span className="text-[9px] uppercase tracking-wider opacity-70">Paid</span>
                 </div>
             </div>
         </div>

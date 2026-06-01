@@ -16,6 +16,9 @@ import ProfileCompletenessCard from '@/components/ProfileCompletenessCard';
 import ProfileNudge from '@/components/ProfileNudge';
 import DirectoryOptInModal from '@/components/DirectoryOptInModal';
 import DirectorySettingsCard from '@/components/DirectorySettingsCard';
+import ActivationChecklist from '@/components/dashboard/ActivationChecklist';
+import UsageMeter from '@/components/dashboard/UsageMeter';
+import OverdueNudge from '@/components/dashboard/OverdueNudge';
 import {
   Plus, BarChart3, FileText, Eye, CreditCard,
   Trash2, RefreshCcw, MoreHorizontal, Sparkles
@@ -376,6 +379,37 @@ export default function DashboardPage() {
 
   const stats = calculateStats();
 
+  // ── Activation / premium / get-paid-faster derived state ───────────────────────
+  const isPremium =
+    user?.subscription?.plan === 'premium' && user?.subscription?.status === 'active';
+
+  // Documents created in the current calendar month — mirrors the server-side free
+  // plan count in app/api/invoices/route.ts (all types/statuses count toward the cap).
+  const startOfMonthDate = (() => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d; })();
+  const invoicesThisMonth = [
+    ...activeInvoices,
+    ...activeEstimates,
+    ...activeCreditNotes,
+    ...deletedInvoices,
+  ].filter((doc) => doc.createdAt && new Date(doc.createdAt) >= startOfMonthDate).length;
+
+  const profileScore = profileData?.completeness?.score ?? 0;
+  const hasSentInvoice = activeInvoices.some((inv) => !!inv.sentAt);
+  const hasPaidInvoice = activeInvoices.some((inv) => inv.paymentStatus === 'paid');
+
+  // Overdue invoices in the currently-selected currency (matches stats.overdueCount).
+  const overdueInvoiceList = activeInvoices.filter((inv) => {
+    if (inv.currency !== currency) return false;
+    if (inv.paymentStatus === 'paid' || inv.paymentStatus === 'cancelled') return false;
+    return new Date(inv.dueDate) < new Date();
+  });
+
+  const handleSendOverdueReminders = () => {
+    const ids = overdueInvoiceList.map((inv) => inv.id!).filter(Boolean);
+    if (ids.length === 0) return;
+    handleBulkAction('send-reminders', ids);
+  };
+
   const handleSignOut = () => {
     signOut();
     router.push('/');
@@ -508,9 +542,9 @@ export default function DashboardPage() {
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  const handleBulkAction = async (action: string) => {
-    if (selectedIds.size === 0) return;
-    const ids = Array.from(selectedIds);
+  const handleBulkAction = async (action: string, idsOverride?: string[]) => {
+    const ids = idsOverride ?? Array.from(selectedIds);
+    if (ids.length === 0) return;
     const token = localStorage.getItem('auth_token');
 
     // Confirmation for destructive actions
@@ -650,6 +684,17 @@ export default function DashboardPage() {
           userName={user?.name}
           totalStats={{ paid: stats.paidCount, unpaid: stats.unpaidCount }}
         />
+
+        {/* Activation checklist — guides new users to their first paid invoice */}
+        <ActivationChecklist
+          profileScore={profileScore}
+          hasInvoice={activeInvoices.length > 0}
+          hasSentInvoice={hasSentInvoice}
+          hasPaidInvoice={hasPaidInvoice}
+        />
+
+        {/* Free-plan usage meter + near-limit upgrade nudge */}
+        <UsageMeter count={invoicesThisMonth} isPremium={isPremium} />
 
         {/* Profile Nudge - contextual suggestion */}
         {showNudge && profileData?.nudge && profileData?.completeness?.score < 100 && (
@@ -860,6 +905,15 @@ export default function DashboardPage() {
 
         {/* Charts Section */}
         <DashboardCharts invoices={activeInvoices} currency={currency} />
+
+        {/* Proactive get-paid-faster nudge for overdue invoices */}
+        <OverdueNudge
+          overdueCount={stats.overdueCount}
+          overdueAmountLabel={formatCurrency(stats.overdueAmount, currency)}
+          currencySymbol={currencySymbols[currency as Currency] || currencySymbols['USD']}
+          onSendReminders={handleSendOverdueReminders}
+          sending={bulkLoading}
+        />
 
         {/* Action Bar & List Header */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">

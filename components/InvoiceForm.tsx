@@ -59,6 +59,28 @@ interface InvoiceFormContentProps {
   initialType?: 'invoice' | 'estimate' | 'credit_note' | 'receipt';
 }
 
+// Region-aware example placeholders — keyed off the selected currency so the
+// examples feel local (a London/GBP invoice shouldn't suggest "MTN Nigeria").
+// These are illustrative text only — never prices (pricing stays in lib/pricing).
+type RegionExample = { company: string; client: string; bank: string };
+const REGION_EXAMPLES: Record<string, RegionExample> = {
+  NGN: { company: 'e.g. Adewale Consulting Ltd', client: 'e.g. MTN Nigeria Ltd', bank: 'e.g. Bank transfer to Zenith Bank, Acct 1234567890 — Adewale Consulting Ltd' },
+  GBP: { company: 'e.g. Thompson Studio Ltd', client: 'e.g. Tesco PLC', bank: 'e.g. Bank transfer — Sort code 12-34-56, Acct 12345678' },
+  USD: { company: 'e.g. Riverside Studio LLC', client: 'e.g. Acme Corporation', bank: 'e.g. ACH transfer — Routing 021000021, Acct 123456789' },
+  CAD: { company: 'e.g. Maple Studio Inc', client: 'e.g. Shopify Inc', bank: 'e.g. Bank transfer — Transit 12345, Inst 003, Acct 1234567' },
+  AUD: { company: 'e.g. Harbour Studio Pty Ltd', client: 'e.g. Telstra Ltd', bank: 'e.g. Bank transfer — BSB 123-456, Acct 12345678' },
+  EUR: { company: 'e.g. Müller Studio GmbH', client: 'e.g. Siemens AG', bank: 'e.g. SEPA transfer — IBAN DE00 0000 0000 0000 00' },
+  ZAR: { company: 'e.g. Cape Studio (Pty) Ltd', client: 'e.g. MTN Group Ltd', bank: 'e.g. Bank transfer — Standard Bank, Acct 1234567890' },
+  KES: { company: 'e.g. Nairobi Studio Ltd', client: 'e.g. Safaricom PLC', bank: 'e.g. Bank transfer / M-Pesa — Equity Bank, Acct 1234567890' },
+  GHS: { company: 'e.g. Accra Studio Ltd', client: 'e.g. MTN Ghana', bank: 'e.g. Bank transfer / MoMo — GCB Bank, Acct 1234567890' },
+  AED: { company: 'e.g. Dubai Studio LLC', client: 'e.g. Emirates Group', bank: 'e.g. Bank transfer — IBAN AE00 0000 0000 0000 0000 000' },
+  INR: { company: 'e.g. Mumbai Studio Pvt Ltd', client: 'e.g. Tata Consultancy Services', bank: 'e.g. Bank transfer — IFSC HDFC0000001, Acct 12345678901' },
+};
+const NEUTRAL_EXAMPLE: RegionExample = { company: 'e.g. Acme Studio Ltd', client: 'e.g. Acme Corporation', bank: 'e.g. Bank transfer details — bank name, account number' };
+function getRegionExamples(currency?: string): RegionExample {
+  return REGION_EXAMPLES[currency || 'NGN'] || NEUTRAL_EXAMPLE;
+}
+
 function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -119,6 +141,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
   const [showShipTo, setShowShipTo] = useState(false);
   const [invoiceHistory, setInvoiceHistory] = useState<Invoice[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [showThemePreview, setShowThemePreview] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showSaveDefaults, setShowSaveDefaults] = useState(false);
@@ -1273,6 +1296,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
   }, [invoice.theme]);
 
   const currencySymbol = currencySymbols[invoice.currency || 'NGN'];
+  const regionExamples = getRegionExamples(invoice.currency);
 
   return (
     <>
@@ -1563,78 +1587,81 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
             <div className="w-full xl:w-80 shrink-0 space-y-6 xl:sticky xl:top-8 order-2 xl:order-2 h-fit">
               {/* Action Buttons - Hidden on mobile (sticky bar replaces this) */}
               <div className="hidden lg:flex bg-white p-5 rounded-xl border border-gray-200 flex-col gap-3">
+                {/* Primary action — the deliverable everyone wants */}
                 <button
                   onClick={handleDownloadPDF}
                   disabled={isGeneratingPDF}
-                  className="group w-full py-3 px-4 bg-gray-900 hover:bg-black text-white font-bold rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:-translate-y-1 hover:shadow-lg hover:shadow-gray-900/20 active:scale-95 transition-all duration-300"
+                  className="group w-full py-3.5 px-4 bg-gray-900 hover:bg-black text-white font-bold rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:-translate-y-1 hover:shadow-lg hover:shadow-gray-900/20 active:scale-95 transition-all duration-300"
                 >
                   <svg className="w-4 h-4 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                   {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
                 </button>
-                <button
-                  onClick={() => setIsEmailModalOpen(true)}
-                  disabled={!invoice.id}
-                  className="w-full py-3 px-4 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold rounded-lg text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Mail className="w-4 h-4" />
-                  Send via Email
-                </button>
-                <button
-                  onClick={handleWhatsAppShare}
-                  className="w-full py-3 px-4 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                  Share via WhatsApp
-                </button>
-                <button
-                  onClick={() => {
-                    if (!user) {
-                      setShowLoginPrompt(true);
-                    } else {
-                      handleSaveInvoice();
-                    }
-                  }}
-                  className="w-full py-3 px-4 bg-theme-primary hover:opacity-90 text-white font-bold rounded-lg text-sm transition-colors flex items-center justify-center gap-2 shadow-md shadow-theme-primary/20"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-                  Save Invoice
-                </button>
 
-                <div className="flex gap-2">
+                {/* Secondary actions — uniform, quieter group */}
+                <div className="grid grid-cols-1 gap-2">
+                  <button
+                    onClick={() => {
+                      if (!user) {
+                        setShowLoginPrompt(true);
+                      } else {
+                        handleSaveInvoice();
+                      }
+                    }}
+                    className="w-full py-2.5 px-4 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-semibold rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4 text-theme-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                    Save Invoice
+                  </button>
+                  <button
+                    onClick={() => setIsEmailModalOpen(true)}
+                    disabled={!invoice.id}
+                    className="w-full py-2.5 px-4 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-semibold rounded-lg text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Mail className="w-4 h-4 text-gray-500" />
+                    Send via Email
+                  </button>
+                  <button
+                    onClick={handleWhatsAppShare}
+                    className="w-full py-2.5 px-4 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-semibold rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4 text-[#25D366]" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.978-1.044zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                    Share via WhatsApp
+                  </button>
+                </div>
+
+                {/* Utility chips — grouped tidily under a divider */}
+                <div className="grid grid-cols-2 gap-2 pt-3 mt-1 border-t border-gray-100">
                   <button
                     onClick={() => setShowHistory(!showHistory)}
-                    className="flex-1 py-2 px-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-lg text-xs transition-colors"
+                    className="py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-600 font-medium rounded-lg text-xs transition-colors flex items-center justify-center gap-1"
                   >
                     History {invoiceHistory.length > 0 && `(${invoiceHistory.length})`}
                   </button>
                   <button
                     onClick={handleNewInvoice}
-                    className="flex-1 py-2 px-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-lg text-xs transition-colors"
+                    className="py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-600 font-medium rounded-lg text-xs transition-colors flex items-center justify-center gap-1"
                   >
                     + New
                   </button>
-                </div>
-
-                {/* Templates */}
-                {user && (
-                  <div className="flex gap-2 relative">
+                  {user && (
+                    <>
                     <button
                       onClick={handleSaveAsTemplate}
                       disabled={savingTemplate}
-                      className="flex-1 py-2 px-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-lg text-xs transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                      className="py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-600 font-medium rounded-lg text-xs transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                       </svg>
-                      {savingTemplate ? 'Saving...' : 'Save Template'}
+                      {savingTemplate ? 'Saving...' : 'Template'}
                     </button>
-                    <div className="relative flex-1">
+                    <div className="relative">
                       <button
                         onClick={() => {
                           if (!showTemplateDropdown) loadTemplates();
                           setShowTemplateDropdown(!showTemplateDropdown);
                         }}
-                        className="w-full py-2 px-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-lg text-xs transition-colors flex items-center justify-center gap-1"
+                        className="w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 text-gray-600 font-medium rounded-lg text-xs transition-colors flex items-center justify-center gap-1"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -1667,8 +1694,9 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
+                  </>
+                  )}
+                </div>
               </div>
 
               {/* Settings */}
@@ -1738,15 +1766,25 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                 {/* Mini Theme Preview - Layout Aware */}
                 <div className="pt-4 border-t border-gray-100">
                   <div className="flex justify-between items-center mb-3">
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">Theme Preview</label>
+                    {/* Collapsible — the large live preview already auto-updates, so this is opt-in */}
                     <button
-                      onClick={() => setIsPreviewModalOpen(true)}
-                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 font-medium transition-colors"
+                      onClick={() => setShowThemePreview((v) => !v)}
+                      className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-gray-700 uppercase tracking-wider transition-colors"
                     >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" /></svg>
-                      Zoom
+                      <svg className={`w-3 h-3 transition-transform ${showThemePreview ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                      Theme Preview
                     </button>
+                    {showThemePreview && (
+                      <button
+                        onClick={() => setIsPreviewModalOpen(true)}
+                        className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 font-medium transition-colors"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" /></svg>
+                        Zoom
+                      </button>
+                    )}
                   </div>
+                  {showThemePreview && (
                   <div
                     className={`w-full aspect-[210/297] rounded border relative overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-100 transition-all duration-500 ${
                       invoice.layout === 'startup' ? 'bg-[#0f172a] border-slate-700' : 
@@ -1880,6 +1918,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                        invoice.layout === 'elegant' ? 'Elegant' : ''}
                     </div>
                   </div>
+                  )}
                 </div>
 
                 {/* Payment Link - Premium */}
@@ -1963,7 +2002,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                           value={invoice.company?.name || ''}
                           onChange={(e) => updateField('company.name', e.target.value)}
                           className="w-full text-base font-bold text-gray-900 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-300 mb-4 transition-all"
-                          placeholder="e.g. Adewale Consulting Ltd"
+                          placeholder={regionExamples.company}
                         />
 
                         {addressModes.company === 'simple' ? (
@@ -2116,7 +2155,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                           value={invoice.client?.name || ''}
                           onChange={(e) => updateField('client.name', e.target.value)}
                           className="w-full text-lg font-bold text-gray-900 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-300 mb-4 transition-all"
-                          placeholder="e.g. MTN Nigeria Ltd"
+                          placeholder={regionExamples.client}
                         />
 
                         {addressModes.client === 'simple' ? (
@@ -2270,7 +2309,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                           value={invoice.bankDetails || ''}
                           onChange={(e) => updateField('bankDetails', e.target.value)}
                           className="w-full text-[15px] text-gray-800 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-300 min-h-[100px] transition-all"
-                          placeholder="e.g. Bank transfer to Zenith Bank, Acct 1234567890 — Adewale Consulting Ltd"
+                          placeholder={regionExamples.bank}
                         />
                       </div>
                     </div>
@@ -2701,7 +2740,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                     value={newClient.name}
                     onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all "
-                    placeholder="e.g. MTN Nigeria Ltd"
+                    placeholder={regionExamples.client}
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">

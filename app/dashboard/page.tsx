@@ -21,7 +21,7 @@ import UsageMeter from '@/components/dashboard/UsageMeter';
 import OverdueNudge from '@/components/dashboard/OverdueNudge';
 import {
   Plus, BarChart3, FileText, Eye, CreditCard,
-  Trash2, RefreshCcw, MoreHorizontal, Sparkles
+  Trash2, RefreshCcw, MoreHorizontal, Sparkles, ArrowRightLeft
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -1201,6 +1201,19 @@ export default function DashboardPage() {
 
                           {!showDeleted && (
                             <>
+                              {/* Estimates: inline "Convert to invoice" — reuses the
+                                  existing convertFrom flow so approved quotes are never
+                                  retyped. Only meaningful on the estimates tab. */}
+                              {activeTab === 'estimates' && (
+                                <button
+                                  onClick={() => router.push(`/free-invoice-generator?convertFrom=${invoice.id}`)}
+                                  className="p-1 md:p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                  title="Convert to invoice"
+                                >
+                                  <ArrowRightLeft className="w-4 h-4" />
+                                </button>
+                              )}
+
                               {/* Quick Actions based on status */}
                               {(invoice.paymentStatus === 'pending' || invoice.paymentStatus === 'overdue') && (
                                 <button

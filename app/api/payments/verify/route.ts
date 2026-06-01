@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { notifyPaymentReceived } from '@/lib/payment-notifications';
 
 // POST - Verify payment
 export async function POST(request: NextRequest) {
@@ -95,6 +96,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const wasAlreadyPaid = invoice.paymentStatus === 'paid';
+
     // Update invoice
     await prisma.invoice.update({
       where: { id: invoiceId },
@@ -105,7 +108,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ 
+    // Fire payment emails (owner notification + client receipt). EmailLog
+    // dedupe inside the helper guards against the webhook firing the same one.
+    if (!wasAlreadyPaid) {
+      notifyPaymentReceived(invoiceId).catch(() => {});
+    }
+
+    return NextResponse.json({
       success: true,
       payment,
     });

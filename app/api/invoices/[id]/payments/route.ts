@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit';
+import { notifyPaymentReceived } from '@/lib/payment-notifications';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -135,6 +136,10 @@ export async function POST(
         paymentStatus: isFullyPaid ? 'paid' : invoice.paymentStatus,
       },
     });
+
+    // Fire payment emails (owner notification + client receipt once settled).
+    // Fire-and-forget: never block the response on email delivery.
+    notifyPaymentReceived(invoice.id, { paymentAmount: parseFloat(amount) }).catch(() => {});
 
     return NextResponse.json({ payment }, { status: 201 });
   } catch (error: any) {

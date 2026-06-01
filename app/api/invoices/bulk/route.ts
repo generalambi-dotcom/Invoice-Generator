@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { sendInvoiceReminderEmail, sendInvoiceEmail } from '@/lib/email';
 import { generateInvoicePDFBuffer } from '@/lib/pdf-server';
+import { notifyPaymentReceived } from '@/lib/payment-notifications';
 
 // POST - Handle bulk actions on invoices
 export async function POST(request: NextRequest) {
@@ -78,6 +79,8 @@ export async function POST(request: NextRequest) {
 
             case 'mark-paid': {
                 const now = new Date();
+                // Invoices that will actually transition to paid (for email firing).
+                const transitioning = invoices.filter((inv) => inv.paymentStatus !== 'paid');
                 const updated = await prisma.invoice.updateMany({
                     where: {
                         id: { in: invoiceIds },
@@ -89,6 +92,12 @@ export async function POST(request: NextRequest) {
                         paymentDate: now,
                     },
                 });
+
+                // Fire payment emails (owner notification + client receipt) for each
+                // newly-settled invoice. Fire-and-forget — don't block the response.
+                Promise.allSettled(
+                    transitioning.map((inv) => notifyPaymentReceived(inv.id))
+                ).catch(() => {});
 
                 return NextResponse.json({
                     success: true,

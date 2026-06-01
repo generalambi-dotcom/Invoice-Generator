@@ -158,6 +158,8 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [expandedSections, setExpandedSections] = useState<any>({ payment: false, notes: false, terms: false });
   const [showGuestPostDownloadModal, setShowGuestPostDownloadModal] = useState(false);
+  // Logged-in post-creation success flow ("get paid faster" next actions)
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [guestEmailStep, setGuestEmailStep] = useState<1 | 2>(1);
   const [guestEmail, setGuestEmail] = useState('');
   const [guestEmailLoading, setGuestEmailLoading] = useState(false);
@@ -786,6 +788,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
 
       // Skip saving for guests to prevent "Failed to save" error
       if (user) {
+        const wasNewInvoice = !invoice.id;
         try {
           setSavingInvoice(true);
           const payload = { ...completeInvoice };
@@ -796,6 +799,11 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
           // Update invoice with database ID
           if (result.invoice) {
             setInvoice(prev => ({ ...prev, id: result.invoice.id }));
+            // First time this invoice is saved → show the "now get paid" success
+            // flow that drives the next action (share / send / reminders).
+            if (wasNewInvoice) {
+              setShowSuccessModal(true);
+            }
           }
           // Reload history
           const invoices = await loadInvoicesAPI();
@@ -850,15 +858,41 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
     }
   };
 
+  // Build a professional, payment-driving WhatsApp message.
+  const buildWhatsAppMessage = (url?: string) => {
+    const companyName = invoice.company?.name || 'us';
+    const clientName = invoice.client?.name?.trim();
+    const currSymbol = currencySymbols[invoice.currency || 'NGN'];
+    const totalFormatted = `${currSymbol}${formatCurrency(invoice.total || 0, invoice.currency || 'NGN')}`;
+    const fmtDate = (d?: string) => {
+      if (!d) return null;
+      try {
+        return new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      } catch {
+        return d;
+      }
+    };
+    const dueLabel = fmtDate(invoice.dueDate);
+
+    const lines = [
+      `Hi ${clientName || 'there'},`,
+      ``,
+      `Here is your invoice ${invoice.invoiceNumber || ''} from ${companyName}.`,
+      ``,
+      `*Amount Due:* ${totalFormatted}`,
+      ...(dueLabel ? [`*Due Date:* ${dueLabel}`] : []),
+      ...(url ? [``, `View & pay your invoice here:`, url] : []),
+      ``,
+      `Thank you for your business!`,
+    ];
+    return lines.join('\n');
+  };
+
   // WhatsApp Share
   const handleWhatsAppShare = async () => {
-    const companyName = invoice.company?.name || 'us';
-
     // For guest users, share invoice details as text (no save needed)
     if (!user) {
-      const currSymbol = currencySymbols[invoice.currency || 'NGN'];
-      const totalFormatted = `${currSymbol}${formatCurrency(invoice.total || 0, invoice.currency || 'NGN')}`;
-      const text = `Invoice ${invoice.invoiceNumber || 'N/A'} from ${companyName}\nTotal: ${totalFormatted}\nDate: ${invoice.invoiceDate || 'N/A'}\nDue: ${invoice.dueDate || 'N/A'}`;
+      const text = buildWhatsAppMessage();
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
       return;
     }
@@ -913,7 +947,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
     if (!currentInvoiceId) return;
 
     const url = `${window.location.origin}/invoice/${currentInvoiceId}`;
-    const text = `Here is your invoice ${invoice.invoiceNumber} from ${companyName}: ${url}`;
+    const text = buildWhatsAppMessage(url);
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -1929,7 +1963,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                           value={invoice.company?.name || ''}
                           onChange={(e) => updateField('company.name', e.target.value)}
                           className="w-full text-base font-bold text-gray-900 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-300 mb-4 transition-all"
-                          placeholder="Your Company Name"
+                          placeholder="e.g. Adewale Consulting Ltd"
                         />
 
                         {addressModes.company === 'simple' ? (
@@ -2082,7 +2116,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                           value={invoice.client?.name || ''}
                           onChange={(e) => updateField('client.name', e.target.value)}
                           className="w-full text-lg font-bold text-gray-900 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-300 mb-4 transition-all"
-                          placeholder="Client Name"
+                          placeholder="e.g. MTN Nigeria Ltd"
                         />
 
                         {addressModes.client === 'simple' ? (
@@ -2236,7 +2270,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                           value={invoice.bankDetails || ''}
                           onChange={(e) => updateField('bankDetails', e.target.value)}
                           className="w-full text-[15px] text-gray-800 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-300 min-h-[100px] transition-all"
-                          placeholder="Add bank details, payment instructions..."
+                          placeholder="e.g. Bank transfer to Zenith Bank, Acct 1234567890 — Adewale Consulting Ltd"
                         />
                       </div>
                     </div>
@@ -2260,7 +2294,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                           value={invoice.notes || ''}
                           onChange={(e) => updateField('notes', e.target.value)}
                           className="w-full text-[15px] text-gray-800 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-300 min-h-[100px] transition-all"
-                          placeholder="Add notes, thank you message..."
+                          placeholder="e.g. Thank you for your business!"
                         />
                       </div>
                     </div>
@@ -2284,7 +2318,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                           value={invoice.terms || ''}
                           onChange={(e) => updateField('terms', e.target.value)}
                           className="w-full text-[15px] text-gray-800 bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary placeholder:text-gray-300 min-h-[100px] transition-all"
-                          placeholder="Add terms and conditions, late fees, etc..."
+                          placeholder="e.g. Payment due within 7 days. 5% late fee applies after the due date."
                         />
                       </div>
                     </div>
@@ -2667,7 +2701,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                     value={newClient.name}
                     onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all "
-                    placeholder="Enter client name"
+                    placeholder="e.g. MTN Nigeria Ltd"
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -3103,6 +3137,69 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
               </div>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* Logged-in post-creation success flow — drive the next action */}
+      {showSuccessModal && user && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4" style={{ margin: 0 }}>
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 sm:p-8">
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                aria-label="Close"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+
+              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-1.5 text-center">Your invoice is ready! 🎉</h3>
+              <p className="text-sm text-gray-500 mb-6 text-center">
+                Now let&apos;s help you get paid faster. Send it to your client in one tap.
+              </p>
+
+              <div className="space-y-2.5">
+                {/* Primary: Share via WhatsApp */}
+                <button
+                  onClick={() => { setShowSuccessModal(false); handleWhatsAppShare(); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold rounded-xl text-sm transition-colors"
+                >
+                  <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.6 5.392l-.999 3.648 3.738-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                  Share via WhatsApp
+                </button>
+
+                {/* Send via email (this also marks it as sent) */}
+                <button
+                  onClick={() => { setShowSuccessModal(false); setIsEmailModalOpen(true); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-gray-900 hover:bg-black text-white font-semibold rounded-xl text-sm transition-colors"
+                >
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  Send via email
+                </button>
+
+                {/* Enable automatic reminders (discoverability of existing system) */}
+                <Link
+                  href="/settings/reminders"
+                  className="w-full flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl text-sm transition-colors"
+                >
+                  <svg className="w-5 h-5 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                  Set up automatic reminders
+                </Link>
+              </div>
+
+              <div className="mt-5 text-center">
+                <button
+                  onClick={() => setShowSuccessModal(false)}
+                  className="text-sm text-gray-400 hover:text-gray-600"
+                >
+                  I&apos;ll do this later
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

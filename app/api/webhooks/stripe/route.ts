@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import Stripe from 'stripe';
 import { syncContactToBrevo } from '@/lib/brevo';
+import { notifyPaymentReceived } from '@/lib/payment-notifications';
 
 // POST - Handle Stripe webhook
 export async function POST(request: NextRequest) {
@@ -90,6 +91,8 @@ export async function POST(request: NextRequest) {
         });
 
         if (payment) {
+          const wasAlreadyPaid = payment.invoice?.paymentStatus === 'paid';
+
           // Update payment
           await prisma.payment.update({
             where: { id: payment.id },
@@ -109,6 +112,12 @@ export async function POST(request: NextRequest) {
               paymentDate: new Date(),
             },
           });
+
+          // Fire payment emails (owner notification + client receipt). The
+          // EmailLog dedupe inside the helper guards against webhook retries.
+          if (!wasAlreadyPaid) {
+            notifyPaymentReceived(invoiceId).catch(() => {});
+          }
         }
       }
     }

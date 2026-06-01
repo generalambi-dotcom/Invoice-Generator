@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { autoGeneratePaymentLink } from '@/lib/auto-payment-link';
 import { logInvoicePatchEvents } from '@/lib/invoice-events';
+import { notifyPaymentReceived } from '@/lib/payment-notifications';
 
 // GET - Get single invoice (public, for payment page)
 export async function GET(
@@ -249,6 +250,15 @@ export async function PATCH(
       before: existingInvoice as any,
       after: body,
     });
+
+    // If this update just settled the invoice, fire payment emails
+    // (owner notification + client receipt). Fire-and-forget.
+    if (
+      updatedInvoice.paymentStatus === 'paid' &&
+      existingInvoice.paymentStatus !== 'paid'
+    ) {
+      notifyPaymentReceived(invoiceId).catch(() => {});
+    }
 
     // Phase 1 Data Gravity: Update lastActiveAt and bump score
     await prisma.user.update({

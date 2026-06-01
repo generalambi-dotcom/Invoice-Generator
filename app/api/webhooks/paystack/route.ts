@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import crypto from 'crypto';
+import { notifyPaymentReceived } from '@/lib/payment-notifications';
 
 // POST - Handle Paystack webhook
 export async function POST(request: NextRequest) {
@@ -46,6 +47,8 @@ export async function POST(request: NextRequest) {
           },
         });
 
+        const wasAlreadyPaid = payment.invoice?.paymentStatus === 'paid';
+
         await prisma.invoice.update({
           where: { id: payment.invoiceId },
           data: {
@@ -54,6 +57,12 @@ export async function POST(request: NextRequest) {
             paymentDate: new Date(),
           },
         });
+
+        // Fire payment emails (owner notification + client receipt). The
+        // EmailLog dedupe inside the helper also guards against webhook retries.
+        if (!wasAlreadyPaid) {
+          notifyPaymentReceived(payment.invoiceId).catch(() => {});
+        }
 
         console.log(`✅ Invoice payment confirmed via webhook: ref=${reference}`);
       }

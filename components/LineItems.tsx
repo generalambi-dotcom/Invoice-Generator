@@ -156,7 +156,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
                       autoResize(e.target);
                     }}
                     onFocus={(e) => autoResize(e.target)}
-                    placeholder="Item description (supports multiple lines)"
+                    placeholder="e.g. Social media management services (supports multiple lines)"
                     rows={1}
                     className="w-full px-4 py-2.5 bg-gray-50 border border-transparent hover:border-gray-200 rounded-xl text-[15px] text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary transition-all resize-none overflow-hidden"
                   />
@@ -234,7 +234,7 @@ export default function LineItems({ lineItems, onUpdate, currency, currencySymbo
                   autoResize(e.target);
                 }}
                 onFocus={(e) => autoResize(e.target)}
-                placeholder="Description of item/service..."
+                placeholder="e.g. Social media management services"
                 rows={1}
                 className="w-full px-4 py-3.5 bg-gray-50 border border-transparent focus:bg-white focus:border-theme-primary rounded-xl text-[15px] outline-none ring-0 focus:ring-2 focus:ring-theme-primary/20 transition-all resize-none overflow-hidden"
               />

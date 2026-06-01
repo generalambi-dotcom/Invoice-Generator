@@ -807,6 +807,81 @@ export async function sendPaymentReceivedEmail({
 }
 
 /**
+ * Send a payment confirmation email to the CLIENT (the person who paid).
+ * Complements sendPaymentReceivedEmail (which notifies the business owner).
+ * Sent only once an invoice is fully settled.
+ */
+interface SendPaymentConfirmationEmailParams {
+  to: string;
+  clientName: string;
+  companyName: string;
+  invoiceNumber: string;
+  paymentAmount: string;
+  invoiceTotal: string;
+  remainingBalance: string;
+  currency: string;
+}
+
+export async function sendPaymentConfirmationEmail({
+  to,
+  clientName,
+  companyName,
+  invoiceNumber,
+  paymentAmount,
+  invoiceTotal,
+  remainingBalance,
+  currency,
+}: SendPaymentConfirmationEmailParams): Promise<{ success: boolean; error?: string }> {
+  try {
+    const enabled = await isNotificationEnabled('payment_confirmation');
+    if (!enabled) return { success: true };
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return { success: false, error: 'RESEND_API_KEY not set' };
+    const resend = new Resend(apiKey);
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
+
+    const content = `
+      <div style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 30px;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">✅ Payment Confirmed</h1>
+      </div>
+
+      <p>Hi ${clientName},</p>
+      <p>Thank you! We've received your payment for invoice <strong>${invoiceNumber}</strong> from <strong>${companyName}</strong>. Your account is now settled — this email is your receipt.</p>
+
+      <div style="background: #f9fafb; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Invoice</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #111827;">${invoiceNumber}</td></tr>
+          <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Amount Paid</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: #059669;">${currency} ${paymentAmount}</td></tr>
+          <tr style="border-top: 1px solid #e5e7eb;"><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Invoice Total</td><td style="padding: 8px 0; text-align: right; color: #111827;">${currency} ${invoiceTotal}</td></tr>
+          <tr><td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Balance</td><td style="padding: 8px 0; text-align: right; font-weight: 600; color: ${remainingBalance === '0' || remainingBalance === '0.00' ? '#059669' : '#dc2626'};">${currency} ${remainingBalance}</td></tr>
+        </table>
+      </div>
+
+      <p style="color: #6b7280; font-size: 14px;">Please keep this email for your records. If you have any questions about this payment, simply reply to ${companyName}.</p>
+    `;
+
+    const emailHtml = await getEmailLayout({
+      content,
+      title: `Payment Confirmed: ${invoiceNumber}`,
+      previewText: `Your payment for Invoice ${invoiceNumber} has been received`,
+    });
+
+    await resend.emails.send({
+      from: `${companyName} <${fromEmail}>`,
+      to,
+      subject: `Payment confirmed for Invoice ${invoiceNumber}`,
+      html: emailHtml,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error sending payment confirmation email:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Send Drip Sequence Email (Welcome Flow)
  */
 interface SendSequenceEmailParams {
@@ -1134,6 +1209,102 @@ export async function sendWhatsAppReplyNotification({
     return { success: true };
   } catch (error: any) {
     console.error('Error sending WhatsApp reply notification:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Weekly business summary — a "return trigger" habit email.
+ * Sent once a week (via the weekly-summary cron) to users who had activity
+ * or have outstanding invoices. Amounts are USER business data (their own
+ * invoices), formatted with their own currency — NOT product pricing.
+ */
+interface SendWeeklySummaryEmailParams {
+  to: string;
+  userName: string;
+  currency: string;
+  invoicesSent: number;
+  totalInvoiced: string;
+  totalPaid: string;
+  overdueCount: number;
+  overdueAmount: string;
+}
+
+export async function sendWeeklySummaryEmail({
+  to,
+  userName,
+  currency,
+  invoicesSent,
+  totalInvoiced,
+  totalPaid,
+  overdueCount,
+  overdueAmount,
+}: SendWeeklySummaryEmailParams): Promise<{ success: boolean; error?: string }> {
+  try {
+    const enabled = await isNotificationEnabled('weekly_summary');
+    if (!enabled) return { success: true };
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) return { success: false, error: 'RESEND_API_KEY not set' };
+    const resend = new Resend(apiKey);
+    const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng';
+
+    const row = (label: string, value: string, color = '#111827') =>
+      `<tr><td style="padding:10px 0;color:#6b7280;font-size:14px;">${label}</td><td style="padding:10px 0;text-align:right;font-weight:700;color:${color};font-size:15px;">${value}</td></tr>`;
+
+    const overdueBlock = overdueCount > 0
+      ? `
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px 20px;margin:20px 0;">
+        <p style="margin:0 0 4px;font-weight:700;color:#991b1b;font-size:14px;">${currency} ${overdueAmount} overdue across ${overdueCount} invoice${overdueCount !== 1 ? 's' : ''}</p>
+        <p style="margin:0;color:#b91c1c;font-size:13px;">A quick reminder is the fastest way to get paid.</p>
+        <div style="margin-top:12px;">
+          <a href="${appUrl}/dashboard" style="background:#dc2626;color:#fff;padding:10px 18px;text-decoration:none;border-radius:6px;font-weight:600;font-size:13px;display:inline-block;">Send reminders</a>
+        </div>
+      </div>`
+      : `<p style="color:#059669;font-weight:600;font-size:14px;margin:20px 0;">🎉 No overdue invoices — you're all caught up!</p>`;
+
+    const content = `
+      <div style="background: linear-gradient(135deg, #047857 0%, #0d9488 100%); padding: 30px; text-align: center; border-radius: 8px; margin-bottom: 30px;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 22px;">Your week in business 📊</h1>
+      </div>
+
+      <p>Hi ${userName},</p>
+      <p>Here's how your invoicing went over the last 7 days:</p>
+
+      <div style="background: #f9fafb; border-radius: 8px; padding: 8px 20px; margin: 20px 0;">
+        <table style="width: 100%; border-collapse: collapse;">
+          ${row('Invoices sent', String(invoicesSent))}
+          ${row('Total invoiced', `${currency} ${totalInvoiced}`)}
+          ${row('Total paid', `${currency} ${totalPaid}`, '#059669')}
+        </table>
+      </div>
+
+      ${overdueBlock}
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${appUrl}/dashboard" style="background-color: #047857; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Open your dashboard</a>
+      </div>
+
+      <p style="color:#6b7280;font-size:13px;">You're receiving this because weekly summaries are on. You can turn them off anytime in your notification settings.</p>
+    `;
+
+    const emailHtml = await getEmailLayout({
+      content,
+      title: 'Your weekly business summary',
+      previewText: `${invoicesSent} invoices sent · ${currency} ${totalPaid} paid this week`,
+    });
+
+    await resend.emails.send({
+      from: `InvoiceGenerator.ng <${fromEmail}>`,
+      to,
+      subject: '📊 Your weekly business summary',
+      html: emailHtml,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error sending weekly summary email:', error);
     return { success: false, error: error.message };
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sendWeeklySummaryEmail } from '@/lib/email';
+import { checkCronAuth } from '@/lib/cron-auth';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // Vercel limit
@@ -14,11 +15,9 @@ export const maxDuration = 60; // Vercel limit
  * Schedule: weekly (see vercel.json). Dedupe key = weekly_summary:<weekStart>.
  */
 export async function GET(req: NextRequest) {
-  // Auth — same Bearer pattern as the other crons.
-  const authHeader = req.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // Auth — mandatory CRON_SECRET (shared helper).
+  const authError = checkCronAuth(req);
+  if (authError) return authError;
 
   try {
     const now = new Date();

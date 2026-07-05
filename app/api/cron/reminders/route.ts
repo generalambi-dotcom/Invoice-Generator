@@ -2,16 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sendInvoiceReminderEmail } from '@/lib/email';
 import { z } from 'zod';
+import { checkCronAuth } from '@/lib/cron-auth';
 
 export const dynamic = 'force-dynamic'; // Prevent caching
 export const maxDuration = 60; // Allow 60 seconds for execution (Vercel limit)
 
 export async function GET(req: NextRequest) {
-    // 1. Authentication (Simple Bearer token for Cron)
-    const authHeader = req.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // 1. Authentication (mandatory CRON_SECRET)
+    const authError = checkCronAuth(req);
+    if (authError) return authError;
 
     try {
         const today = new Date();

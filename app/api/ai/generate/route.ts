@@ -89,9 +89,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(object);
 
     } catch (error: any) {
+        // Log detail server-side; don't leak provider/internal error text.
         console.error('AI Generation Error:', error);
         return NextResponse.json(
-            { error: error.message || 'Failed to generate invoice with AI' },
+            { error: 'Failed to generate invoice with AI' },
             { status: 500 }
         );
     }

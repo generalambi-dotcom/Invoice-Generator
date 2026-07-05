@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getNextInvoiceNumber, incrementInvoiceNumber } from '@/lib/invoice-number';
 import { addDays, addWeeks, addMonths, addYears } from 'date-fns';
+import { checkCronAuth } from '@/lib/cron-auth';
 
 function parseTermsToDays(terms?: string): number {
     if (!terms) return 7; // Default
@@ -30,11 +31,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     try {
-        // Basic security check (can be enhanced with a secret header)
-        const authHeader = req.headers.get('authorization');
-        if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        // Validate Cron Secret (mandatory)
+        const authError = checkCronAuth(req);
+        if (authError) return authError;
 
         const today = new Date();
         // Reset time to start of day needed? 

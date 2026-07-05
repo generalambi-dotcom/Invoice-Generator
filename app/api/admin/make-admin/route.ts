@@ -62,21 +62,11 @@ export async function POST(request: NextRequest) {
       user: updatedUser,
     });
   } catch (error: any) {
+    // Log full detail server-side; return a generic message to the client so we
+    // don't leak internal error text, Prisma codes, or stack traces.
     console.error('Error making user admin:', error);
-    console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      meta: error.meta,
-      stack: error.stack,
-    });
     return NextResponse.json(
-      { 
-        error: 'Failed to make user admin: ' + (error.message || 'Unknown error'),
-        details: process.env.NODE_ENV === 'development' ? {
-          code: error.code,
-          meta: error.meta,
-        } : undefined,
-      },
+      { error: 'Failed to make user admin' },
       { status: 500 }
     );
   }

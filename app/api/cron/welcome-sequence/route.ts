@@ -2,17 +2,13 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sendSequenceEmail } from '@/lib/email';
 import { differenceInDays } from 'date-fns';
+import { checkCronAuth } from '@/lib/cron-auth';
 
 export async function GET(request: Request) {
     try {
-        // Only allow cron job to trigger this endpoint
-        const authHeader = request.headers.get('authorization');
-        if (
-            process.env.NODE_ENV === 'production' &&
-            authHeader !== `Bearer ${process.env.CRON_SECRET}`
-        ) {
-            return new NextResponse('Unauthorized', { status: 401 });
-        }
+        // Only allow cron job to trigger this endpoint (mandatory CRON_SECRET)
+        const authError = checkCronAuth(request);
+        if (authError) return authError;
 
         const today = new Date();
 

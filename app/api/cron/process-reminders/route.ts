@@ -2,20 +2,16 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { sendInvoiceReminderEmail } from '@/lib/email';
 import { isAfter, isBefore, startOfDay, addDays, subDays, differenceInCalendarDays } from 'date-fns';
+import { checkCronAuth } from '@/lib/cron-auth';
 
 // Max duration for the chron job
 export const maxDuration = 300; // 5 minutes max on Vercel Pro
 
 export async function GET(request: Request) {
     try {
-        // 1. Validate Cron Secret
-        const authHeader = request.headers.get('authorization');
-        const cronSecret = process.env.CRON_SECRET;
-
-        // Allow if no secret is set in env (for local testing), otherwise enforce it
-        if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        // 1. Validate Cron Secret (mandatory)
+        const authError = checkCronAuth(request);
+        if (authError) return authError;
 
         // 2. Fetch pending/overdue invoices that have a due date
         const invoices = await prisma.invoice.findMany({

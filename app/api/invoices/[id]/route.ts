@@ -4,6 +4,15 @@ import { getAuthenticatedUser } from '@/lib/api-auth';
 import { autoGeneratePaymentLink } from '@/lib/auto-payment-link';
 import { logInvoicePatchEvents } from '@/lib/invoice-events';
 import { notifyPaymentReceived } from '@/lib/payment-notifications';
+import { rateLimit, getClientIdentifier } from '@/lib/rate-limit';
+
+// Throttle anonymous invoice reads. This endpoint is public (payment page) and
+// exposes the owner's name/email, so we limit per-IP scraping of invoice IDs.
+const publicInvoiceRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 60, // 60 anonymous invoice fetches per IP per window
+  message: 'Too many requests, please try again later.',
+});
 
 // GET - Get single invoice (public, for payment page)
 export async function GET(
@@ -13,6 +22,18 @@ export async function GET(
   try {
     const invoiceId = params.id;
     const user = getAuthenticatedUser(request); // Optional, for authenticated access
+
+    // Rate-limit anonymous (unauthenticated) reads only; owners hitting their
+    // own dashboard are not affected.
+    if (!user) {
+      const limit = publicInvoiceRateLimiter(getClientIdentifier(request));
+      if (!limit.allowed) {
+        return NextResponse.json(
+          { error: limit.message },
+          { status: 429, headers: { 'Retry-After': String(Math.ceil((limit.resetTime - Date.now()) / 1000)) } }
+        );
+      }
+    }
 
     const invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId },

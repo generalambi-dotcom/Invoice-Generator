@@ -1,17 +1,28 @@
 import crypto from 'crypto';
 
-// Use environment variable or a consistent fallback for development
-// WARNING: In production, always set ENCRYPTION_KEY
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'invoicenaija-fallback-secret-key-2024';
-// Ensure key is 32 bytes for AES-256
-const KEY_BUFFER = Buffer.concat([Buffer.from(ENCRYPTION_KEY), Buffer.alloc(32)], 32);
+// ENCRYPTION_KEY is mandatory. It protects users' payment provider secret keys
+// (Paystack/Stripe/Twilio) at rest, so there is deliberately no fallback — a
+// hardcoded fallback would mean anyone with repo access could decrypt them.
+function getKeyBuffer(): Buffer {
+  const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+  if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length < 32) {
+    throw new Error(
+      'ENCRYPTION_KEY environment variable must be set to a strong secret of at ' +
+      'least 32 characters. It is required to encrypt payment credentials at rest.'
+    );
+  }
+  // Pad/truncate to exactly 32 bytes for AES-256. This matches the original
+  // derivation so credentials encrypted before this change still decrypt.
+  return Buffer.concat([Buffer.from(ENCRYPTION_KEY), Buffer.alloc(32)], 32);
+}
+
 const ALGORITHM = 'aes-256-cbc';
 
 export function encrypt(text: string): string {
   if (!text) return '';
   try {
     const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(ALGORITHM, KEY_BUFFER, iv);
+    const cipher = crypto.createCipheriv(ALGORITHM, getKeyBuffer(), iv);
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
     return iv.toString('hex') + ':' + encrypted;
@@ -30,7 +41,7 @@ export function decrypt(encryptedText: string): string {
     const iv = Buffer.from(parts[0], 'hex');
     const encrypted = parts[1];
 
-    const decipher = crypto.createDecipheriv(ALGORITHM, KEY_BUFFER, iv);
+    const decipher = crypto.createDecipheriv(ALGORITHM, getKeyBuffer(), iv);
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;

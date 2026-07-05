@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generateToken } from '@/lib/auth-jwt';
 import { createRefreshToken } from '@/lib/refresh-token';
+import { setAuthCookie } from '@/lib/auth-cookie';
 import { getSystemSetting } from '@/lib/settings';
 import { sendSequenceEmail } from '@/lib/email';
 import { syncContactToBrevo } from '@/lib/brevo';
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
 
         const refreshToken = await createRefreshToken(user.id);
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             token: accessToken,
             refreshToken,
             user: {
@@ -136,6 +137,7 @@ export async function POST(request: NextRequest) {
                 image: user.image
             },
         });
+        return setAuthCookie(response, accessToken);
 
     } catch (error: any) {
         console.error('Google auth error:', error);

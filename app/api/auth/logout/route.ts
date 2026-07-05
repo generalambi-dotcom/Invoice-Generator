@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { revokeRefreshToken, revokeAllUserRefreshTokens } from '@/lib/refresh-token';
+import { clearAuthCookie } from '@/lib/auth-cookie';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -30,9 +31,10 @@ export async function POST(request: NextRequest) {
     // Revoke all user refresh tokens for security
     await revokeAllUserRefreshTokens(user.userId);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: 'Logged out successfully',
     });
+    return clearAuthCookie(response);
   } catch (error: any) {
     console.error('Error during logout:', error);
     return NextResponse.json(

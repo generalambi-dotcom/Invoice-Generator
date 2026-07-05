@@ -2,12 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generateToken } from '@/lib/auth-jwt';
 import { createRefreshToken } from '@/lib/refresh-token';
+import { setAuthCookie } from '@/lib/auth-cookie';
+import { rateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+
+// Per-IP throttle on login attempts (on top of the per-account lockout below).
+const loginRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // 20 attempts per IP per window
+  message: 'Too many login attempts, please try again later.',
+});
 
 // POST - Login user and return JWT token
 export async function POST(request: NextRequest) {
   try {
+    const limit = loginRateLimiter(getClientIdentifier(request));
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: limit.message },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil((limit.resetTime - Date.now()) / 1000)) } }
+      );
+    }
+
     const body = await request.json();
     const { email, password } = body;
 
@@ -130,8 +147,9 @@ export async function POST(request: NextRequest) {
     // Generate refresh token
     const refreshToken = await createRefreshToken(user.id);
 
-    // Return tokens and user info (without password)
-    return NextResponse.json({
+    // Return tokens and user info (without password). The access token is also
+    // set as an httpOnly cookie, which is the authoritative auth transport.
+    const response = NextResponse.json({
       token: accessToken,
       refreshToken,
       user: {
@@ -141,6 +159,7 @@ export async function POST(request: NextRequest) {
         isAdmin: user.isAdmin,
       },
     });
+    return setAuthCookie(response, accessToken);
   } catch (error: any) {
     console.error('Error during login:', error);
     return NextResponse.json(

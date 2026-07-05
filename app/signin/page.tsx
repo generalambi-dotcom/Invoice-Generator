@@ -56,10 +56,11 @@ function SignInContent() {
           return;
         }
 
-        localStorage.setItem('auth_token', data.token);
+        // The access token now lives only in the httpOnly cookie set by the
+        // server response (not readable by JS). We keep the refresh token and a
+        // non-sensitive user profile for client-side UI state.
         if (data.refreshToken) localStorage.setItem('refresh_token', data.refreshToken);
         localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
-        document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
         createSession(data.user);
 
         trackEvent('login', { method: 'email' });
@@ -102,10 +103,9 @@ function SignInContent() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Invalid code.'); return; }
-      localStorage.setItem('auth_token', data.token);
+      // Access token is in the httpOnly cookie from the server response.
       if (data.refreshToken) localStorage.setItem('refresh_token', data.refreshToken);
       localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
-      document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
       createSession(data.user);
       trackEvent('login', { method: '2fa' });
       const redirectUrl = searchParams.get('redirect') || '/dashboard';

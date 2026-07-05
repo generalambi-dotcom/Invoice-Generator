@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { verifyTOTP } from '@/lib/totp';
 import { verifyToken, generateToken } from '@/lib/auth-jwt';
 import { createRefreshToken } from '@/lib/refresh-token';
+import { setAuthCookie } from '@/lib/auth-cookie';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
         });
         const refreshToken = await createRefreshToken(dbUser.id);
 
-        return NextResponse.json({
+        const response = NextResponse.json({
             token: accessToken,
             refreshToken,
             user: {
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
                 isAdmin: dbUser.isAdmin,
             },
         });
+        return setAuthCookie(response, accessToken);
     } catch (error: any) {
         console.error('2FA verify error:', error);
         return NextResponse.json({ error: 'Failed to verify 2FA code' }, { status: 500 });

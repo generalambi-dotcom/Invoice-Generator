@@ -41,3 +41,6 @@ Invoice-Generator/
 
 
 /lib/generated/prisma
+
+# Contains PII (user emails/IDs) — never commit
+admins.txt

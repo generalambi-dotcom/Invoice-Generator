@@ -36,18 +36,14 @@ export async function refreshAccessToken(): Promise<string | null> {
     }
 
     const data = await response.json();
-    
-    // Update tokens
-    localStorage.setItem('auth_token', data.token);
+
+    // The refresh endpoint sets a fresh httpOnly auth cookie on its response;
+    // we only persist non-sensitive client state here.
     if (data.refreshToken) {
       localStorage.setItem('refresh_token', data.refreshToken);
     }
     if (data.user) {
       localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
-    }
-    // Update cookie for middleware
-    if (typeof document !== 'undefined') {
-      document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
     }
 
     return data.token;
@@ -97,12 +93,12 @@ export function setupTokenRefresh() {
     return;
   }
 
-  // Refresh token every 10 minutes
+  // Refresh every 10 minutes so the httpOnly auth cookie stays fresh while a
+  // tab is open. The access token itself is no longer in localStorage.
   setInterval(async () => {
-    const token = localStorage.getItem('auth_token');
     const refreshToken = localStorage.getItem('refresh_token');
-    
-    if (token && refreshToken) {
+
+    if (refreshToken) {
       await refreshAccessToken();
     }
   }, 10 * 60 * 1000); // 10 minutes

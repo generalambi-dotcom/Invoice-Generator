@@ -22,7 +22,10 @@ export function SendEmailModal({ invoiceId, isOpen, onClose, defaultEmail = '' }
 
         setIsLoading(true);
         try {
-            const isGuestOrPublic = !window.localStorage.getItem('auth_token') && !document.cookie.includes('next-auth.session-token');
+            // Logged-in state is tracked by the presence of the cached user
+            // profile (the JWT itself now lives in an httpOnly cookie that JS
+            // cannot read).
+            const isGuestOrPublic = !window.localStorage.getItem('invoice-generator-current-user');
             // If the user isn't fully authenticated, they might be using the public endpoint. 
             // But we built /api/invoices/send-email which assumes auth. 
             // We also built /api/public/send-copy for guests.

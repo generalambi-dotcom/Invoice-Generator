@@ -65,13 +65,13 @@ export default function SignUpPage() {
         throw new Error(data.error || 'Registration failed');
       }
 
-      // Store tokens and user data
-      localStorage.setItem('auth_token', data.token);
+      // On auto-login (verification disabled) the access token is set as an
+      // httpOnly cookie by the server. Persist only non-sensitive client state.
       if (data.refreshToken) localStorage.setItem('refresh_token', data.refreshToken);
-      localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
-      document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
-
-      createSession(data.user);
+      if (data.user) {
+        localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
+        createSession(data.user);
+      }
       trackEvent('sign_up', { method: 'email' });
 
       // Redirect to email verification or dashboard

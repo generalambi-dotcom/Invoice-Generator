@@ -6,25 +6,35 @@ import { notifyPaymentReceived } from '@/lib/payment-notifications';
 // POST - Handle Paystack webhook
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // Read the raw body so the signature is computed over the exact bytes
+    // Paystack signed, rather than a re-serialized object.
+    const rawBody = await request.text();
     const signature = request.headers.get('x-paystack-signature');
 
-    // Verify webhook signature
+    // Verify webhook signature — ALWAYS required. Without this, anyone could
+    // POST a fake charge.success event and mark invoices as paid.
     const secret = process.env.PAYSTACK_SECRET_KEY;
-    if (secret && signature) {
-      const hash = crypto
-        .createHmac('sha512', secret)
-        .update(JSON.stringify(body))
-        .digest('hex');
-      
-      if (hash !== signature) {
-        return NextResponse.json(
-          { error: 'Invalid signature' },
-          { status: 401 }
-        );
-      }
+    if (!secret) {
+      console.error('PAYSTACK_SECRET_KEY is not set; rejecting webhook.');
+      return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+    }
+    if (!signature) {
+      return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
     }
 
+    const hash = crypto
+      .createHmac('sha512', secret)
+      .update(rawBody)
+      .digest('hex');
+
+    // Constant-time comparison to avoid timing attacks.
+    const expected = Buffer.from(hash);
+    const provided = Buffer.from(signature);
+    if (expected.length !== provided.length || !crypto.timingSafeEqual(expected, provided)) {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+
+    const body = JSON.parse(rawBody);
     const { event, data } = body;
 
     if (event === 'charge.success') {

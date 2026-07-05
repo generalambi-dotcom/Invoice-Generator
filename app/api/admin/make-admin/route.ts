@@ -1,15 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { getAuthenticatedUser } from '@/lib/api-auth';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
 
 /**
  * POST - Make a user an admin by email
- * This is a one-time setup endpoint
+ * Restricted to existing admins. (Previously unauthenticated, which allowed
+ * anyone to grant themselves admin.)
  */
 export async function POST(request: NextRequest) {
   try {
+    // Only an existing admin may promote other users to admin.
+    const caller = getAuthenticatedUser(request);
+    if (!caller || !caller.isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { email } = body;
 

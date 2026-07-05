@@ -4,6 +4,15 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { z } from 'zod';
 import { getSystemSettings } from '@/lib/settings';
+import { getAuthenticatedUser } from '@/lib/api-auth';
+import { rateLimit, getClientIdentifier } from '@/lib/rate-limit';
+
+// Throttle AI generations to protect the shared LLM API key from cost abuse.
+const aiRateLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 30, // 30 generations per user per hour
+    message: 'Too many AI generation requests, please try again later.',
+});
 
 const invoiceSchema = z.object({
     clientName: z.string().describe('The name of the client or company being billed. If none is mentioned, leave blank.'),
@@ -20,10 +29,30 @@ const invoiceSchema = z.object({
 
 export async function POST(request: NextRequest) {
     try {
+        // Require an authenticated user — this endpoint spends money on the
+        // shared LLM key, so it must not be open to the public.
+        const user = getAuthenticatedUser(request);
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // Per-user (falls back to per-IP) rate limit.
+        const limit = aiRateLimiter(getClientIdentifier(request));
+        if (!limit.allowed) {
+            return NextResponse.json(
+                { error: limit.message },
+                { status: 429, headers: { 'Retry-After': String(Math.ceil((limit.resetTime - Date.now()) / 1000)) } }
+            );
+        }
+
         const { prompt } = await request.json();
 
         if (!prompt) {
             return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+        }
+
+        if (typeof prompt !== 'string' || prompt.length > 4000) {
+            return NextResponse.json({ error: 'Prompt is invalid or too long' }, { status: 400 });
         }
 
         // 1. Fetch LLM settings from the database

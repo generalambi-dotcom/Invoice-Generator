@@ -7,12 +7,29 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { generateToken } from '@/lib/auth-jwt';
 import { createRefreshToken } from '@/lib/refresh-token';
+import { setAuthCookie } from '@/lib/auth-cookie';
+import { rateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { sendSequenceEmail } from '@/lib/email';
 import { syncContactToBrevo } from '@/lib/brevo';
+
+// Per-IP throttle to slow down bulk account creation / enumeration.
+const registerRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // 10 sign-ups per IP per hour
+  message: 'Too many sign-up attempts, please try again later.',
+});
 
 // POST - Register new user
 export async function POST(request: NextRequest) {
   try {
+    const limit = registerRateLimiter(getClientIdentifier(request));
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: limit.message },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil((limit.resetTime - Date.now()) / 1000)) } }
+      );
+    }
+
     const body = await request.json();
     const { email, password, name } = body;
 
@@ -174,8 +191,13 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    // Return success message and data
-    return NextResponse.json(responseData, { status: 201 });
+    // Return success message and data. If we auto-logged the user in (email
+    // verification disabled), also set the httpOnly auth cookie.
+    const response = NextResponse.json(responseData, { status: 201 });
+    if (responseData.token) {
+      setAuthCookie(response, responseData.token);
+    }
+    return response;
 
   } catch (error: any) {
     console.error('Error during registration:', error);

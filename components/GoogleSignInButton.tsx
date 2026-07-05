@@ -90,13 +90,11 @@ export default function GoogleSignInButton({ text = "Sign in with Google" }: { t
 
             const data = await res.json();
 
-            // Store tokens
-            localStorage.setItem('auth_token', data.token);
+            // Access token is set as an httpOnly cookie by the server response.
             if (data.refreshToken) {
                 localStorage.setItem('refresh_token', data.refreshToken);
             }
             localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
-            document.cookie = `auth_token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Lax`;
 
             createSession(data.user);
 

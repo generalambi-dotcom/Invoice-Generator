@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRefreshToken } from '@/lib/refresh-token';
 import { generateToken } from '@/lib/auth-jwt';
+import { setAuthCookie } from '@/lib/auth-cookie';
 import { prisma } from '@/lib/db';
 
 // Force dynamic rendering
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
       isAdmin: user.isAdmin,
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       token: accessToken,
       user: {
         id: user.id,
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
         isAdmin: user.isAdmin,
       },
     });
+    return setAuthCookie(response, accessToken);
   } catch (error: any) {
     console.error('Error refreshing token:', error);
     return NextResponse.json(

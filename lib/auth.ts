@@ -70,13 +70,11 @@ export async function signIn(email: string, password: string): Promise<User> {
 
     const data = await response.json();
 
-    // Store user data in localStorage for basic frontend state
+    // Store non-sensitive user data for frontend state. The access token is
+    // kept in an httpOnly cookie (set by the server), not in localStorage, so
+    // it cannot be exfiltrated via XSS.
     if (typeof window !== 'undefined') {
       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(data.user));
-      // Also store token if provided for API calls (though cookies are better)
-      if (data.token) {
-        localStorage.setItem('auth_token', data.token);
-      }
     }
 
     return data.user;

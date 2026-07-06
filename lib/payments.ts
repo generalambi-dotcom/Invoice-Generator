@@ -224,8 +224,9 @@ export function isPremiumUser(): boolean {
       return true;
     }
 
-    // Check premium subscription
-    if (user?.subscription?.plan === 'premium' && user?.subscription?.status === 'active') {
+    // Any paid tier (Pro or Business; legacy 'premium' maps to Pro) counts.
+    const { isPaidTier, normaliseTier } = require('./plans');
+    if (isPaidTier(normaliseTier(user?.subscription?.plan)) && user?.subscription?.status === 'active') {
       // Check if subscription hasn't expired
       if (user.subscription.endDate) {
         const endDate = new Date(user.subscription.endDate);

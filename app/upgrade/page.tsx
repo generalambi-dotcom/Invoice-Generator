@@ -289,56 +289,63 @@ export default function UpgradePage() {
           </p>
         </div>
 
-        {/* Features List */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-semibold mb-6">Premium Features</h2>
-          <ul className="space-y-4">
-            <li className="flex items-start">
-              <svg className="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <div>
-                <span className="font-semibold text-gray-900">WhatsApp Integration:</span>
-                <span className="text-gray-600 ml-2">Create & send invoices directly from WhatsApp. Includes &quot;Quick-Pay&quot; links for faster payments.</span>
-              </div>
-            </li>
-            <li className="flex items-start">
-              <svg className="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <div>
-                <span className="font-semibold text-gray-900">Smart Reports Dashboard:</span>
-                <span className="text-gray-600 ml-2">Visualize monthly income, track top clients, and see payment trends instantly.</span>
-              </div>
-            </li>
-            <li className="flex items-start">
-              <svg className="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <div>
-                <span className="font-semibold text-gray-900">Magic Receipt Scanning:</span>
-                <span className="text-gray-600 ml-2">Snap a photo of any receipt and let AI automatically extract the details.</span>
-              </div>
-            </li>
-            <li className="flex items-start">
-              <svg className="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <div>
-                <span className="font-semibold text-gray-900">Accept Payments Online:</span>
-                <span className="text-gray-600 ml-2">Connect PayPal, Stripe, or Paystack to get paid faster.</span>
-              </div>
-            </li>
-            <li className="flex items-start">
-              <svg className="w-6 h-6 text-green-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <div>
-                <span className="font-semibold text-gray-900">Unlimited Everything:</span>
-                <span className="text-gray-600 ml-2">Unlimited invoices, unlimited clients, and ad-free experience.</span>
-              </div>
-            </li>
-          </ul>
+        {/* Plan comparison — Pro vs Business (tap a plan to select it) */}
+        <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8 mb-8">
+          <h2 className="text-2xl font-semibold mb-1 text-center">Pro vs Business</h2>
+          <p className="text-center text-gray-500 text-sm mb-6">Tap a plan to choose it</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            {(['pro', 'business'] as const).map((t) => {
+              const plan = PLAN_BY_TIER[t];
+              const cur: PriceCurrency = pricing?.currency === 'NGN' ? 'NGN' : 'USD';
+              const selected = tier === t;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setTier(t)}
+                  aria-pressed={selected}
+                  className="text-left rounded-xl border-2 p-5 transition-colors bg-white h-full"
+                  style={{ borderColor: selected ? '#1DB89A' : '#e5e7eb' }}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
+                    {t === 'pro' && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#D1F2EA', color: '#0D3B36' }}>
+                        MOST POPULAR
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 mb-3">{plan.tagline}</p>
+                  <div className="mb-4">
+                    <span className="text-2xl font-bold" style={{ color: '#0D3B36' }}>
+                      {pricing ? formatPlanPrice(getPlanPrice(t, interval, cur), cur) : '…'}
+                    </span>
+                    <span className="text-sm text-gray-400">/{interval === 'annual' ? 'yr' : 'mo'}</span>
+                  </div>
+                  <ul className="space-y-2">
+                    {plan.featureLines.map((line, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm">
+                        <span className="mt-0.5 flex-shrink-0" style={{ color: line.included ? '#1DB89A' : '#d1d5db' }} aria-hidden>
+                          {line.included ? '✓' : '✕'}
+                        </span>
+                        <span className={line.included ? 'text-gray-700' : 'text-gray-400'}>
+                          {line.label}
+                          {line.comingSoon && (
+                            <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                              Coming soon
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  {selected && (
+                    <p className="mt-4 text-xs font-bold" style={{ color: '#0D3B36' }}>✓ Selected</p>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Coupon Code Section */}
@@ -389,38 +396,7 @@ export default function UpgradePage() {
           {/* Plan + billing selector */}
           {pricing && (
             <div className="mb-8">
-              {/* Plan selector: Pro / Business */}
-              <div className="grid grid-cols-2 gap-3 mb-4 max-w-md mx-auto">
-                {(['pro', 'business'] as const).map((t) => {
-                  const cur: PriceCurrency = pricing.currency === 'NGN' ? 'NGN' : 'USD';
-                  const selected = tier === t;
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setTier(t)}
-                      aria-pressed={selected}
-                      className="rounded-xl border-2 p-3 text-left transition-colors bg-white min-h-[44px]"
-                      style={{ borderColor: selected ? '#1DB89A' : '#e5e7eb' }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-gray-900">{PLAN_BY_TIER[t].name}</span>
-                        {t === 'pro' && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#D1F2EA', color: '#0D3B36' }}>
-                            POPULAR
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-sm text-gray-600 mt-1">
-                        {formatPlanPrice(getPlanPrice(t, interval, cur), cur)}
-                        <span className="text-gray-400">/{interval === 'annual' ? 'yr' : 'mo'}</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Billing toggle: Monthly / Annual */}
+              {/* Billing toggle: Monthly / Annual (plan is chosen in the comparison above) */}
               <div className="flex justify-center">
                 <div className="inline-flex items-center rounded-full bg-gray-100 p-1" role="group" aria-label="Billing interval">
                   {(['monthly', 'annual'] as BillingInterval[]).map((opt) => {

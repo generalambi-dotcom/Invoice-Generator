@@ -12,6 +12,7 @@ import {
   getPlanPrice,
   getPaystackPlanCode,
   formatPlanPrice,
+  annualSavings,
   normaliseTier,
   isPaidTier,
   type BillingInterval,
@@ -385,6 +386,73 @@ export default function UpgradePage() {
 
         {/* Pricing */}
         <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-lg shadow-lg p-8 mb-8">
+          {/* Plan + billing selector */}
+          {pricing && (
+            <div className="mb-8">
+              {/* Plan selector: Pro / Business */}
+              <div className="grid grid-cols-2 gap-3 mb-4 max-w-md mx-auto">
+                {(['pro', 'business'] as const).map((t) => {
+                  const cur: PriceCurrency = pricing.currency === 'NGN' ? 'NGN' : 'USD';
+                  const selected = tier === t;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setTier(t)}
+                      aria-pressed={selected}
+                      className="rounded-xl border-2 p-3 text-left transition-colors bg-white min-h-[44px]"
+                      style={{ borderColor: selected ? '#1DB89A' : '#e5e7eb' }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-gray-900">{PLAN_BY_TIER[t].name}</span>
+                        {t === 'pro' && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#D1F2EA', color: '#0D3B36' }}>
+                            POPULAR
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        {formatPlanPrice(getPlanPrice(t, interval, cur), cur)}
+                        <span className="text-gray-400">/{interval === 'annual' ? 'yr' : 'mo'}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Billing toggle: Monthly / Annual */}
+              <div className="flex justify-center">
+                <div className="inline-flex items-center rounded-full bg-gray-100 p-1" role="group" aria-label="Billing interval">
+                  {(['monthly', 'annual'] as BillingInterval[]).map((opt) => {
+                    const active = interval === opt;
+                    const cur: PriceCurrency = pricing.currency === 'NGN' ? 'NGN' : 'USD';
+                    const save = opt === 'annual' ? annualSavings(tier, cur) : 0;
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setInterval(opt)}
+                        aria-pressed={active}
+                        className="min-h-[44px] px-5 rounded-full text-sm font-semibold transition-colors"
+                        style={active ? { backgroundColor: '#0D3B36', color: '#fff' } : { color: '#4b5563' }}
+                      >
+                        {opt === 'monthly' ? 'Monthly' : 'Annual'}
+                        {opt === 'annual' && save > 0 && (
+                          <span
+                            className="ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                            style={active ? { backgroundColor: '#1DB89A', color: '#0D3B36' } : { backgroundColor: '#D1F2EA', color: '#0D3B36' }}
+                          >
+                            SAVE {formatPlanPrice(save, cur)}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="text-center mb-8">
             <div className="mb-4">
               {pricing ? (

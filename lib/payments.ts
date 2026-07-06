@@ -91,6 +91,7 @@ export async function initiatePayment(params: {
           currency: params.currency.toLowerCase(),
           userEmail: params.userEmail,
           trial: params.trial,
+          interval: params.interval || 'monthly',
         }),
       });
 

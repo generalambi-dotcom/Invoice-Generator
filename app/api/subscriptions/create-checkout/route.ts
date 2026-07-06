@@ -18,7 +18,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { userId, plan, amount, currency, userEmail, trial } = body;
+    const { userId, plan, amount, currency, userEmail, trial, interval } = body;
+    // Billing interval → Stripe recurring interval.
+    const billingInterval = interval === 'annual' ? 'annual' : 'monthly';
+    const stripeInterval: 'month' | 'year' = billingInterval === 'annual' ? 'year' : 'month';
 
     // Validate input
     if (!userId || !plan || !amount || !currency || !userEmail) {
@@ -107,11 +110,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Calculate subscription duration (30 days for monthly)
-    const subscriptionDuration = 30; // days
     const isTrial = trial === true;
+    const intervalLabel = stripeInterval === 'year' ? 'year' : 'month';
 
-    // Create Stripe Checkout Session
+    // Create Stripe Checkout Session (recurring subscription).
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'subscription', // Use subscription mode for recurring billing
@@ -121,26 +123,33 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: currency.toLowerCase(),
             product_data: {
-              name: `Premium Subscription - ${plan} ${isTrial ? '(30-Day Free Trial)' : ''}`,
+              name: `${plan} Subscription${isTrial ? ' (30-Day Free Trial)' : ''}`,
               description: isTrial
-                ? `Free for 30 days, then ${currency} ${amount}/month`
-                : `Premium access for ${subscriptionDuration} days (Monthly)`,
+                ? `Free for 30 days, then ${currency} ${amount}/${intervalLabel}`
+                : `${plan} plan, billed ${billingInterval} (${currency} ${amount}/${intervalLabel})`,
             },
             unit_amount: Math.round(amount * 100), // Convert to cents
             recurring: {
-              interval: 'month',
+              interval: stripeInterval, // 'month' | 'year'
             },
           },
           quantity: 1,
         },
       ],
-      subscription_data: isTrial ? {
-        trial_period_days: 30,
-        metadata: { isTrial: 'true' }
-      } : undefined,
+      // Carry userId/tier/interval on the subscription so renewals are attributable.
+      subscription_data: {
+        ...(isTrial ? { trial_period_days: 30 } : {}),
+        metadata: {
+          userId,
+          plan,
+          interval: billingInterval,
+          isTrial: isTrial ? 'true' : 'false',
+        },
+      },
       metadata: {
         userId,
         plan,
+        interval: billingInterval,
         type: 'subscription',
         isTrial: isTrial ? 'true' : 'false',
       },

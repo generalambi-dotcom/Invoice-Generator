@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from '@/lib/api-auth';
 import { generateInvoicePDFBuffer } from '@/lib/pdf-server';
 import { rateLimit, rateLimitConfigs, getClientIdentifier } from '@/lib/rate-limit';
 import { logRequest, logError } from '@/lib/request-logger';
+import { userHasFeature } from '@/lib/feature-gate';
 import { logInvoiceEvent } from '@/lib/invoice-events';
 
 // POST - Send invoice via email
@@ -37,6 +38,15 @@ export async function POST(request: NextRequest) {
     
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Feature gate: emailing invoices to clients is Pro+ (grandfathered free
+    // users keep it). Admins pass.
+    if (!(await userHasFeature(user.userId, 'emailToClient'))) {
+      return NextResponse.json(
+        { error: 'UPGRADE_REQUIRED', message: 'Emailing invoices to clients is available on Pro. Please upgrade to use it.' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
+import { userHasFeature } from '@/lib/feature-gate';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -57,9 +58,17 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = getAuthenticatedUser(request);
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Feature gate: credit notes are Pro+ (grandfathered free users keep them).
+    if (!(await userHasFeature(user.userId, 'estimatesAndCreditNotes'))) {
+      return NextResponse.json(
+        { error: 'UPGRADE_REQUIRED', message: 'Credit notes are available on Pro. Please upgrade to create them.' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();

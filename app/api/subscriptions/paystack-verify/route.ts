@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { reference, userId, plan } = body;
+    const { reference, userId, plan, interval } = body;
 
     if (!reference) {
       return NextResponse.json({ error: 'Payment reference is required' }, { status: 400 });
@@ -102,7 +102,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Payment user mismatch' }, { status: 403 });
     }
 
-    const resolvedPlan = plan || txData.metadata?.plan || 'premium';
+    const resolvedPlan = plan || txData.metadata?.plan || 'pro';
+    const resolvedInterval = interval || txData.metadata?.interval || 'monthly';
 
     // ── Idempotency: check if already activated for this reference ────────────
     const existing = await prisma.user.findUnique({
@@ -111,9 +112,11 @@ export async function POST(request: NextRequest) {
     });
 
     // ── Activate subscription in database ────────────────────────────────────
+    // Period length follows the billing interval (Paystack auto-renews via the
+    // plan; the webhook extends the end date on each renewal charge.success).
     const startDate = new Date();
     const endDate = new Date();
-    endDate.setDate(endDate.getDate() + 30);
+    endDate.setDate(endDate.getDate() + (resolvedInterval === 'annual' ? 365 : 30));
 
     await prisma.user.update({
       where: { id: resolvedUserId },

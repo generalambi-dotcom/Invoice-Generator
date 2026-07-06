@@ -71,14 +71,16 @@ export const LEGACY_PREMIUM_FEATURES: FeatureKey[] = [
  * These are passed to Paystack checkout so the customer is subscribed to the
  * correct recurring plan for the tier + interval they picked.
  */
+// Live Paystack plan codes (created in the Paystack dashboard). Env vars can
+// override per-environment (e.g. test-mode codes in staging).
 export const PAYSTACK_PRO_MONTHLY =
-  process.env.NEXT_PUBLIC_PAYSTACK_PRO_MONTHLY || 'PLN_REPLACE_ME_pro_monthly';
+  process.env.NEXT_PUBLIC_PAYSTACK_PRO_MONTHLY || 'PLN_n49rm5v6pdhto28'; // Pro Plan — NGN 5,000 / month
 export const PAYSTACK_PRO_ANNUAL =
-  process.env.NEXT_PUBLIC_PAYSTACK_PRO_ANNUAL || 'PLN_REPLACE_ME_pro_annual';
+  process.env.NEXT_PUBLIC_PAYSTACK_PRO_ANNUAL || 'PLN_m4hv63qna8ujp96'; // Pro Plan Annual — NGN 45,000 / year
 export const PAYSTACK_BUSINESS_MONTHLY =
-  process.env.NEXT_PUBLIC_PAYSTACK_BUSINESS_MONTHLY || 'PLN_REPLACE_ME_business_monthly';
+  process.env.NEXT_PUBLIC_PAYSTACK_BUSINESS_MONTHLY || 'PLN_nrju7m4gcu00tk8'; // Business — NGN 12,000 / month
 export const PAYSTACK_BUSINESS_ANNUAL =
-  process.env.NEXT_PUBLIC_PAYSTACK_BUSINESS_ANNUAL || 'PLN_REPLACE_ME_business_annual';
+  process.env.NEXT_PUBLIC_PAYSTACK_BUSINESS_ANNUAL || 'PLN_zxq37hg3opxbjt9'; // Business Plan — NGN 110,000 / year
 
 /** Convenience lookup: paystackPlanCode[tier][interval]. Free has none. */
 export const PAYSTACK_PLAN_CODES: Record<
@@ -341,4 +343,32 @@ export function formatPlanPrice(amount: number, currency: PriceCurrency): string
   const symbol = currencySymbol(currency);
   if (currency === 'NGN') return `${symbol}${amount.toLocaleString('en-NG')}`;
   return `${symbol}${amount % 1 === 0 ? amount : amount.toFixed(2)}`;
+}
+
+/* ─── Free-tier allowlists (for the 'extraCurrencies' / 'extraThemes' gates) ── */
+
+/** Currencies a (non-grandfathered) Free user may use — NGN + a small set. */
+export const FREE_CURRENCIES = ['NGN', 'USD', 'GBP', 'EUR', 'GHS'];
+
+/** Colour themes a (non-grandfathered) Free user may use (2 of the 5). */
+export const FREE_THEMES = ['slate', 'blue'];
+
+/** May this user use this invoice currency? Pro+/grandfathered → any. */
+export function currencyAllowed(
+  currency: string,
+  subscriptionPlan?: string | null,
+  registeredAt?: Date | string | null
+): boolean {
+  if (planHasFeature('extraCurrencies', subscriptionPlan, registeredAt)) return true;
+  return FREE_CURRENCIES.includes((currency || 'NGN').toUpperCase());
+}
+
+/** May this user use this invoice theme? Pro+/grandfathered → any. */
+export function themeAllowed(
+  theme: string,
+  subscriptionPlan?: string | null,
+  registeredAt?: Date | string | null
+): boolean {
+  if (planHasFeature('extraThemes', subscriptionPlan, registeredAt)) return true;
+  return FREE_THEMES.includes(theme || 'slate');
 }

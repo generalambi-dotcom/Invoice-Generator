@@ -7,6 +7,16 @@ import { getCurrentUser } from '@/lib/auth';
 import { initiatePayment } from '@/lib/payments';
 import { validateCoupon, applyCoupon } from '@/lib/coupons';
 import { getPricing, formatPrice, detectUserRegion } from '@/lib/pricing';
+import {
+  PLAN_BY_TIER,
+  getPlanPrice,
+  getPaystackPlanCode,
+  formatPlanPrice,
+  normaliseTier,
+  isPaidTier,
+  type BillingInterval,
+  type PriceCurrency,
+} from '@/lib/plans';
 import { toast } from 'react-hot-toast';
 import { trackEvent } from '@/lib/tracking';
 
@@ -21,6 +31,9 @@ export default function UpgradePage() {
   const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [pricing, setPricing] = useState<any>(null);
   const [region, setRegion] = useState<'nigeria' | 'rest-of-world'>('rest-of-world');
+  // Selected tier + billing interval (from the pricing page CTA query params).
+  const [tier, setTier] = useState<'pro' | 'business'>('pro');
+  const [interval, setInterval] = useState<BillingInterval>('annual');
   const [availableProviders, setAvailableProviders] = useState<{
     paypal: boolean;
     paystack: boolean;
@@ -34,6 +47,15 @@ export default function UpgradePage() {
   useEffect(() => {
     const currentUser = getCurrentUser();
     setUser(currentUser);
+
+    // Read the tier + interval chosen on the pricing page.
+    if (typeof window !== 'undefined') {
+      const qp = new URLSearchParams(window.location.search);
+      const t = qp.get('tier');
+      const i = qp.get('interval');
+      if (t === 'pro' || t === 'business') setTier(t);
+      if (i === 'monthly' || i === 'annual') setInterval(i);
+    }
 
     // If already premium or admin, allow them to view but show a message
     // No redirect - let them view pricing even if premium
@@ -214,19 +236,30 @@ export default function UpgradePage() {
       return;
     }
 
+    // Resolve tier + interval price and Paystack plan code from central config.
+    const currency: PriceCurrency = pricing.currency === 'NGN' ? 'NGN' : 'USD';
+    const amount = getPlanPrice(tier, interval, currency);
+    // Recurring plan codes exist for NGN only; USD tiers charge the amount.
+    const planCode =
+      currency === 'NGN' && provider === 'paystack'
+        ? getPaystackPlanCode(tier, interval)
+        : undefined;
+
     setLoading(true);
     setPaymentProvider(provider);
-    trackEvent('begin_checkout', { provider, value: pricing.premiumPrice, currency: pricing.currency });
+    trackEvent('begin_checkout', { provider, value: amount, currency, tier, interval });
 
     try {
       const paymentLink = await initiatePayment({
         userId: user.id,
-        plan: 'premium',
+        plan: tier, // 'pro' | 'business'
         provider,
-        amount: pricing.premiumPrice,
-        currency: pricing.currency,
+        amount,
+        currency,
         userEmail: user.email,
         trial: provider === 'stripe', // Enable trial for Stripe
+        interval,
+        planCode,
       });
 
       if (paymentLink) {
@@ -249,9 +282,9 @@ export default function UpgradePage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Upgrade to Premium</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Upgrade to {PLAN_BY_TIER[tier].name}</h1>
           <p className="text-xl text-gray-600">
-            Unlock powerful features to grow your business
+            {PLAN_BY_TIER[tier].tagline}
           </p>
         </div>
 
@@ -357,9 +390,14 @@ export default function UpgradePage() {
               {pricing ? (
                 <>
                   <span className="text-5xl font-bold text-gray-900">
-                    {formatPrice(pricing.premiumPrice, pricing.currency)}
+                    {formatPlanPrice(
+                      getPlanPrice(tier, interval, pricing.currency === 'NGN' ? 'NGN' : 'USD'),
+                      pricing.currency === 'NGN' ? 'NGN' : 'USD'
+                    )}
                   </span>
-                  <span className="text-gray-600 text-xl ml-2">/month</span>
+                  <span className="text-gray-600 text-xl ml-2">
+                    /{interval === 'annual' ? 'year' : 'month'}
+                  </span>
                 </>
               ) : (
                 <>
@@ -376,7 +414,7 @@ export default function UpgradePage() {
             )}
           </div>
 
-          {user && (user.isAdmin || (user.subscription?.plan === 'premium' && user.subscription?.status === 'active')) ? (
+          {user && (user.isAdmin || (isPaidTier(normaliseTier(user.subscription?.plan)) && user.subscription?.status === 'active')) ? (
             <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-blue-800 font-medium">You already have premium access!</p>
               <Link href="/dashboard" className="text-blue-600 hover:text-blue-800 underline mt-2 inline-block">
@@ -469,7 +507,7 @@ export default function UpgradePage() {
                       )}
                     </button>
                     <p className="text-sm text-center text-gray-500 mt-2">
-                      30 days free, then {pricing ? formatPrice(pricing.premiumPrice, pricing.currency) : '...'} / month
+                      30 days free, then {pricing ? formatPlanPrice(getPlanPrice(tier, interval, pricing.currency === 'NGN' ? 'NGN' : 'USD'), pricing.currency === 'NGN' ? 'NGN' : 'USD') : '...'} / {interval === 'annual' ? 'year' : 'month'}
                     </p>
                   </div>
                 )}

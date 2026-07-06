@@ -2,6 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import crypto from 'crypto';
 import { notifyPaymentReceived } from '@/lib/payment-notifications';
+import { PAYSTACK_PLAN_CODES } from '@/lib/plans';
+
+/** Reverse-lookup a Paystack plan code → our tier + interval. */
+function tierIntervalFromPlanCode(
+  code?: string
+): { tier?: 'pro' | 'business'; interval?: 'monthly' | 'annual' } {
+  if (!code) return {};
+  for (const tier of ['pro', 'business'] as const) {
+    for (const interval of ['monthly', 'annual'] as const) {
+      if (PAYSTACK_PLAN_CODES[tier][interval] === code) return { tier, interval };
+    }
+  }
+  return {};
+}
+
+/** Normalise Paystack's interval string ('monthly' | 'annually' | …) to ours. */
+function normalisePaystackInterval(paystackInterval?: string): 'monthly' | 'annual' {
+  return paystackInterval === 'annually' || paystackInterval === 'annual' ? 'annual' : 'monthly';
+}
 
 // POST - Handle Paystack webhook
 export async function POST(request: NextRequest) {
@@ -77,51 +96,121 @@ export async function POST(request: NextRequest) {
         console.log(`✅ Invoice payment confirmed via webhook: ref=${reference}`);
       }
 
-      // ── Path B: Subscription payment (fallback activator) ─────────────────
-      // The primary activation path is the /api/subscriptions/paystack-verify
-      // endpoint called immediately after the Inline popup succeeds. This
-      // webhook acts as a safety net in case that call failed (network issue,
-      // tab closed, etc.).
+      // Derive tier + interval from the plan code (present on subscription
+      // charges) or from the metadata we set on the initial Inline checkout.
+      const planCode: string | undefined =
+        (typeof data.plan === 'string' ? data.plan : data.plan?.plan_code) ||
+        data.plan_object?.plan_code;
+      const fromCode = tierIntervalFromPlanCode(planCode);
+      const tier = (metadata?.plan || fromCode.tier || 'pro') as string;
+      const interval =
+        (metadata?.interval as 'monthly' | 'annual') ||
+        fromCode.interval ||
+        normalisePaystackInterval(data.plan?.interval || data.plan_object?.interval);
+      const periodDays = interval === 'annual' ? 365 : 30;
+
       const metaUserId: string | undefined = metadata?.userId;
-      const metaPlan: string | undefined = metadata?.plan || 'premium';
 
       if (metaUserId) {
+        // ── Path B: Initial subscription activation (fallback for verify) ────
+        // Primary activation is /api/subscriptions/paystack-verify; this is the
+        // safety net if that call failed. Skip if already active to avoid
+        // double-counting the same first charge.
         const targetUser = await prisma.user.findUnique({
           where: { id: metaUserId },
-          select: { id: true, subscriptionStatus: true, subscriptionStartDate: true },
+          select: { id: true, subscriptionStatus: true },
         });
 
-        if (targetUser) {
-          // Only activate if not already active (avoid overwriting a fresh activation)
-          const alreadyActive = targetUser.subscriptionStatus === 'active';
-          if (!alreadyActive) {
-            const endDate = new Date();
-            endDate.setDate(endDate.getDate() + 30);
+        if (targetUser && targetUser.subscriptionStatus !== 'active') {
+          const endDate = new Date();
+          endDate.setDate(endDate.getDate() + periodDays);
+
+          await prisma.user.update({
+            where: { id: metaUserId },
+            data: {
+              subscriptionPlan: tier,
+              subscriptionStatus: 'active',
+              subscriptionStartDate: new Date(),
+              subscriptionEndDate: endDate,
+              subscriptionPaymentMethod: 'paystack',
+            },
+          });
+
+          console.log(`✅ Subscription activated via webhook fallback for user ${metaUserId}: ref=${reference}`);
+          try {
+            await prisma.systemLog.create({
+              data: {
+                level: 'info',
+                category: 'payment',
+                message: `Paystack subscription activated via webhook for user ${metaUserId}`,
+                metadata: { reference, plan: tier, interval, amount: amount / 100 },
+              },
+            });
+          } catch (_) { /* non-critical */ }
+        }
+      } else if (planCode) {
+        // ── Path C: Recurring renewal ───────────────────────────────────────
+        // Renewal charges are initiated by Paystack and carry no metadata, so
+        // match by customer email and extend the current period.
+        // NOTE(idempotency): we return 200 so Paystack won't retry; if you see
+        // duplicate extensions, add a processed-reference guard.
+        const email: string | undefined = customer?.email;
+        if (email) {
+          const subUser = await prisma.user.findUnique({
+            where: { email: email.toLowerCase() },
+            select: { id: true, subscriptionEndDate: true },
+          });
+
+          if (subUser) {
+            // Extend from the later of "now" or the existing end date.
+            const base =
+              subUser.subscriptionEndDate && subUser.subscriptionEndDate > new Date()
+                ? new Date(subUser.subscriptionEndDate)
+                : new Date();
+            base.setDate(base.getDate() + periodDays);
 
             await prisma.user.update({
-              where: { id: metaUserId },
+              where: { id: subUser.id },
               data: {
-                subscriptionPlan: metaPlan,
+                subscriptionPlan: tier,
                 subscriptionStatus: 'active',
-                subscriptionStartDate: new Date(),
-                subscriptionEndDate: endDate,
+                subscriptionEndDate: base,
                 subscriptionPaymentMethod: 'paystack',
               },
             });
 
-            console.log(`✅ Subscription activated via webhook fallback for user ${metaUserId}: ref=${reference}`);
-
+            console.log(`🔁 Subscription renewed via webhook for ${email}: ref=${reference}`);
             try {
               await prisma.systemLog.create({
                 data: {
                   level: 'info',
                   category: 'payment',
-                  message: `Paystack subscription activated via webhook for user ${metaUserId}`,
-                  metadata: { reference, plan: metaPlan, amount: amount / 100 },
+                  message: `Paystack subscription renewed for ${email}`,
+                  metadata: { reference, plan: tier, interval, amount: amount / 100 },
                 },
               });
             } catch (_) { /* non-critical */ }
           }
+        }
+      }
+    }
+
+    // ── Subscription cancellation / non-renewal ───────────────────────────────
+    // Access is kept until the current period end; the check-subscriptions cron
+    // downgrades to Free once subscriptionEndDate passes.
+    if (event === 'subscription.disable' || event === 'subscription.not_renew') {
+      const email: string | undefined = data?.customer?.email;
+      if (email) {
+        const subUser = await prisma.user.findUnique({
+          where: { email: email.toLowerCase() },
+          select: { id: true },
+        });
+        if (subUser) {
+          await prisma.user.update({
+            where: { id: subUser.id },
+            data: { subscriptionStatus: 'cancelled' },
+          });
+          console.log(`⚠️ Paystack subscription ${event} for ${email}`);
         }
       }
     }

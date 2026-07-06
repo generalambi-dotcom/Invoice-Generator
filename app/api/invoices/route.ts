@@ -5,7 +5,7 @@ import { rateLimit, rateLimitConfigs, getClientIdentifier } from '@/lib/rate-lim
 import { logRequest, logError } from '@/lib/request-logger';
 import { autoGeneratePaymentLink } from '@/lib/auto-payment-link';
 import { sendLimitWarningEmail } from '@/lib/email';
-import { getInvoiceLimit } from '@/lib/plans';
+import { getInvoiceLimit, planHasFeature, currencyAllowed, themeAllowed } from '@/lib/plans';
 import { logInvoiceEvent } from '@/lib/invoice-events';
 
 // GET - Get user's invoices
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
       // grandfathering for pre-launch free users).
       const dbUser = await prisma.user.findUnique({
         where: { id: user.userId },
-        select: { subscriptionPlan: true, email: true, name: true, createdAt: true }
+        select: { subscriptionPlan: true, email: true, name: true, createdAt: true, isAdmin: true }
       });
 
       const monthlyLimit = getInvoiceLimit(dbUser?.subscriptionPlan, dbUser?.createdAt);
@@ -174,6 +174,40 @@ export async function POST(request: NextRequest) {
         if (currentMonthInvoicesCount === monthlyLimit - 1 && dbUser && dbUser.email) {
           // Fire email asynchronously, don't await so we don't slow down creation
           sendLimitWarningEmail({ to: dbUser.email, name: dbUser.name || 'there' }).catch(err => console.error('Limit warning email failed:', err));
+        }
+      }
+
+      // ── Feature gates (skipped for admins) ──────────────────────────────────
+      // Grandfathering is baked into the config helpers below.
+      if (!dbUser?.isAdmin) {
+        const plan = dbUser?.subscriptionPlan;
+        const since = dbUser?.createdAt;
+
+        // Estimates & credit notes are Pro+.
+        if (
+          (type === 'estimate' || type === 'credit_note') &&
+          !planHasFeature('estimatesAndCreditNotes', plan, since)
+        ) {
+          return NextResponse.json(
+            { error: 'UPGRADE_REQUIRED', message: 'Estimates and credit notes are available on Pro. Please upgrade to create them.' },
+            { status: 403 }
+          );
+        }
+
+        // Currency allowlist (Free gets a small set).
+        if (currency && !currencyAllowed(currency, plan, since)) {
+          return NextResponse.json(
+            { error: 'UPGRADE_REQUIRED', message: 'This currency is available on Pro. Free plans support a limited set of currencies.' },
+            { status: 403 }
+          );
+        }
+
+        // Theme allowlist (Free gets 2 themes).
+        if (theme && !themeAllowed(theme, plan, since)) {
+          return NextResponse.json(
+            { error: 'UPGRADE_REQUIRED', message: 'This colour theme is available on Pro. Free plans include 2 themes.' },
+            { status: 403 }
+          );
         }
       }
 

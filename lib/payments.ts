@@ -6,12 +6,14 @@ import { getPaymentConfig } from './admin';
  */
 export async function initiatePayment(params: {
   userId: string;
-  plan: string;
+  plan: string;                    // tier stored on the user: 'pro' | 'business'
   provider: 'paypal' | 'paystack' | 'stripe';
   amount: number;
   currency: string;
   userEmail: string;
   trial?: boolean;
+  interval?: 'monthly' | 'annual'; // billing interval
+  planCode?: string;               // Paystack recurring plan code (NGN only)
 }): Promise<string> {
   if (typeof window === 'undefined') {
     throw new Error('Payment can only be initiated in the browser');
@@ -114,15 +116,18 @@ function initializePaystack(
   reject: (error: Error) => void
 ): void {
   try {
-    const handler = (window as any).PaystackPop.setup({
+    // When a recurring plan code is supplied (NGN tiers), subscribe the customer
+    // to that plan — Paystack uses the plan's amount/interval and auto-renews.
+    // Otherwise fall back to a one-time charge for the given amount.
+    const setupConfig: any = {
       key: publicKey,
       email: params.userEmail,
-      amount: params.amount * 100, // Convert to kobo (smallest currency unit)
       currency: params.currency === 'NGN' ? 'NGN' : 'USD',
       ref: `sub_${params.userId}_${Date.now()}`,
       metadata: {
         userId: params.userId,
-        plan: params.plan,
+        plan: params.plan,        // tier: 'pro' | 'business'
+        interval: params.interval || 'monthly',
       },
       callback: async (response: any) => {
         try {
@@ -134,6 +139,7 @@ function initializePaystack(
               reference: response.reference,
               userId: params.userId,
               plan: params.plan,
+              interval: params.interval || 'monthly',
             }),
           });
 
@@ -152,8 +158,17 @@ function initializePaystack(
       onClose: () => {
         reject(new Error('Payment window closed'));
       },
-    });
+    };
 
+    if (params.planCode) {
+      // Recurring subscription — Paystack derives amount + interval from the plan.
+      setupConfig.plan = params.planCode;
+    } else {
+      // One-time charge fallback (e.g. USD tiers without a Paystack plan).
+      setupConfig.amount = params.amount * 100; // kobo
+    }
+
+    const handler = (window as any).PaystackPop.setup(setupConfig);
     handler.openIframe();
   } catch (error: any) {
     reject(new Error('Failed to initialize Paystack: ' + error.message));

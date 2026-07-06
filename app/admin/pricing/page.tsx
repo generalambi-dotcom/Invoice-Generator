@@ -91,13 +91,12 @@ function PricingSettingsContent() {
     setSaving(true);
 
     try {
+      // Auth is carried by the httpOnly cookie; include a Bearer token only if
+      // one still exists (legacy sessions). Do not hard-fail when it's absent.
       const token = await getValidAccessToken();
-      if (!token) {
-        throw new Error('Authentication required. Please sign in again.');
-      }
 
       const setting = pricingSettings[region];
-      
+
       // Validate price
       if (typeof setting.premiumPrice !== 'number' || setting.premiumPrice < 0) {
         throw new Error('Price must be a positive number');
@@ -107,7 +106,7 @@ function PricingSettingsContent() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          ...(token && { 'Authorization': `Bearer ${token}` }),
         },
         body: JSON.stringify({
           region,

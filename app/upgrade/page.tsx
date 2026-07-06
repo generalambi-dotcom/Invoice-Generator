@@ -87,9 +87,15 @@ export default function UpgradePage() {
 
   const loadPricing = async () => {
     const detectedRegion = detectUserRegion();
-    setRegion(detectedRegion);
     const priceData = await getPricing(detectedRegion);
     setPricing(priceData);
+    // Reflect the server's authoritative (IP-based) region so the label matches
+    // the currency actually shown.
+    if (priceData.region === 'nigeria' || priceData.region === 'rest-of-world') {
+      setRegion(priceData.region as 'nigeria' | 'rest-of-world');
+    } else {
+      setRegion(detectedRegion);
+    }
     trackEvent('view_item', { item_name: 'Premium Subscription', value: priceData.premiumPrice, currency: priceData.currency });
   };
 

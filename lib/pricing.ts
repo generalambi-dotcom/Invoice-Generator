@@ -23,19 +23,22 @@ export function detectUserRegion(): 'nigeria' | 'rest-of-world' {
     return storedRegion;
   }
 
-  // Method 2: Check user's timezone (Nigeria is WAT - UTC+1)
+  // Method 2: Check user's timezone. Nigeria's IANA zone is 'Africa/Lagos'.
+  // NOTE: this is only a client-side hint used before the server responds — do
+  // NOT match all of 'Africa/*' here, or every African visitor would be treated
+  // as Nigerian. The authoritative decision is made server-side by IP in
+  // /api/pricing; this just avoids a wrong first paint.
   try {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (timezone.includes('Lagos') || timezone.includes('Africa')) {
-      localStorage.setItem('user-region', 'nigeria');
+    if (timezone === 'Africa/Lagos') {
       return 'nigeria';
     }
   } catch (e) {
     // Ignore errors
   }
 
-  // Method 3: Use IP geolocation (client-side via API)
-  // This is handled separately via API call for better accuracy
+  // Method 3: IP geolocation is applied authoritatively server-side in
+  // /api/pricing based on the request country.
 
   // Default to rest-of-world
   return 'rest-of-world';

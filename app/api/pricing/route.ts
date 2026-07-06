@@ -12,12 +12,31 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const region = searchParams.get('region') || 'default';
-    
-    // Normalize region
-    const normalizedRegion = ['nigeria', 'rest-of-world'].includes(region) 
-      ? region 
-      : 'default';
+    const explicitRegion = searchParams.get('region');
+
+    // Resolve region authoritatively from IP geolocation (Vercel populates
+    // request.geo / the x-vercel-ip-country header). This is far more reliable
+    // than the client's timezone guess, which can't tell Nigeria apart from the
+    // rest of Africa and is easily wrong.
+    const country = (
+      (request as any).geo?.country ||
+      request.headers.get('x-vercel-ip-country') ||
+      ''
+    ).toUpperCase();
+
+    let normalizedRegion: string;
+    if (country === 'NG') {
+      normalizedRegion = 'nigeria';
+    } else if (country) {
+      // Any other known country → rest of world.
+      normalizedRegion = 'rest-of-world';
+    } else if (explicitRegion === 'nigeria' || explicitRegion === 'rest-of-world') {
+      // No geo signal (e.g. local dev, missing header) → fall back to the
+      // client-provided hint.
+      normalizedRegion = explicitRegion;
+    } else {
+      normalizedRegion = 'rest-of-world';
+    }
 
     // Get pricing setting for region, fallback to default
     let pricingSetting = await prisma.pricingSettings.findUnique({

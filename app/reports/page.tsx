@@ -63,8 +63,9 @@ export default function ReportsPage() {
   const [showFormatDropdown, setShowFormatDropdown] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) { router.push('/signin'); return; }
+    // Auth is carried by the httpOnly cookie; gate on the cached user profile.
+    const authed = typeof window !== 'undefined' && !!localStorage.getItem('invoice-generator-current-user');
+    if (!authed) { router.push('/signin'); return; }
     fetchReports();
   }, [router]);
 

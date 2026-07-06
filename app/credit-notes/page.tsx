@@ -19,12 +19,7 @@ export default function CreditNotesPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        router.push('/signin?redirect=/credit-notes');
-        return;
-      }
-
+      // Auth is carried by the httpOnly cookie; gate on the cached user profile.
       const currentUser = getCurrentUser();
       if (!currentUser) {
         router.push('/signin?redirect=/credit-notes');

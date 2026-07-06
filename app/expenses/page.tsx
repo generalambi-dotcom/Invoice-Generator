@@ -62,12 +62,14 @@ const emptyForm = () => ({
 export default function ExpensesPage() {
     const router = useRouter();
 
-    // Auth
+    // Auth — the JWT is in an httpOnly cookie (not readable by JS). We gate on
+    // the cached user profile and let the cookie authenticate API calls. `token`
+    // is kept as a readiness sentinel so the existing `if (!token)` guards work.
     const [token, setToken] = useState<string | null>(null);
     useEffect(() => {
-        const t = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-        if (!t) { router.push('/signin'); return; }
-        setToken(t);
+        const authed = typeof window !== 'undefined' && !!localStorage.getItem('invoice-generator-current-user');
+        if (!authed) { router.push('/signin'); return; }
+        setToken('authenticated');
     }, [router]);
 
     // Data

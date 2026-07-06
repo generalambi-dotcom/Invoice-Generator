@@ -52,24 +52,15 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Check for token first
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        router.push('/signin?redirect=/dashboard');
-        return;
-      }
-
+      // Auth is carried by the httpOnly `auth_token` cookie (not readable by JS).
+      // Gate on the cached user profile; if it's missing, verify via /api/auth/me
+      // which authenticates from the cookie.
       const currentUser = getCurrentUser();
       let userData = currentUser;
 
       if (!currentUser) {
-        // Try to get user from token if localStorage user is missing
         try {
-          const response = await fetch('/api/auth/me', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          });
+          const response = await fetch('/api/auth/me');
           if (response.ok) {
             const data = await response.json();
             localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));

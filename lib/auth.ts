@@ -7,11 +7,11 @@ export interface User {
   createdAt: string;
   isAdmin?: boolean; // For admin access
   subscription?: {
-    plan: 'free' | 'premium';
+    plan: string;
     status: 'active' | 'cancelled' | 'expired';
     startDate?: string;
     endDate?: string;
-    paymentMethod?: 'paypal' | 'paystack';
+    paymentMethod?: string;
   };
 }
 

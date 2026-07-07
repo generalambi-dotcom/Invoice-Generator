@@ -13,12 +13,13 @@ import DashboardGreeting from '@/components/DashboardGreeting';
 import DashboardCharts from '@/components/DashboardCharts';
 import OnboardingModal from '@/components/OnboardingModal';
 import ProfileCompletenessCard from '@/components/ProfileCompletenessCard';
-import ProfileNudge from '@/components/ProfileNudge';
+
 import DirectoryOptInModal from '@/components/DirectoryOptInModal';
 import DirectorySettingsCard from '@/components/DirectorySettingsCard';
 import ActivationChecklist from '@/components/dashboard/ActivationChecklist';
 import UsageMeter from '@/components/dashboard/UsageMeter';
 import OverdueNudge from '@/components/dashboard/OverdueNudge';
+import { normaliseTier, isPaidTier, getInvoiceLimit } from '@/lib/plans';
 import {
   Plus, BarChart3, FileText, Eye, CreditCard,
   Trash2, RefreshCcw, MoreHorizontal, Sparkles, ArrowRightLeft
@@ -371,8 +372,8 @@ export default function DashboardPage() {
   const stats = calculateStats();
 
   // ── Activation / premium / get-paid-faster derived state ───────────────────────
-  const isPremium =
-    user?.subscription?.plan === 'premium' && user?.subscription?.status === 'active';
+  const userTier = normaliseTier(user?.subscription?.plan);
+  const isPremium = isPaidTier(userTier) && user?.subscription?.status === 'active';
 
   // Documents created in the current calendar month — mirrors the server-side free
   // plan count in app/api/invoices/route.ts (all types/statuses count toward the cap).
@@ -685,16 +686,9 @@ export default function DashboardPage() {
         />
 
         {/* Free-plan usage meter + near-limit upgrade nudge */}
-        <UsageMeter count={invoicesThisMonth} isPremium={isPremium} />
+        <UsageMeter count={invoicesThisMonth} limit={getInvoiceLimit(user?.subscription?.plan, user?.createdAt)} />
 
-        {/* Profile Nudge - contextual suggestion */}
-        {showNudge && profileData?.nudge && profileData?.completeness?.score < 100 && (
-          <ProfileNudge
-            nudge={profileData.nudge}
-            score={profileData.completeness.score}
-            onDismiss={() => setShowNudge(false)}
-          />
-        )}
+
 
         {/* Profile Completeness - compact card */}
         {profileData?.completeness && profileData.completeness.score < 100 && (

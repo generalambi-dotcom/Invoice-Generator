@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
       where: { id: user.userId },
       select: {
         id: true,
+        createdAt: true,
         email: true,
         name: true,
         isAdmin: true,
@@ -41,6 +42,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       user: {
         id: dbUser.id,
+        createdAt: dbUser.createdAt?.toISOString(),
         email: dbUser.email,
         name: dbUser.name,
         isAdmin: dbUser.isAdmin,

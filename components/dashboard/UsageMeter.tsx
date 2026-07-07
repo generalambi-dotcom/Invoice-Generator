@@ -7,16 +7,11 @@ import { getPricing, formatPrice, detectUserRegion, TRIAL_DAYS } from '@/lib/pri
 interface UsageMeterProps {
   /** Number of documents created in the current calendar month (mirrors server count). */
   count: number;
-  /** Whether the user is on an active premium subscription. */
-  isPremium: boolean;
+  /** Monthly invoice limit for the user's plan, or null if unlimited (paid users). */
+  limit: number | null;
 }
 
-// Free plan cap — mirrors the server rule in app/api/invoices/route.ts.
-const FREE_LIMIT = 15;
-// Threshold at which we switch to the upgrade nudge.
-const NUDGE_AT = 12;
-
-export default function UsageMeter({ count, isPremium }: UsageMeterProps) {
+export default function UsageMeter({ count, limit }: UsageMeterProps) {
   const [priceLabel, setPriceLabel] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,13 +32,14 @@ export default function UsageMeter({ count, isPremium }: UsageMeterProps) {
     };
   }, []);
 
-  // Premium users have no limit — nothing to show.
-  if (isPremium) return null;
+  // Unlimited users (paid plans) — nothing to show.
+  if (limit === null) return null;
 
-  const used = Math.min(count, FREE_LIMIT);
-  const remaining = Math.max(0, FREE_LIMIT - count);
-  const pct = Math.min(100, Math.round((count / FREE_LIMIT) * 100));
-  const nearLimit = count >= NUDGE_AT;
+  const used = Math.min(count, limit);
+  const remaining = Math.max(0, limit - count);
+  const pct = Math.min(100, Math.round((count / limit) * 100));
+  const nudgeAt = Math.ceil(limit * 0.8);
+  const nearLimit = count >= nudgeAt;
 
   const barColor = pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-amber-500' : 'bg-emerald-500';
 
@@ -57,7 +53,7 @@ export default function UsageMeter({ count, isPremium }: UsageMeterProps) {
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-gray-900">Free plan usage</span>
           <span className="text-xs text-gray-500">
-            {used}/{FREE_LIMIT} invoices this month
+            {used}/{limit} invoices this month
           </span>
         </div>
         {nearLimit && (

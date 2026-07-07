@@ -8,7 +8,7 @@ import InvoicePaper from './InvoicePaper';
 import { pdf } from '@react-pdf/renderer';
 import { InvoicePDF } from '@/lib/pdf-generator';
 import { SendEmailModal } from './SendEmailModal';
-import { Mail } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
 import {
   Invoice,
   LineItem,
@@ -51,6 +51,7 @@ import {
 import LineItems from './LineItems';
 import { format } from 'date-fns';
 import { getCurrentUser } from '@/lib/auth';
+import { planHasFeature, currencyAllowed, themeAllowed, FREE_THEMES, FREE_CURRENCIES, FeatureKey } from '@/lib/plans';
 import { isPremiumUser } from '@/lib/payments';
 import ImageUpload from '@/components/ImageUpload';
 import { trackEvent } from '@/lib/tracking';
@@ -164,6 +165,21 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
   const [templates, setTemplates] = useState<any[]>([]);
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
+
+  // ── Client-side entitlement checks (UX hints only; server is source of truth) ──
+  const entitlements = React.useMemo(() => {
+    const u = getCurrentUser();
+    const plan = u?.subscription?.plan;
+    const createdAt = u?.createdAt;
+    return {
+      canEmail: planHasFeature('emailToClient', plan, createdAt),
+      canEstimates: planHasFeature('estimatesAndCreditNotes', plan, createdAt),
+      canExtraCurrencies: planHasFeature('extraCurrencies', plan, createdAt),
+      canExtraThemes: planHasFeature('extraThemes', plan, createdAt),
+      isCurrencyAllowed: (c: string) => currencyAllowed(c, plan, createdAt),
+      isThemeAllowed: (t: string) => themeAllowed(t, plan, createdAt),
+    };
+  }, []);
   const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState<string | null>(null);
   const [newClient, setNewClient] = useState({
@@ -1711,15 +1727,23 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Color Theme</label>
                   <div className="grid grid-cols-5 gap-2">
-                    {['slate', 'blue', 'green', 'purple', 'red'].map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => updateField('theme', t as Theme)}
-                        className={`h-8 rounded-full border-2 transition-all ${invoice.theme === t ? 'border-gray-900 scale-110' : 'border-transparent hover:scale-110'}`}
-                        style={{ backgroundColor: `var(--color-${t}-500, ${t === 'slate' ? '#64748b' : t === 'blue' ? '#3b82f6' : t === 'green' ? '#22c55e' : t === 'purple' ? '#a855f7' : '#ef4444'})` }}
-                        title={t.charAt(0).toUpperCase() + t.slice(1)}
-                      />
-                    ))}
+                    {['slate', 'blue', 'green', 'purple', 'red'].map((t) => {
+                      const locked = !entitlements.isThemeAllowed(t);
+                      return (
+                        <button
+                          key={t}
+                          onClick={() => {
+                            if (locked) { window.location.href = '/upgrade'; return; }
+                            updateField('theme', t as Theme);
+                          }}
+                          className={`h-8 rounded-full border-2 transition-all relative ${invoice.theme === t ? 'border-gray-900 scale-110' : 'border-transparent hover:scale-110'} ${locked ? 'opacity-60' : ''}`}
+                          style={{ backgroundColor: `var(--color-${t}-500, ${t === 'slate' ? '#64748b' : t === 'blue' ? '#3b82f6' : t === 'green' ? '#22c55e' : t === 'purple' ? '#a855f7' : '#ef4444'})` }}
+                          title={locked ? `${t.charAt(0).toUpperCase() + t.slice(1)} (Pro)` : t.charAt(0).toUpperCase() + t.slice(1)}
+                        >
+                          {locked && <Lock className="w-3 h-3 text-white absolute inset-0 m-auto drop-shadow" />}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -1727,23 +1751,37 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Currency</label>
                   <select
                     value={invoice.currency}
-                    onChange={(e) => updateField('currency', e.target.value as Currency)}
+                    onChange={(e) => {
+                      const val = e.target.value as Currency;
+                      if (!entitlements.isCurrencyAllowed(val)) {
+                        toast.error('This currency requires a Pro plan.');
+                        window.location.href = '/upgrade';
+                        return;
+                      }
+                      updateField('currency', val);
+                    }}
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-theme-primary/20 focus:border-theme-primary"
                   >
-                    <option value="NGN">NGN (₦)</option>
-                    <option value="USD">USD ($)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="CAD">CAD (C$)</option>
-                    <option value="AUD">AUD (A$)</option>
-                    <option value="JPY">JPY (¥)</option>
-                    <option value="ZAR">ZAR (R)</option>
-                    <option value="KES">KES (KSh)</option>
-                    <option value="GHS">GHS (₵)</option>
-                    <option value="AED">AED (د.إ)</option>
-                    <option value="CNY">CNY (¥)</option>
-                    <option value="INR">INR (₹)</option>
-                    <option value="BRL">BRL (R$)</option>
+                    {[
+                      { code: 'NGN', label: 'NGN (₦)' },
+                      { code: 'USD', label: 'USD ($)' },
+                      { code: 'GBP', label: 'GBP (£)' },
+                      { code: 'EUR', label: 'EUR (€)' },
+                      { code: 'CAD', label: 'CAD (C$)' },
+                      { code: 'AUD', label: 'AUD (A$)' },
+                      { code: 'JPY', label: 'JPY (¥)' },
+                      { code: 'ZAR', label: 'ZAR (R)' },
+                      { code: 'KES', label: 'KES (KSh)' },
+                      { code: 'GHS', label: 'GHS (₵)' },
+                      { code: 'AED', label: 'AED (د.إ)' },
+                      { code: 'CNY', label: 'CNY (¥)' },
+                      { code: 'INR', label: 'INR (₹)' },
+                      { code: 'BRL', label: 'BRL (R$)' },
+                    ].map(({ code, label }) => (
+                      <option key={code} value={code}>
+                        {label}{!entitlements.isCurrencyAllowed(code) ? ' · Pro' : ''}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -2069,16 +2107,22 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                           Invoice
                         </button>
                         <button
-                          onClick={() => updateField('type', 'estimate')}
+                          onClick={() => {
+                            if (!entitlements.canEstimates) { window.location.href = '/upgrade'; return; }
+                            updateField('type', 'estimate');
+                          }}
                           className={`px-3 py-1.5 border-l border-r border-gray-200 transition-colors ${invoice.type === 'estimate' ? 'bg-amber-500 text-white border-amber-600' : 'text-gray-600 hover:bg-gray-50'}`}
                         >
-                          Estimate
+                          Estimate {!entitlements.canEstimates && <Lock className="w-3 h-3 inline ml-0.5 text-amber-500" />}
                         </button>
                         <button
-                          onClick={() => updateField('type', 'credit_note')}
+                          onClick={() => {
+                            if (!entitlements.canEstimates) { window.location.href = '/upgrade'; return; }
+                            updateField('type', 'credit_note');
+                          }}
                           className={`px-3 py-1.5 transition-colors ${invoice.type === 'credit_note' ? 'bg-rose-500 text-white border-rose-600' : 'text-gray-600 hover:bg-gray-50'}`}
                         >
-                          Credit Note
+                          Credit Note {!entitlements.canEstimates && <Lock className="w-3 h-3 inline ml-0.5 text-amber-500" />}
                         </button>
                       </div>
 
@@ -3213,11 +3257,18 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
 
                 {/* Send via email (this also marks it as sent) */}
                 <button
-                  onClick={() => { setShowSuccessModal(false); setIsEmailModalOpen(true); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 bg-gray-900 hover:bg-black text-white font-semibold rounded-xl text-sm transition-colors"
+                  onClick={() => {
+                    if (!entitlements.canEmail) { window.location.href = '/upgrade'; return; }
+                    setShowSuccessModal(false); setIsEmailModalOpen(true);
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 font-semibold rounded-xl text-sm transition-colors ${entitlements.canEmail ? 'bg-gray-900 hover:bg-black text-white' : 'bg-gray-100 text-gray-400 border border-gray-200'}`}
                 >
-                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                  Send via email
+                  {entitlements.canEmail ? (
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  ) : (
+                    <Lock className="w-5 h-5 flex-shrink-0 text-amber-500" />
+                  )}
+                  Send via email {!entitlements.canEmail && <span className="ml-auto text-xs text-amber-500 font-medium">Pro</span>}
                 </button>
 
                 {/* Enable automatic reminders (discoverability of existing system) */}

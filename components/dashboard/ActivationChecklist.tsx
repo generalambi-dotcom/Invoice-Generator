@@ -49,7 +49,7 @@ export default function ActivationChecklist({
     },
     {
       label: 'Send an invoice',
-      hint: 'Email it to your client straight from the app',
+      hint: 'Download or share it with your client',
       done: hasSentInvoice,
       href: '/free-invoice-generator',
       cta: 'Send invoice',

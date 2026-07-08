@@ -13,19 +13,7 @@ export function getCoupons(): Coupon[] {
   try {
     const data = localStorage.getItem(COUPONS_KEY);
     if (!data) {
-      // Initialize with default "free" coupon
-      const defaultCoupon: Coupon = {
-        code: 'free',
-        discountType: 'free',
-        plan: 'premium',
-        duration: 30, // 30 days
-        maxUses: 1000, // Allow many uses
-        usedCount: 0,
-        createdAt: new Date().toISOString(),
-      };
-      const coupons = [defaultCoupon];
-      localStorage.setItem(COUPONS_KEY, JSON.stringify(coupons));
-      return coupons;
+      return [];
     }
     return JSON.parse(data);
   } catch (error) {
@@ -56,6 +44,10 @@ function getCouponUsage(): CouponUsage[] {
 export function validateCoupon(code: string, userId: string): { valid: boolean; coupon?: Coupon; error?: string } {
   if (typeof window === 'undefined') {
     return { valid: false, error: 'Coupon validation only available in browser' };
+  }
+
+  if (code.toLowerCase() === 'free') {
+    return { valid: false, error: 'This coupon code has expired' };
   }
 
   const coupons = getCoupons();

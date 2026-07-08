@@ -294,7 +294,12 @@ export default function UpgradePage() {
         }
       }
     } catch (error: any) {
-      toast.error('Failed to initiate payment: ' + error.message);
+      if (error.message === 'Payment window closed') {
+        // Silently handle or show a mild info toast
+        toast.info('Payment cancelled');
+      } else {
+        toast.error('Failed to initiate payment: ' + error.message);
+      }
       setLoading(false);
       setPaymentProvider(null);
     }
@@ -406,9 +411,6 @@ export default function UpgradePage() {
               {couponError && (
                 <p className="text-sm text-red-600">{couponError}</p>
               )}
-              <p className="text-sm text-gray-500">
-                Try the code <strong>"free"</strong> for 30 days of premium access!
-              </p>
             </div>
           )}
         </div>

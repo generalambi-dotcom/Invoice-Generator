@@ -64,8 +64,7 @@ export default function UpgradePage() {
     // Load pricing based on region
     loadPricing();
 
-    // Load available payment providers
-    loadAvailableProviders();
+    // Payment providers are loaded inside loadPricing() after region detection.
 
     // Check for payment success/cancel redirect
     if (typeof window !== 'undefined') {
@@ -120,25 +119,39 @@ export default function UpgradePage() {
       setRegion(detectedRegion);
     }
     trackEvent('view_item', { item_name: 'Premium Subscription', value: priceData.premiumPrice, currency: priceData.currency });
+
+    // Now that we know the region, load payment providers with geo-filtering.
+    const resolvedRegion = (priceData.region === 'nigeria' || priceData.region === 'rest-of-world')
+      ? priceData.region as 'nigeria' | 'rest-of-world'
+      : detectedRegion;
+    loadAvailableProviders(resolvedRegion);
   };
 
-  const loadAvailableProviders = async () => {
+  const loadAvailableProviders = async (detectedRegion?: 'nigeria' | 'rest-of-world') => {
     try {
       // Check server-side API for available providers
       const response = await fetch('/api/subscriptions/available-providers');
       if (response.ok) {
         const data = await response.json();
-        const providers = data.providers || {
+        const configured = data.providers || {
           paypal: false,
           paystack: false,
           stripe: false,
         };
 
-        console.log('Available providers from API:', providers);
+        // Geo-gate: Nigeria → Paystack only, international → Stripe only.
+        // A provider must also have keys configured on the server to appear.
+        const isNigeria = detectedRegion === 'nigeria';
+        const providers = {
+          paypal: false, // PayPal disabled for now
+          paystack: isNigeria && configured.paystack,
+          stripe: !isNigeria && configured.stripe,
+        };
+
+        console.log('Available providers (geo-filtered):', { detectedRegion, configured, providers });
         setAvailableProviders(providers);
       } else {
         console.error('Failed to fetch available providers:', response.status);
-        // Set all to false if API fails
         setAvailableProviders({
           paypal: false,
           paystack: false,
@@ -147,7 +160,6 @@ export default function UpgradePage() {
       }
     } catch (error) {
       console.error('Error loading available providers:', error);
-      // Set all to false on error
       setAvailableProviders({
         paypal: false,
         paystack: false,

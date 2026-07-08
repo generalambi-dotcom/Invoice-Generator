@@ -125,8 +125,7 @@ function initializePaystack(
       email: params.userEmail,
       currency: params.currency === 'NGN' ? 'NGN' : 'USD',
       ref: `sub_${params.userId}_${Date.now()}`,
-      bearer: 'account', // Critical for subscriptions if the merchant has "Pass fees to customers" enabled globally
-      channels: ['card'], // Subscriptions ONLY support card. If Paystack tries to offer Bank Transfer, it crashes with "no channels available".
+      bearer: 'account', // Critical if the merchant has "Pass fees to customers" enabled
       metadata: {
         userId: params.userId,
         plan: params.plan,        // tier: 'pro' | 'business'

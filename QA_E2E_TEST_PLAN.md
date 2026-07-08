@@ -1,185 +1,142 @@
-# InvoiceGenerator.ng — End-to-End Test Plan
+# InvoiceGenerator.ng — Comprehensive End-to-End Test Plan
 
-**Purpose:** Verify the new pricing, subscriptions, login/session changes, and feature limits all work correctly before/after go-live.
+**Purpose:** Provide full regression and feature coverage for the entire Invoice Generator app, from the unauthenticated landing page experience through to premium features, subscriptions, and document management. 
 **Who runs this:** QA / staff tester (no coding needed).
-**How to use:** Work top to bottom. For each test, follow the steps, compare to "Expected result," and mark **Pass / Fail** with a note. Log every failure using the Bug Report template at the end.
+**How to use:** Work top to bottom. For each test, follow the steps, compare to "Expected result," and mark **Pass / Fail**. Log every failure using the Bug Report template at the end.
 
 ---
 
-## 0. Before you start (READ THIS FIRST)
+## 0. Prerequisites & Setup
 
-### Use TEST mode for payments — do NOT use real cards
-So you can test paying for plans without moving real money:
-- **Paystack:** the account should be toggled to **Test mode**, and the site should be configured with the **test** Paystack keys.
-- **Stripe:** use the **test** Stripe keys.
-- If you are testing on the **live** site with live keys, use the **smallest plan** and tell the admin so they can refund — but test mode is strongly preferred.
-
-**Confirm with the admin which mode you are testing in before starting:** ☐ Test mode  ☐ Live mode
-
-### Test card numbers (TEST MODE ONLY)
-| Provider | Card number | Expiry | CVV | Extra |
-|---|---|---|---|---|
-| **Paystack** | `4084 0840 8408 4081` | any future date | `408` | PIN `0000`, OTP `123456` |
-| **Stripe** | `4242 4242 4242 4242` | any future date | any 3 digits | any ZIP |
-
-### Test accounts you need to create
-Create these before starting and write down the emails/passwords:
-
-1. **NEW FREE user** — a brand-new account you sign up **today** (after the new pricing went live). Used to test the *new* Free limits. → `________________`
-2. **EXISTING (grandfathered) user** — an account that already existed **before** the new pricing launched. Ask the admin for one, or use an old test account. Used to test grandfathering. → `________________`
-3. **A second throwaway email** for extra signup tests. → `________________`
-
-> **Why this matters:** users who registered *before* launch keep the old, more generous Free plan (15 invoices/month, can email invoices, can make estimates). Users who sign up *after* launch get the new leaner Free plan (5 invoices/month, no emailing, no estimates). You must test both.
-
-### Devices
-Test on **at least one Android phone** (most of our users are on mobile) and one desktop browser.
-
-### How to check a user's plan (admin)
-The admin can open **Admin → User Management**, search the test email, and confirm the plan (free / pro / business) and subscription status. Ask them to help verify after each payment test.
+- **Test Environments:** Ensure you are testing against the staging environment with test keys (Paystack Test, Stripe Test). Confirm mode with admin.
+- **Test Accounts Needed:**
+  1. **New Free User** (Signed up today)
+  2. **Grandfathered Free User** (Created before pricing launch)
+  3. **Premium User** (Pro or Business)
+- **Devices:** Test on at least one Desktop browser (Chrome/Safari) and one Mobile device (Android/iOS).
 
 ---
 
-## 1. Authentication & Sessions
-*(We recently changed how login works — this is the highest-priority regression area. If login breaks, stop and report immediately.)*
+## 1. Landing Page & Unauthenticated Experience
 
-| # | Steps | Expected result | Pass/Fail | Notes |
+| # | Scenario | Steps | Expected Result | Pass/Fail |
 |---|---|---|---|---|
-| 1.1 | Sign up a brand-new account (email + password) | Account is created; you're guided to verify email (or logged in if verification is off) | ☐ | |
-| 1.2 | Verify email via the link in the inbox, then sign in | You land on the Dashboard, **not** bounced back to the sign-in page | ☐ | |
-| 1.3 | Sign in with correct email + password | Lands on Dashboard and **stays** logged in | ☐ | |
-| 1.4 | Refresh the Dashboard page (hard refresh) | Still logged in, no redirect to sign-in | ☐ | |
-| 1.5 | Close the tab, reopen the site | Still logged in (session persists) | ☐ | |
-| 1.6 | Sign in with **wrong** password 5–6 times | Clear error; after several tries the account is temporarily locked / rate-limited | ☐ | |
-| 1.7 | "Sign in with Google" | Logs in and lands on Dashboard | ☐ | If Google login is enabled |
-| 1.8 | If the account has 2FA on: sign in → enter the 6-digit code | Logs in only after correct code | ☐ | If 2FA enabled |
-| 1.9 | Click Logout | Returns to signed-out state; visiting /dashboard now redirects to sign-in | ☐ | |
-| 1.10 | While logged OUT, open `/dashboard` directly | Redirected to sign-in | ☐ | |
-| 1.11 | "Forgot password" → reset via email link → sign in with new password | Reset works; can log in with new password | ☐ | |
+| 1.1 | Homepage Load | Open the homepage on Desktop and Mobile. | Loads quickly, hero section is visible, layouts adjust properly to mobile screens without horizontal scroll. | ☐ |
+| 1.2 | Unauthenticated Generator | Click "Create Free Invoice" on the homepage without logging in. | The free invoice generator tool loads. You can add items, totals calculate, and you can download a PDF. | ☐ |
+| 1.3 | Unauthenticated Save Block | Try to click "Save Invoice" while logged out. | A prompt appears asking you to sign up or log in to save and manage invoices. | ☐ |
+| 1.4 | Pricing Display | View the pricing section. Toggle Monthly/Annual. | Prices update correctly. Annual shows default with savings badge. | ☐ |
+| 1.5 | Geo-Pricing | Use a VPN (US/UK) and view pricing. | Prices display in USD instead of NGN. | ☐ |
 
 ---
 
-## 2. Pricing Page (3 tiers + billing toggle)
-*(Open the homepage pricing section and/or the pricing page.)*
+## 2. Authentication & Onboarding
 
-| # | Steps | Expected result | Pass/Fail | Notes |
+| # | Scenario | Steps | Expected Result | Pass/Fail |
 |---|---|---|---|---|
-| 2.1 | Look at the pricing section | **Three** plans show: **Free, Pro, Business** | ☐ | |
-| 2.2 | Check the billing toggle at the top | Toggle shows **Monthly / Annual**, and **Annual is selected by default** | ☐ | |
-| 2.3 | With Annual selected, read Pro & Business prices | Pro shows **₦45,000/year**, Business **₦110,000/year** (or $ equivalents abroad), each with a **"Save ₦…"** badge | ☐ | |
-| 2.4 | Switch toggle to Monthly | Pro shows **₦5,000/month**, Business **₦12,000/month**; savings badge disappears | ☐ | |
-| 2.5 | Switch back to Annual | Prices update back to yearly; no page reload needed | ☐ | |
-| 2.6 | Look at the Pro card | Pro has the **"★ Most Popular"** highlight | ☐ | |
-| 2.7 | Look at the Business card | Business is visually distinct and lists **FIRS-compliant e-invoicing** with a **"Coming soon"** tag | ☐ | |
-| 2.8 | Read the line under the cards | "30-day money-back guarantee • Cancel anytime • No setup fees" | ☐ | |
-| 2.9 | **On an Android phone**, view the pricing section | Cards **stack vertically**, nothing is cut off, **no sideways scrolling**, toggle and buttons are easy to tap | ☐ | |
-| 2.10 | Tap "Choose Pro" (Annual) | Goes to the upgrade/checkout page showing **Pro** and the **annual** price | ☐ | |
-| 2.11 | Tap "Choose Business" (Monthly) | Upgrade page shows **Business** and the **monthly** price | ☐ | |
+| 2.1 | Sign Up | Create a new account with email and password. | Account created, redirected to onboarding/dashboard. | ☐ |
+| 2.2 | Email Verification | Check inbox for verification link, click it. | Email is verified successfully. | ☐ |
+| 2.3 | Login & Persistence | Log in, close browser tab, reopen the app. | You remain logged in. | ☐ |
+| 2.4 | Invalid Login | Attempt login with wrong password 5 times. | Clear error messages; account locks/rate-limits after max attempts. | ☐ |
+| 2.5 | 2FA (If enabled) | Turn on 2FA in settings, logout, log back in. | Prompted for 6-digit code. Login blocked until correct code entered. | ☐ |
+| 2.6 | Password Reset | Click "Forgot Password", use reset link from email. | Password updates successfully, user can log in with new password. | ☐ |
+| 2.7 | Dashboard Onboarding | View dashboard as a brand new user. | See the "Profile Strength" card and the "Get Started" Activation checklist. | ☐ |
 
 ---
 
-## 3. Region-based currency
-*(Region is detected by the visitor's country automatically.)*
+## 3. Profile & Settings
 
-| # | Steps | Expected result | Pass/Fail | Notes |
+| # | Scenario | Steps | Expected Result | Pass/Fail |
 |---|---|---|---|---|
-| 3.1 | Open the pricing page **from Nigeria** (normal connection, no VPN) | Prices show in **Naira (₦)** | ☐ | |
-| 3.2 | Open the pricing page **via a VPN set to the US/UK** (or ask a colleague abroad) | Prices show in **US Dollars ($)** | ☐ | Needs VPN or someone abroad |
+| 3.1 | Business Details | Go to Settings/Profile. Update Business Name, Address, and Tax ID. | Saves successfully. Dashboard "Profile Strength" percentage increases. | ☐ |
+| 3.2 | Logo Upload | Upload a company logo. | Upload succeeds, logo appears in settings and on new invoices. | ☐ |
+| 3.3 | Bank Details | Add Bank Name, Account Number, and Account Name. | Saves successfully. These appear automatically at the bottom of new invoices. | ☐ |
+| 3.4 | Default Preferences | Set a default currency, default tax rate (e.g., 7.5% VAT), and default notes. | New invoices automatically load with these defaults applied. | ☐ |
+| 3.5 | Directory Opt-in | Toggle public directory settings. | Saves successfully. | ☐ |
 
 ---
 
-## 4. New Free plan — limits & locked features
-**Use the NEW FREE user (account #1, signed up after launch).**
+## 4. Core Invoice Editor (Heavy Lifter)
 
-| # | Steps | Expected result | Pass/Fail | Notes |
+| # | Scenario | Steps | Expected Result | Pass/Fail |
 |---|---|---|---|---|
-| 4.1 | Create invoices until you hit the cap | After **5 invoices in the current month**, creating a 6th is **blocked** with an "upgrade" message | ☐ | |
-| 4.2 | On invoice #4 or #5 | A warning (e.g. limit-approaching email) may be sent | ☐ | |
-| 4.3 | Try to **email an invoice to a client** | **Blocked** — message says emailing is a Pro feature | ☐ | |
-| 4.4 | Try to create an **Estimate** | **Blocked** — Pro feature message | ☐ | |
-| 4.5 | Try to create a **Credit Note** | **Blocked** — Pro feature message | ☐ | |
-| 4.6 | Open the currency dropdown and pick an unusual currency (not NGN/USD/GBP/EUR/GHS), then save | **Blocked** — message says that currency needs Pro | ☐ | |
-| 4.7 | Try to pick a theme other than the 2 free ones (Slate, Blue) and save | **Blocked** — message says extra themes need Pro | ☐ | |
-| 4.8 | Create a normal invoice (NGN, default theme) | **Works** — free users can still make basic invoices | ☐ | |
-| 4.9 | Download the invoice as PDF | **Works** — PDF export is available on Free | ☐ | |
+| 4.1 | Adding Line Items | Create an invoice, add 3 line items with different quantities and rates. | Subtotal calculates exactly (Qty * Rate). | ☐ |
+| 4.2 | Tax & Discount | Apply a 10% discount and a 5% tax. | Total accurately reflects: (Subtotal - Discount) + Tax. | ☐ |
+| 4.3 | Client Selection | Click the client field. Add a brand new client. Then create a second invoice and search for that client. | New client saves to address book. Can be selected from dropdown on future invoices. | ☐ |
+| 4.4 | Layout Changes | (Pro feature) Change invoice layout from Modern to Classic, Bold, etc. | Preview updates instantly reflecting the new structural layout. | ☐ |
+| 4.5 | Save as Draft | Click "Save" without sending. | Invoice saves successfully, appears in invoice list with "Draft" status. | ☐ |
 
 ---
 
-## 5. Grandfathering — existing users keep their old benefits
-**Use the EXISTING (grandfathered) user (account #2, created before launch).**
+## 5. Plan Gating & Entitlements (The Paywall)
 
-| # | Steps | Expected result | Pass/Fail | Notes |
+**Use the NEW FREE User for this section.**
+
+| # | Scenario | Steps | Expected Result | Pass/Fail |
 |---|---|---|---|---|
-| 5.1 | Create more than 5 invoices this month | Allowed up to **15** (old limit), not blocked at 5 | ☐ | |
-| 5.2 | Email an invoice to a client | **Works** (kept from old Free plan) | ☐ | |
-| 5.3 | Create an Estimate and a Credit Note | **Works** (kept) | ☐ | |
-
-> If 5.1–5.3 are **blocked**, grandfathering is broken — report it (existing users must not be downgraded).
+| 5.1 | Invoice Cap | Create invoices until you hit 5 for the month. Try creating a 6th. | Creation blocked; usage meter shows 5/5; upgrade prompt appears. | ☐ |
+| 5.2 | Locked Document Types | Try to toggle document type to "Estimate" or "Credit Note". | Amber lock icon visible. Clicking redirects to /upgrade. | ☐ |
+| 5.3 | Locked Themes | Try to select the Green, Purple, or Red themes. | Lock overlay visible. Clicking redirects to /upgrade. | ☐ |
+| 5.4 | Locked Currencies | Open the currency dropdown and select a non-free currency (e.g. JPY). | Option shows "· Pro". Clicking shows error toast and redirects to /upgrade. | ☐ |
+| 5.5 | Locked Emailing | Click "Send via email" in the success modal after saving. | Button is muted with a lock icon. Redirects to /upgrade. | ☐ |
+| 5.6 | Grandfathering Check | **Log into the GRANDFATHERED FREE account.** Try to create >5 invoices, send emails, and make estimates. | **Allowed**. Grandfathered users retain their old 15 limit and legacy features. | ☐ |
 
 ---
 
-## 6. Paystack subscriptions (Naira) — the 4 plans
-**Use the NEW FREE user. Pay with the Paystack TEST card above. Test from Nigeria / with NGN pricing.**
-After each successful payment, ask the admin to confirm the plan + expiry in Admin → User Management.
+## 6. Sharing & Getting Paid
 
-| # | Steps | Expected result | Pass/Fail | Notes |
+**Use a PRO/BUSINESS User for this section to avoid gates.**
+
+| # | Scenario | Steps | Expected Result | Pass/Fail |
 |---|---|---|---|---|
-| 6.1 | Choose **Pro → Monthly** → pay with Paystack test card | Payment succeeds; account becomes **Pro**; expiry ≈ **30 days** out | ☐ | |
-| 6.2 | Confirm Pro features now work: email invoice, create estimate/credit note, unlimited invoices, all currencies/themes | All unlocked | ☐ | |
-| 6.3 | (New test account) Choose **Pro → Annual** → pay | Account **Pro**; expiry ≈ **365 days** out | ☐ | |
-| 6.4 | (New test account) Choose **Business → Monthly** → pay | Account **Business**; expiry ≈ **30 days**; Smart Reports & AI receipt scanning available | ☐ | |
-| 6.5 | (New test account) Choose **Business → Annual** → pay | Account **Business**; expiry ≈ **365 days** | ☐ | |
-| 6.6 | Start a checkout, then **close the Paystack popup** without paying | No plan change; you can retry; no error stuck on screen | ☐ | |
-| 6.7 | In the Paystack dashboard (admin), open the plan | A **subscription** appears for the customer (auto-renewing), not just a one-off charge | ☐ | |
+| 6.1 | PDF Download | Click "Download PDF". | PDF generates correctly, matches the web preview, formatting is intact. | ☐ |
+| 6.2 | Emailing Client | Click "Send via email". Edit the subject and message. Send to a test email. | Email arrives formatted nicely, with PDF attached and a "View/Pay Invoice" button. | ☐ |
+| 6.3 | Public Link View | Copy the public link. Open in an Incognito window. | Client view loads correctly. Shows "Pay Now" button and invoice details. | ☐ |
+| 6.4 | Online Payment (Stripe/Paystack) | As a client on the public link, click Pay Now. Complete test checkout. | Payment succeeds. Invoice status changes to "Paid" automatically. | ☐ |
+| 6.5 | Manual Payment Record | Open an unpaid invoice. Click "Record Payment". Enter partial amount. | Invoice status changes to "Partially Paid". Remaining balance updates. | ☐ |
+| 6.6 | Overdue Status | Set an invoice due date to yesterday. | Dashboard and invoice list flag it as "Overdue" in red. | ☐ |
 
 ---
 
-## 7. Stripe subscriptions (US Dollars)
-**Use a test account with USD pricing (via VPN abroad, or ask the admin to force USD). Pay with the Stripe test card `4242…`.**
+## 7. Advanced Document Workflows
 
-| # | Steps | Expected result | Pass/Fail | Notes |
+**Use a PRO/BUSINESS User.**
+
+| # | Scenario | Steps | Expected Result | Pass/Fail |
 |---|---|---|---|---|
-| 7.1 | Choose **Pro → Monthly** → pay with Stripe test card | Account becomes **Pro**; expiry ≈ **30 days** | ☐ | |
-| 7.2 | Choose **Pro → Annual** (new test account) → pay | Account **Pro**; expiry ≈ **365 days** | ☐ | |
-| 7.3 | Choose **Business → Monthly / Annual** (new test accounts) → pay | Account **Business**; correct expiry | ☐ | |
-| 7.4 | In the Stripe dashboard (admin), open the customer | An active **subscription** exists with the correct interval (monthly/yearly) | ☐ | |
-| 7.5 | If a 30-day free trial is offered on Stripe: start it | Access granted immediately, marked as trial | ☐ | If trial enabled |
+| 7.1 | Estimates | Create an Estimate. Send via public link. "Client" clicks "Approve". | Estimate status changes to Approved. | ☐ |
+| 7.2 | Estimate to Invoice | Open an approved estimate. Click "Convert to Invoice". | New invoice is generated carrying over all line items and clients. | ☐ |
+| 7.3 | Credit Notes | Create a Credit Note. | Generates properly with negative connotations/formatting. | ☐ |
+| 7.4 | Duplication | Open an existing invoice. Click "Duplicate". | Creates a fresh draft invoice with identical line items and client info. | ☐ |
 
 ---
 
-## 8. Subscription lifecycle (renewal & cancellation)
-*(Renewals are hard to test in real time — coordinate with the admin, who can use Stripe "test clocks" or shorten a plan to simulate a renewal.)*
+## 8. Dashboard & Analytics
 
-| # | Steps | Expected result | Pass/Fail | Notes |
+| # | Scenario | Steps | Expected Result | Pass/Fail |
 |---|---|---|---|---|
-| 8.1 | **Renewal (admin-assisted):** simulate the next billing cycle | The user's subscription **end date moves forward** by one interval; plan stays active | ☐ | |
-| 8.2 | **Cancellation:** cancel a test subscription in the Paystack/Stripe dashboard | User's status becomes **cancelled** but access **remains until the end date** | ☐ | |
-| 8.3 | After the end date passes on a cancelled sub (admin can expire it) | User is **downgraded to Free**; Pro/Business features lock again | ☐ | |
+| 8.1 | Metric Accuracy | Create a $100 invoice, mark $50 as paid. Check dashboard. | Total revenue, Paid, and Unpaid tiles reflect the exact amounts accurately. | ☐ |
+| 8.2 | Usage Meter | On a Free account, create an invoice and view the dashboard. | Meter increments correctly (e.g., 1/5 to 2/5). | ☐ |
+| 8.3 | Activity Feed | Perform actions (create, send, mark paid). Check dashboard feed. | Recent Activity list logs these actions chronologically. | ☐ |
 
 ---
 
-## 9. Core invoice features — regression check
-*(Make sure nothing basic broke. Use any Pro/Business test account.)*
+## 9. Clients Management
 
-| # | Steps | Expected result | Pass/Fail | Notes |
+| # | Scenario | Steps | Expected Result | Pass/Fail |
 |---|---|---|---|---|
-| 9.1 | Create a full invoice with several line items, tax, discount | Totals calculate correctly | ☐ | |
-| 9.2 | Add a company logo | Logo appears on the invoice | ☐ | |
-| 9.3 | Download PDF | PDF is correct and readable | ☐ | |
-| 9.4 | Email the invoice to yourself (as a client) | Email arrives with the invoice attached/linked | ☐ | |
-| 9.5 | Generate a Paystack payment link on an invoice and open it | Payment page loads with the correct amount | ☐ | |
-| 9.6 | Mark/record a payment on an invoice | Invoice shows as paid | ☐ | |
-| 9.7 | Open an invoice's **public payment page** (as if you were the client, logged out) | Loads correctly, shows the amount and pay option | ☐ | |
-| 9.8 | Recurring invoices, WhatsApp send (if used) | Work as before | ☐ | If these features are used |
+| 9.1 | Client Address Book | Go to Clients page. View list. | All previously added clients are listed. | ☐ |
+| 9.2 | Edit Client | Select a client, update their address and email. | Saves successfully. Future invoices reflect new address. | ☐ |
+| 9.3 | Client History | Click on a specific client profile. | Displays a history/ledger of all invoices specifically assigned to them. | ☐ |
 
 ---
 
-## 10. Admin spot-checks
+## 10. Subscriptions & Billing Lifecycle
 
-| # | Steps | Expected result | Pass/Fail | Notes |
+| # | Scenario | Steps | Expected Result | Pass/Fail |
 |---|---|---|---|---|
-| 10.1 | Admin → Pricing Settings: change the Nigeria price, Save | Saves successfully (no "Authentication required" error) | ☐ | |
-| 10.2 | Admin → User Management: open a test user | Plan, status, and expiry are correct after the payment tests | ☐ | |
-| 10.3 | Admin dashboard loads and other admin pages open | No errors / no unexpected logouts | ☐ | |
+| 10.1 | Upgrade to Pro | Free user goes to /upgrade, selects Pro (Monthly), checks out via Paystack. | User is upgraded instantly. Editor locks are removed. | ☐ |
+| 10.2 | Admin Verification | Admin opens User Management. | User shows "Pro" plan and "Active" status with correct expiry. | ☐ |
+| 10.3 | Cancellation | Cancel the subscription in the payment provider dashboard. | Access remains active until the end date, then reverts to Free plan. | ☐ |
 
 ---
 
@@ -197,12 +154,3 @@ What actually happened:
 Screenshot / screen recording: (attach)
 Time it happened:
 ```
-
----
-
-## Sign-off
-- Tester name: ___________________  Date: ___________
-- Environment tested: ☐ Test mode  ☐ Live
-- Devices tested: ☐ Android phone  ☐ Desktop  ☐ iPhone
-- Overall result: ☐ All pass  ☐ Pass with minor issues  ☐ Blocking issues found
-- Summary / notes: ______________________________________________

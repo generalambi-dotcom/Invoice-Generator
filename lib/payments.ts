@@ -130,33 +130,36 @@ function initializePaystack(
         plan: params.plan,        // tier: 'pro' | 'business'
         interval: params.interval || 'monthly',
       },
-      callback: async (response: any) => {
-        try {
-          // Verify on the server and activate subscription in the database
-          const verifyRes = await fetch('/api/subscriptions/paystack-verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              reference: response.reference,
-              userId: params.userId,
-              plan: params.plan,
-              interval: params.interval || 'monthly',
-            }),
-          });
+      callback: function(response: any) {
+        // Run async operations inside
+        (async () => {
+          try {
+            // Verify on the server and activate subscription in the database
+            const verifyRes = await fetch('/api/subscriptions/paystack-verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                reference: response.reference,
+                userId: params.userId,
+                plan: params.plan,
+                interval: params.interval || 'monthly',
+              }),
+            });
 
-          if (!verifyRes.ok) {
-            const errData = await verifyRes.json().catch(() => ({}));
-            console.error('Paystack verify failed:', errData);
-            // Still redirect — webhook will act as fallback activator
+            if (!verifyRes.ok) {
+              const errData = await verifyRes.json().catch(() => ({}));
+              console.error('Paystack verify failed:', errData);
+              // Still redirect — webhook will act as fallback activator
+            }
+          } catch (verifyErr) {
+            console.error('Error calling paystack-verify:', verifyErr);
+            // Webhook fallback will handle activation if this call fails
           }
-        } catch (verifyErr) {
-          console.error('Error calling paystack-verify:', verifyErr);
-          // Webhook fallback will handle activation if this call fails
-        }
 
-        resolve('/dashboard?payment=success');
+          resolve('/dashboard?payment=success');
+        })();
       },
-      onClose: () => {
+      onClose: function() {
         reject(new Error('Payment window closed'));
       },
     };

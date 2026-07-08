@@ -96,9 +96,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2025-12-15.clover',
-    });
+    const stripe = new Stripe(stripeSecretKey);
 
     // Get user details
     const dbUser = await prisma.user.findUnique({

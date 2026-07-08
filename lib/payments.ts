@@ -125,6 +125,7 @@ function initializePaystack(
       email: params.userEmail,
       currency: params.currency === 'NGN' ? 'NGN' : 'USD',
       ref: `sub_${params.userId}_${Date.now()}`,
+      bearer: 'account', // Critical for subscriptions if the merchant has "Pass fees to customers" enabled globally
       metadata: {
         userId: params.userId,
         plan: params.plan,        // tier: 'pro' | 'business'

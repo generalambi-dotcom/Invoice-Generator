@@ -75,12 +75,24 @@ export async function GET(request: NextRequest) {
       stripe: { env: hasStripeEnv, db: hasStripeDb, final: hasStripe },
     });
 
+    // Collect Paystack public key from whichever source has it (env or db).
+    let paystackPublicKey: string | null = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || null;
+    if (!paystackPublicKey && adminUser) {
+      const psCred = await prisma.paymentCredential.findUnique({
+        where: { userId_provider: { userId: adminUser.id, provider: 'paystack' } },
+        select: { publicKey: true },
+      });
+      paystackPublicKey = psCred?.publicKey || null;
+    }
+
     return NextResponse.json({
       providers: {
         paypal: hasPayPal,
         paystack: hasPaystack,
         stripe: hasStripe,
       },
+      // Public keys are safe to send to the client.
+      paystackPublicKey: hasPaystack ? paystackPublicKey : null,
     });
   } catch (error: any) {
     console.error('Error checking payment providers:', error);

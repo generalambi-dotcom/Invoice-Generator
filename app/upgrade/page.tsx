@@ -150,6 +150,16 @@ export default function UpgradePage() {
 
         console.log('Available providers (geo-filtered):', { detectedRegion, configured, providers });
         setAvailableProviders(providers);
+
+        // Persist the Paystack public key the server sent so that
+        // initiatePayment → getPaymentConfig() can read it from localStorage.
+        if (data.paystackPublicKey) {
+          try {
+            const existing = JSON.parse(localStorage.getItem('admin-payment-config') || '{}');
+            existing.paystackPublicKey = data.paystackPublicKey;
+            localStorage.setItem('admin-payment-config', JSON.stringify(existing));
+          } catch { /* ignore */ }
+        }
       } else {
         console.error('Failed to fetch available providers:', response.status);
         setAvailableProviders({

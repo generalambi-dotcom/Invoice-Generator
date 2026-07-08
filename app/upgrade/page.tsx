@@ -296,7 +296,7 @@ export default function UpgradePage() {
     } catch (error: any) {
       if (error.message === 'Payment window closed') {
         // Silently handle or show a mild info toast
-        toast.info('Payment cancelled');
+        toast('Payment cancelled', { icon: '⚠️' });
       } else {
         toast.error('Failed to initiate payment: ' + error.message);
       }

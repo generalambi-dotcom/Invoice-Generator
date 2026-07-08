@@ -76,9 +76,9 @@ export const LEGACY_PREMIUM_FEATURES: FeatureKey[] = [
 export const PAYSTACK_PRO_MONTHLY =
   process.env.NEXT_PUBLIC_PAYSTACK_PRO_MONTHLY || 'PLN_n49rm5v6pdhto28'; // Pro Plan — NGN 5,000 / month
 export const PAYSTACK_PRO_ANNUAL =
-  process.env.NEXT_PUBLIC_PAYSTACK_PRO_ANNUAL || 'PLN_m4hv63qna8ujp96'; // Pro Plan Annual — NGN 45,000 / year
+  process.env.NEXT_PUBLIC_PAYSTACK_PRO_ANNUAL || 'PLN_m4hv63qna8ujp98'; // Pro Plan Annual — NGN 45,000 / year
 export const PAYSTACK_BUSINESS_MONTHLY =
-  process.env.NEXT_PUBLIC_PAYSTACK_BUSINESS_MONTHLY || 'PLN_nrju7m4gcu00tk8'; // Business — NGN 12,000 / month
+  process.env.NEXT_PUBLIC_PAYSTACK_BUSINESS_MONTHLY || 'PLN_nrja7m4gcu00tk8'; // Business — NGN 12,000 / month
 export const PAYSTACK_BUSINESS_ANNUAL =
   process.env.NEXT_PUBLIC_PAYSTACK_BUSINESS_ANNUAL || 'PLN_zxq37hg3opxbjt9'; // Business Plan — NGN 110,000 / year
 

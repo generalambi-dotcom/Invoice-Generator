@@ -165,12 +165,13 @@ function initializePaystack(
       },
     };
 
+    // Always pass amount (in kobo/cents). Paystack will override it with the Plan's 
+    // configured amount, but some versions of the inline script crash if amount is missing entirely.
+    setupConfig.amount = params.amount * 100;
+
     if (params.planCode) {
-      // Recurring subscription — Paystack derives amount + interval from the plan.
+      // Recurring subscription
       setupConfig.plan = params.planCode;
-    } else {
-      // One-time charge fallback (e.g. USD tiers without a Paystack plan).
-      setupConfig.amount = params.amount * 100; // kobo
     }
 
     const handler = (window as any).PaystackPop.setup(setupConfig);

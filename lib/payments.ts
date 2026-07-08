@@ -126,6 +126,7 @@ function initializePaystack(
       currency: params.currency === 'NGN' ? 'NGN' : 'USD',
       ref: `sub_${params.userId}_${Date.now()}`,
       bearer: 'account', // Critical for subscriptions if the merchant has "Pass fees to customers" enabled globally
+      channels: ['card'], // Subscriptions ONLY support card. If Paystack tries to offer Bank Transfer, it crashes with "no channels available".
       metadata: {
         userId: params.userId,
         plan: params.plan,        // tier: 'pro' | 'business'
@@ -171,7 +172,11 @@ function initializePaystack(
 
     if (params.planCode) {
       // Recurring subscription
-      setupConfig.plan = params.planCode;
+      // TEMPORARY FIX: Paystack is throwing "no channels available" for Plans on this account.
+      // By commenting out the plan code here, Paystack treats it as a standard one-time charge 
+      // of the correct amount. The user will still get their 1-year/1-month access because our 
+      // paystack-verify webhook reads the metadata interval and updates the database correctly.
+      // setupConfig.plan = params.planCode;
     }
 
     const handler = (window as any).PaystackPop.setup(setupConfig);

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { generateToken } from '@/lib/auth-jwt';
 import { createRefreshToken } from '@/lib/refresh-token';
 import { setAuthCookie } from '@/lib/auth-cookie';
+import { buildClientUser } from '@/lib/user-payload';
 import { getSystemSetting } from '@/lib/settings';
 import { sendSequenceEmail } from '@/lib/email';
 import { syncContactToBrevo } from '@/lib/brevo';
@@ -129,13 +130,7 @@ export async function POST(request: NextRequest) {
         const response = NextResponse.json({
             token: accessToken,
             refreshToken,
-            user: {
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                isAdmin: user.isAdmin,
-                image: user.image
-            },
+            user: buildClientUser(user),
         });
         return setAuthCookie(response, accessToken);
 

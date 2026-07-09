@@ -4,6 +4,7 @@ import { verifyTOTP } from '@/lib/totp';
 import { verifyToken, generateToken } from '@/lib/auth-jwt';
 import { createRefreshToken } from '@/lib/refresh-token';
 import { setAuthCookie } from '@/lib/auth-cookie';
+import { buildClientUser } from '@/lib/user-payload';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,6 +38,9 @@ export async function POST(request: NextRequest) {
                 id: true, email: true, name: true, isAdmin: true,
                 twoFactorEnabled: true, twoFactorSecret: true,
                 createdAt: true,
+                subscriptionPlan: true, subscriptionStatus: true,
+                subscriptionStartDate: true, subscriptionEndDate: true,
+                subscriptionPaymentMethod: true,
             },
         });
 
@@ -63,12 +67,7 @@ export async function POST(request: NextRequest) {
         const response = NextResponse.json({
             token: accessToken,
             refreshToken,
-            user: {
-                id: dbUser.id,
-                email: dbUser.email,
-                name: dbUser.name,
-                isAdmin: dbUser.isAdmin,
-            },
+            user: buildClientUser(dbUser),
         });
         return setAuthCookie(response, accessToken);
     } catch (error: any) {

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getCurrentUser, signOut } from '@/lib/auth';
+import { normaliseTier, isPaidTier } from '@/lib/plans';
 import { toast } from 'react-hot-toast';
 
 export default function Header() {
@@ -39,7 +40,7 @@ export default function Header() {
         // Admins automatically have premium access
         setIsPremium(
           currentUser.isAdmin === true ||
-          (currentUser.subscription?.plan === 'premium' &&
+          (isPaidTier(normaliseTier(currentUser.subscription?.plan)) &&
             currentUser.subscription?.status === 'active')
         );
       }
@@ -288,7 +289,7 @@ export default function Header() {
               >
                 Pricing
               </Link>
-              {user && user.subscription?.plan !== 'premium' && (
+              {user && !isPaidTier(normaliseTier(user.subscription?.plan)) && (
                 <Link
                   href="/upgrade"
                   onClick={closeMenus}

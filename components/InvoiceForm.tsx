@@ -50,7 +50,7 @@ import {
 } from '@/lib/api-client';
 import LineItems from './LineItems';
 import { format } from 'date-fns';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, refreshUser } from '@/lib/auth';
 import { planHasFeature, currencyAllowed, themeAllowed, FREE_THEMES, FREE_CURRENCIES, FeatureKey } from '@/lib/plans';
 import { isPremiumUser } from '@/lib/payments';
 import ImageUpload from '@/components/ImageUpload';
@@ -167,7 +167,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
   const [savingTemplate, setSavingTemplate] = useState(false);
 
   // ── Client-side entitlement checks (UX hints only; server is source of truth) ──
-  const entitlements = React.useMemo(() => {
+  const computeEntitlements = React.useCallback(() => {
     const u = getCurrentUser();
     const plan = u?.subscription?.plan;
     const createdAt = u?.createdAt;
@@ -180,6 +180,12 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
       isThemeAllowed: (t: string) => themeAllowed(t, plan, createdAt),
     };
   }, []);
+  const [entitlements, setEntitlements] = React.useState(computeEntitlements);
+  React.useEffect(() => {
+    // Hydrate plan + createdAt from the server so entitlements stay correct even
+    // when the cached user predates these fields, then recompute.
+    refreshUser().then((fresh) => { if (fresh) setEntitlements(computeEntitlements()); }).catch(() => {});
+  }, [computeEntitlements]);
   const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
   const [bulkActionLoading, setBulkActionLoading] = useState<string | null>(null);
   const [newClient, setNewClient] = useState({

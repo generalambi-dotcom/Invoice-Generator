@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { generateToken } from '@/lib/auth-jwt';
 import { createRefreshToken } from '@/lib/refresh-token';
 import { setAuthCookie } from '@/lib/auth-cookie';
+import { buildClientUser } from '@/lib/user-payload';
 import { rateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -152,12 +153,7 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({
       token: accessToken,
       refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        isAdmin: user.isAdmin,
-      },
+      user: buildClientUser(user),
     });
     return setAuthCookie(response, accessToken);
   } catch (error: any) {

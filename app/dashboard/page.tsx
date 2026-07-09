@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getCurrentUser, signOut } from '@/lib/auth';
+import { getCurrentUser, signOut, refreshUser } from '@/lib/auth';
 import { loadInvoicesAPI, deleteInvoiceAPI, updateOverdueInvoicesAPI, getPaymentRemindersAPI, sendPaymentRemindersAPI, approveInvoiceAPI, rejectInvoiceAPI, requestApprovalAPI, markInvoiceSentAPI, getCompanyDefaultsAPI, getUserProfileAPI, getDirectorySettingsAPI } from '@/lib/api-client';
 import { Invoice, currencySymbols, Currency } from '@/types/invoice';
 import { formatCurrency } from '@/lib/calculations';
@@ -78,6 +78,10 @@ export default function DashboardPage() {
         }
       } else {
         setUser(currentUser);
+        // Hydrate subscription + createdAt from the server for older sessions
+        // whose cached user predates these fields — keeps plan gating / usage
+        // meter accurate without forcing a re-login.
+        refreshUser().then((fresh) => { if (fresh) setUser(fresh); }).catch(() => {});
       }
 
       // Load data in parallel

@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import { generateToken } from '@/lib/auth-jwt';
 import { createRefreshToken } from '@/lib/refresh-token';
 import { setAuthCookie } from '@/lib/auth-cookie';
+import { buildClientUser } from '@/lib/user-payload';
 import { rateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { sendSequenceEmail } from '@/lib/email';
 import { syncContactToBrevo } from '@/lib/brevo';
@@ -183,12 +184,7 @@ export async function POST(request: NextRequest) {
 
       responseData.token = accessToken;
       responseData.refreshToken = refreshToken;
-      responseData.user = {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        isAdmin: user.isAdmin,
-      };
+      responseData.user = buildClientUser(user);
     }
 
     // Return success message and data. If we auto-logged the user in (email

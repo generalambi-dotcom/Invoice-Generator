@@ -15,7 +15,7 @@ export interface ProfileField {
   hint: string;
 }
 
-export function getProfileFields(currency: string = 'USD'): ProfileField[] {
+export function getProfileFields(currency: string = 'NGN'): ProfileField[] {
   const config = getRegionConfig(currency);
   
   return [
@@ -75,7 +75,7 @@ export function extractProfileData(user: any, companyDefaults?: any): Record<str
   };
 }
 
-export function calculateCompleteness(profileData: Record<string, boolean>, currency: string = 'USD'): number {
+export function calculateCompleteness(profileData: Record<string, boolean>, currency: string = 'NGN'): number {
   const fields = getProfileFields(currency);
   const totalWeight = fields.reduce((sum, f) => sum + f.weight, 0);
   const filledWeight = fields.reduce((sum, f) => {
@@ -94,7 +94,7 @@ export function getNextTier(score: number) {
   return sortedTiers.find(tier => tier.threshold > score);
 }
 
-export function getMissingFields(profileData: Record<string, boolean>, currency: string = 'USD'): ProfileField[] {
+export function getMissingFields(profileData: Record<string, boolean>, currency: string = 'NGN'): ProfileField[] {
   return getProfileFields(currency)
     .filter(f => !profileData[f.key])
     .sort((a, b) => b.weight - a.weight);
@@ -110,7 +110,7 @@ export function getNudgeSuggestion(
     currency?: string;
   }
 ): { field: ProfileField; message: string } | null {
-  const currency = context.currency || 'USD';
+  const currency = context.currency || 'NGN';
   const config = getRegionConfig(currency);
   const missing = getMissingFields(profileData, currency);
   

@@ -140,7 +140,7 @@ export default function OnboardingModal({ onComplete, onSkip }: OnboardingModalP
   const [industry, setIndustry] = useState('');
   const [businessType, setBusinessType] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const regionConfig = getRegionConfig('USD'); // Default neutral fallback
+  const regionConfig = getRegionConfig('NGN'); // Nigeria-first default fallback
 
   const handleSubmit = async () => {
     if (!companyName.trim()) {

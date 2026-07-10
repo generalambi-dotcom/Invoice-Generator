@@ -7,7 +7,7 @@ export interface RegionConfig {
   businessTypes: { value: string; label: string }[];
 }
 
-export function getRegionConfig(currency: string = 'USD'): RegionConfig {
+export function getRegionConfig(currency: string = 'NGN'): RegionConfig {
   const normalizedCurrency = currency.toUpperCase();
 
   switch (normalizedCurrency) {

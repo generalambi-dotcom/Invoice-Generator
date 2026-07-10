@@ -50,6 +50,7 @@ export default function DashboardPage() {
   // ── Bulk selection ───────────────────────────────────────────────────────────
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [directoryExpanded, setDirectoryExpanded] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -393,6 +394,13 @@ export default function DashboardPage() {
   const hasSentInvoice = activeInvoices.some((inv) => !!inv.sentAt);
   const hasPaidInvoice = activeInvoices.some((inv) => inv.paymentStatus === 'paid');
 
+  // ── Lifecycle: an "activated" user has moved past onboarding, so we hide the
+  // setup scaffolding (checklist / profile card / low-usage meter) and lead with
+  // the money instead. ───────────────────────────────────────────────────────
+  const isActivated = activeInvoices.length >= 3 || hasPaidInvoice;
+  const freeInvoiceLimit = getInvoiceLimit(user?.subscription?.plan, user?.createdAt);
+  const nearFreeLimit = freeInvoiceLimit !== null && invoicesThisMonth >= Math.ceil(freeInvoiceLimit * 0.8);
+
   // Overdue invoices in the currently-selected currency (matches stats.overdueCount).
   const overdueInvoiceList = activeInvoices.filter((inv) => {
     if (inv.currency !== currency) return false;
@@ -681,41 +689,85 @@ export default function DashboardPage() {
           totalStats={{ paid: stats.paidCount, unpaid: stats.unpaidCount }}
         />
 
-        {/* Activation checklist — guides new users to their first paid invoice */}
-        <ActivationChecklist
-          profileScore={profileScore}
-          hasInvoice={activeInvoices.length > 0}
-          hasSentInvoice={hasSentInvoice}
-          hasPaidInvoice={hasPaidInvoice}
-        />
-
-        {/* Free-plan usage meter + near-limit upgrade nudge */}
-        <UsageMeter count={invoicesThisMonth} limit={getInvoiceLimit(user?.subscription?.plan, user?.createdAt)} />
-
-
-
-        {/* Profile Completeness - compact card */}
-        {profileData?.completeness && profileData.completeness.score < 100 && (
-          <div className="mb-6">
-            <ProfileCompletenessCard
-              score={profileData.completeness.score}
-              currentTier={profileData.completeness.currentTier}
-              nextTier={profileData.completeness.nextTier}
-              missingFields={profileData.completeness.missingFields}
-              compact={true}
-            />
-          </div>
+        {/* Money first — overdue chase nudge leads the page for returning users */}
+        {stats.overdueCount > 0 && (
+          <OverdueNudge
+            overdueCount={stats.overdueCount}
+            overdueAmountLabel={formatCurrency(stats.overdueAmount, currency)}
+            currencySymbol={currencySymbols[currency as Currency] || currencySymbols['USD']}
+            onSendReminders={handleSendOverdueReminders}
+            sending={bulkLoading}
+          />
         )}
 
-        {/* Directory Settings Card */}
+        {/* Onboarding scaffolding — only shown until the user has activated */}
+        {!isActivated && (
+          <ActivationChecklist
+            profileScore={profileScore}
+            hasInvoice={activeInvoices.length > 0}
+            hasSentInvoice={hasSentInvoice}
+            hasPaidInvoice={hasPaidInvoice}
+          />
+        )}
+
+        {/* Free-plan usage meter — for new users, or when approaching the cap */}
+        {(!isActivated || nearFreeLimit) && (
+          <UsageMeter count={invoicesThisMonth} limit={freeInvoiceLimit} />
+        )}
+
+        {/* Profile completeness — full card pre-activation; a slim one-liner after */}
+        {profileData?.completeness && profileData.completeness.score < 100 && (
+          !isActivated ? (
+            <div className="mb-6">
+              <ProfileCompletenessCard
+                score={profileData.completeness.score}
+                currentTier={profileData.completeness.currentTier}
+                nextTier={profileData.completeness.nextTier}
+                missingFields={profileData.completeness.missingFields}
+                compact={true}
+              />
+            </div>
+          ) : (
+            <Link
+              href="/profile"
+              className="flex items-center justify-between gap-3 mb-6 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm hover:border-gray-300 transition-colors"
+            >
+              <span className="text-gray-600">
+                Profile {profileData.completeness.score}% complete — add your logo &amp; bank details to look more professional.
+              </span>
+              <span className="font-semibold text-emerald-700 whitespace-nowrap">Complete →</span>
+            </Link>
+          )
+        )}
+
+        {/* Company Directory — compact by default, expandable to manage */}
         {directorySettings && directorySettings.hasSeenDirectoryPrompt && (
-           <div className="mb-8">
-             <DirectorySettingsCard 
-               settings={directorySettings} 
-               metrics={directoryMetrics} 
-               onUpdate={(updated) => setDirectorySettings(updated)} 
-             />
-           </div>
+          <div className="mb-8">
+            {!directoryExpanded ? (
+              <button
+                type="button"
+                onClick={() => setDirectoryExpanded(true)}
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm hover:border-gray-300 transition-colors"
+              >
+                <span className="flex items-center gap-2 text-gray-700 min-w-0">
+                  <span className="font-semibold whitespace-nowrap">Company Directory</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${directorySettings.directoryOptIn ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {directorySettings.directoryOptIn ? 'Live' : 'Not listed'}
+                  </span>
+                  {directorySettings.directoryOptIn && (
+                    <span className="text-gray-400 whitespace-nowrap">· {directoryMetrics?.profileViews ?? 0} views</span>
+                  )}
+                </span>
+                <span className="font-semibold text-gray-500 whitespace-nowrap">Manage ▾</span>
+              </button>
+            ) : (
+              <DirectorySettingsCard
+                settings={directorySettings}
+                metrics={directoryMetrics}
+                onUpdate={(updated) => setDirectorySettings(updated)}
+              />
+            )}
+          </div>
         )}
 
         {/* Stats Cards - Key Metrics */}
@@ -895,15 +947,6 @@ export default function DashboardPage() {
         {/* Charts Section */}
         <DashboardCharts invoices={activeInvoices} currency={currency} />
 
-        {/* Proactive get-paid-faster nudge for overdue invoices */}
-        <OverdueNudge
-          overdueCount={stats.overdueCount}
-          overdueAmountLabel={formatCurrency(stats.overdueAmount, currency)}
-          currencySymbol={currencySymbols[currency as Currency] || currencySymbols['USD']}
-          onSendReminders={handleSendOverdueReminders}
-          sending={bulkLoading}
-        />
-
         {/* Action Bar & List Header */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
           <h2 className="text-xl font-bold text-gray-900">Recent Documents</h2>
@@ -959,7 +1002,7 @@ export default function DashboardPage() {
                   </Link>
                   <Link
                     href="/invoice-generator-ai"
-                    className="flex-1 md:flex-none justify-center px-3 py-2 md:px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all flex items-center gap-2 text-xs md:text-sm font-medium shadow-indigo-200 shadow-lg whitespace-nowrap"
+                    className="flex-1 md:flex-none justify-center px-3 py-2 md:px-4 bg-white text-indigo-700 border border-indigo-200 rounded-xl hover:bg-indigo-50 transition-colors flex items-center gap-2 text-xs md:text-sm font-medium whitespace-nowrap"
                   >
                     <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
                     <span className="hidden sm:inline">Generate with AI</span>
@@ -1092,7 +1135,7 @@ export default function DashboardPage() {
                     <th className="hidden sm:table-cell px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-3 md:px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    <th className="sticky right-0 z-20 bg-white px-3 md:px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.08)]">
                       Actions
                     </th>
                   </tr>
@@ -1141,14 +1184,14 @@ export default function DashboardPage() {
                         <div className="text-xs md:text-sm font-bold text-gray-900">
                           {currencySymbols[invoice.currency]} {formatCurrency(invoice.total, invoice.currency)}
                         </div>
-                        {invoice.paidAmount && invoice.paidAmount > 0 && invoice.paidAmount < invoice.total && (
+                        {(invoice.paidAmount ?? 0) > 0 && (invoice.paidAmount ?? 0) < invoice.total && (
                           <div className="text-[10px] text-green-600 font-medium mt-0.5">
-                            Paid: {currencySymbols[invoice.currency]}{formatCurrency(invoice.paidAmount, invoice.currency)}
+                            Paid: {currencySymbols[invoice.currency]}{formatCurrency(invoice.paidAmount ?? 0, invoice.currency)}
                           </div>
                         )}
-                        {/* Mobile Status Indicator (dot) since column is hidden on very small screens? No, I hid it on sm but kept on larger. Let's show status icon or color on total? */}
+                        {/* Mobile status dot (Status column is hidden below sm) */}
                         <div className="sm:hidden mt-1">
-                          <span className={`inline-block w-2 H-2 rounded-full ${invoice.paymentStatus === 'paid' ? 'bg-green-500' : invoice.paymentStatus === 'overdue' ? 'bg-red-500' : 'bg-gray-300'}`}></span>
+                          <span className={`inline-block w-2 h-2 rounded-full ${invoice.paymentStatus === 'paid' ? 'bg-green-500' : invoice.paymentStatus === 'overdue' ? 'bg-red-500' : 'bg-gray-300'}`}></span>
                         </div>
                       </td>
                       <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap">
@@ -1177,7 +1220,7 @@ export default function DashboardPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-3 md:px-6 py-4 whitespace-nowrap text-center">
+                      <td className="sticky right-0 z-10 bg-white group-hover:bg-gray-50/80 px-3 md:px-6 py-4 whitespace-nowrap text-center shadow-[-6px_0_6px_-6px_rgba(0,0,0,0.08)]">
                         {/* Simplified Actions for cleaner look */}
                         <div className="flex items-center justify-center gap-1 md:gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                           <button

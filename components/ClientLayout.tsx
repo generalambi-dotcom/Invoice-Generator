@@ -30,11 +30,22 @@ export default function ClientLayout({
     // We could also allow forcing sidebar hidden on specific public pages if needed
     const isAuthPage = ['/signin', '/signup'].includes(pathname);
     const isDirectoryPage = pathname?.startsWith('/businesses');
-    
+
+    // Focused "tool" pages where a marketing footer / newsletter would compete
+    // with the core task (creating & sending an invoice).
+    const isToolPage =
+        pathname?.startsWith('/free-invoice-generator') ||
+        pathname?.startsWith('/invoice-generator-ai') ||
+        pathname?.startsWith('/invoice');
+
     // We hide it if not logged in, OR if we are forcing a full-bleed public directory view
     const showSidebar = isLoggedIn && !isDirectoryPage;
 
     const hideGlobalHeader = isAuthPage || isDirectoryPage;
+
+    // Hide the marketing footer on the whole logged-in app and on tool pages so
+    // nothing competes with the primary conversion actions.
+    const hideFooter = hideGlobalHeader || showSidebar || !!isToolPage;
 
     return (
         <>
@@ -61,13 +72,13 @@ export default function ClientLayout({
                     {children}
                 </div>
 
-                {!hideGlobalHeader && (
+                {!hideFooter && (
                     <div className="mt-auto">
                         <Footer />
                     </div>
                 )}
             </main>
-            {!isLoggedIn && !isAuthPage && <NewsletterPopup />}
+            {!isLoggedIn && !isAuthPage && !isToolPage && <NewsletterPopup />}
             <Toaster position="top-right" />
         </>
     );

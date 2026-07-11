@@ -164,6 +164,8 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
   const [emailActivity, setEmailActivity] = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
+  // Settings panel is collapsed by default on mobile (always open on lg+).
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
 
   // ── Client-side entitlement checks (UX hints only; server is source of truth) ──
@@ -1609,30 +1611,30 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
             <div className="w-full xl:w-80 shrink-0 space-y-6 xl:sticky xl:top-8 order-2 xl:order-2 h-fit">
               {/* Action Buttons - Hidden on mobile (sticky bar replaces this) */}
               <div className="hidden lg:flex bg-white p-5 rounded-xl border border-gray-200 flex-col gap-3">
-                {/* Primary action — the deliverable everyone wants */}
+                {/* Primary action — Save drives the account/get-paid loop */}
                 <button
-                  onClick={handleDownloadPDF}
-                  disabled={isGeneratingPDF}
-                  className="group w-full py-3.5 px-4 bg-gray-900 hover:bg-black text-white font-bold rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:-translate-y-1 hover:shadow-lg hover:shadow-gray-900/20 active:scale-95 transition-all duration-300"
+                  onClick={() => {
+                    if (!user) {
+                      setShowLoginPrompt(true);
+                    } else {
+                      handleSaveInvoice();
+                    }
+                  }}
+                  className="group w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-sm flex items-center justify-center gap-2 hover:-translate-y-1 hover:shadow-lg hover:shadow-emerald-600/20 active:scale-95 transition-all duration-300"
                 >
-                  <svg className="w-4 h-4 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                  {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                  {user ? 'Save Invoice' : 'Save & Manage'}
                 </button>
 
-                {/* Secondary actions — uniform, quieter group */}
+                {/* Secondary actions — Download is a strong secondary, then quieter share */}
                 <div className="grid grid-cols-1 gap-2">
                   <button
-                    onClick={() => {
-                      if (!user) {
-                        setShowLoginPrompt(true);
-                      } else {
-                        handleSaveInvoice();
-                      }
-                    }}
-                    className="w-full py-2.5 px-4 bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-semibold rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
+                    onClick={handleDownloadPDF}
+                    disabled={isGeneratingPDF}
+                    className="w-full py-2.5 px-4 bg-white border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white font-semibold rounded-lg text-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <svg className="w-4 h-4 text-theme-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-                    Save Invoice
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
                   </button>
                   <button
                     onClick={() => setIsEmailModalOpen(true)}
@@ -1728,8 +1730,17 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   </div>
                   <h3 className="font-bold text-gray-900 text-sm">Settings</h3>
+                  <button
+                    type="button"
+                    onClick={() => setSettingsOpen(v => !v)}
+                    aria-label="Toggle settings"
+                    className="ml-auto lg:hidden text-gray-400 p-1 -m-1"
+                  >
+                    <svg className={`w-4 h-4 transition-transform ${settingsOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </button>
                 </div>
 
+                <div className={`space-y-5 ${settingsOpen ? '' : 'hidden lg:block'}`}>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Color Theme</label>
                   <div className="grid grid-cols-5 gap-2">
@@ -1988,6 +1999,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                     )}
                   </div>
                 )}
+                </div>
               </div>
             </div>
 
@@ -2974,7 +2986,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                 handleSaveInvoice();
               }
             }}
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 bg-theme-primary text-white active:opacity-80 transition-colors border-l border-gray-100"
+            className="flex-[1.4] flex flex-col items-center justify-center gap-0.5 py-2.5 bg-emerald-600 text-white active:bg-emerald-700 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
             <span className="text-[10px] font-semibold">Save</span>

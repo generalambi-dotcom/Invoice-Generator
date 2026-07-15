@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
 import { sendInvoiceEmail } from '@/lib/email';
 import { generateInvoicePDFBuffer } from '@/lib/pdf-server';
 import { rateLimit, rateLimitConfigs, getClientIdentifier } from '@/lib/rate-limit';
@@ -19,11 +18,11 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { invoiceId, email, subscribeToBrevo } = body;
+        const { invoiceId, invoiceData, email, subscribeToBrevo } = body;
 
-        if (!invoiceId || !email) {
+        if (!invoiceData || !email) {
             return NextResponse.json(
-                { error: 'Invoice ID and email are required' },
+                { error: 'Invoice details and email are required' },
                 { status: 400 }
             );
         }
@@ -32,13 +31,21 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
         }
 
-        // Get invoice
-        const invoice = await prisma.invoice.findUnique({
-            where: { id: invoiceId },
-        });
+        // Public callers may only email the document they just supplied. Saved
+        // invoices go through the authenticated send-email route.
+        const invoice: any = {
+            ...invoiceData,
+            id: invoiceData?.id || `guest-${Date.now()}`,
+            companyInfo: invoiceData?.companyInfo || invoiceData?.company || {},
+            clientInfo: invoiceData?.clientInfo || invoiceData?.client || {},
+            shipToInfo: invoiceData?.shipToInfo || invoiceData?.shipTo || null,
+            lineItems: Array.isArray(invoiceData?.lineItems) ? invoiceData.lineItems.slice(0, 100) : [],
+            total: Number(invoiceData?.total || 0),
+            subtotal: Number(invoiceData?.subtotal || 0),
+        };
 
-        if (!invoice) {
-            return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+        if (!invoice.invoiceNumber || !Number.isFinite(invoice.total) || invoice.total < 0 || invoice.lineItems.length === 0) {
+            return NextResponse.json({ error: 'Invoice details are incomplete' }, { status: 400 });
         }
 
         // Generate PDF for attachment (server-side)

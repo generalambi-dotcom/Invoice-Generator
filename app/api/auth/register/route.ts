@@ -12,6 +12,7 @@ import { buildClientUser } from '@/lib/user-payload';
 import { rateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { sendSequenceEmail } from '@/lib/email';
 import { syncContactToBrevo } from '@/lib/brevo';
+import { recordMarketingConsent } from '@/lib/email-preferences';
 
 // Per-IP throttle to slow down bulk account creation / enumeration.
 const registerRateLimiter = rateLimit({
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { email, password, name } = body;
+    const { email, password, name, marketingConsent = false } = body;
 
     // Validation
     if (!email || !password || !name) {
@@ -112,8 +113,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Sync new user to Brevo active customer list (fire-and-forget)
-    syncContactToBrevo(user.email, user.name, 'free').catch(console.error);
+    await recordMarketingConsent(user.id, marketingConsent === true);
+    // Brevo is the marketing audience. Only add people who explicitly opted in.
+    if (marketingConsent === true) {
+      syncContactToBrevo(user.email, user.name, 'free').catch(console.error);
+    }
 
     // Send verification email only if required
     if (emailVerificationRequired) {
@@ -168,7 +172,7 @@ export async function POST(request: NextRequest) {
       // Trigger Welcome Sequence Step 1
       sendSequenceEmail({ to: user.email, name: user.name, step: 1 })
         .then(async (result) => {
-          if (result.success) {
+          if (result.success && !result.skipped) {
             await prisma.emailLog.create({
               data: {
                 userId: user.id,

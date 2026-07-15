@@ -110,6 +110,7 @@ model User {
   estimates              Estimate[]
   whatsappCredential     WhatsAppCredential?
   invoiceReminderSettings InvoiceReminderSettings?
+  emailPreferences        EmailPreference?
   posts                  BlogPost[]
   notes                  Note[]
   tasks                  Task[]
@@ -128,7 +129,7 @@ model InvoiceReminderSettings {
   userId          String   @unique
   
   // Toggles
-  enableEmail     Boolean  @default(true)
+  enableEmail     Boolean  @default(false)
   enableWhatsApp  Boolean  @default(false)
   
   // Triggers (Days relative to due date. Negative = before, 0 = on due date, Positive = after)
@@ -292,12 +293,37 @@ model EmailLog {
   errorMessage  String?
   sentAt        DateTime @default(now())
   openedAt      DateTime?
+  deliveredAt   DateTime?
+  bouncedAt     DateTime?
+  complainedAt  DateTime?
+  clickedAt     DateTime?
+  providerMessageId String? @unique
+  dedupeKey     String?  @unique
+  templateKey   String?
+  metadata      Json?
 
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([invoiceId])
   @@index([sentAt])
+  @@index([providerMessageId])
+}
+
+model EmailPreference {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  lifecycleEmails   Boolean  @default(true)
+  weeklySummary     Boolean  @default(true)
+  productUpdates    Boolean  @default(false)
+  marketingConsentAt DateTime?
+  unsubscribeToken  String   @unique @default(cuid())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([unsubscribeToken])
 }
 
 model RefreshToken {
@@ -917,4 +943,3 @@ model B2BApiKey {
   @@index([keyHash])
   @@index([email])
 }
-

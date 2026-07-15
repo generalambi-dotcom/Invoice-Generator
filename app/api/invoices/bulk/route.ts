@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
-import { sendInvoiceReminderEmail, sendInvoiceEmail } from '@/lib/email';
+import { sendInvoiceEmail } from '@/lib/email';
+import { sendPaymentReminder } from '@/lib/reminder-service';
 import { generateInvoicePDFBuffer } from '@/lib/pdf-server';
 import { notifyPaymentReceived } from '@/lib/payment-notifications';
 
@@ -58,11 +59,14 @@ export async function POST(request: NextRequest) {
                         : 0;
 
                     try {
-                        await sendInvoiceReminderEmail({
-                            invoice,
+                        const result = await sendPaymentReminder({
+                            invoiceId: invoice.id,
+                            userId: user.userId,
                             type: isOverdue ? 'overdue' : 'due_soon',
                             days: Math.abs(daysOverdue),
+                            automated: false,
                         });
+                        if (!result.success) throw new Error(result.error || 'Failed to send reminder');
                         sent++;
                     } catch (err: any) {
                         failed++;

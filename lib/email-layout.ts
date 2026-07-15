@@ -4,13 +4,21 @@ interface EmailLayoutOptions {
     content: string;
     title?: string; // Optional title for the browser tab / preview
     previewText?: string; // Hidden preview text
+    footerVariant?: 'account' | 'client' | 'lifecycle';
+    unsubscribeUrl?: string;
 }
 
 const DEFAULT_PRIMARY_COLOR = '#4F46E5';
 const DEFAULT_HEADER_BG = '#ffffff';
 const DEFAULT_BRAND_NAME = 'InvoiceGenerator.ng';
 
-export async function getEmailLayout({ content, title, previewText }: EmailLayoutOptions): Promise<string> {
+export async function getEmailLayout({
+    content,
+    title,
+    previewText,
+    footerVariant = 'account',
+    unsubscribeUrl,
+}: EmailLayoutOptions): Promise<string> {
     // Fetch design settings
     const settings = await getSystemSettings([
         'EMAIL_BRAND_LOGO',
@@ -38,6 +46,14 @@ export async function getEmailLayout({ content, title, previewText }: EmailLayou
 
     // Current Year for Footer
     const year = new Date().getFullYear();
+    const reasonText = footerVariant === 'client'
+        ? `This business document was sent using ${brandName}.`
+        : footerVariant === 'lifecycle'
+            ? `You are receiving this product guidance because you created a ${brandName} account.`
+            : `This is an essential account or service email from ${brandName}.`;
+    const preferenceText = footerVariant === 'lifecycle' && unsubscribeUrl
+        ? `<br>You can <a href="${unsubscribeUrl}" style="color:#6b7280;text-decoration:underline;">unsubscribe from emails like this</a> or update your communication preferences.`
+        : '';
 
     return `
     <!DOCTYPE html>
@@ -123,8 +139,7 @@ export async function getEmailLayout({ content, title, previewText }: EmailLayou
               ${footerText ? `<div style="margin-bottom: 20px;">${footerText}</div>` : ''}
               
               <div style="margin-bottom: 15px; color: #9ca3af; font-size: 11px; line-height: 1.5;">
-                You are receiving this email because you signed up for ${brandName}.<br>
-                If you no longer wish to receive these emails, you can <a href="{{unsubscribe_url}}" style="color: #6b7280; text-decoration: underline;">unsubscribe here</a>.
+                ${reasonText}${preferenceText}
               </div>
 
               <div style="margin-bottom: 10px; font-size: 11px; color: #9ca3af;">

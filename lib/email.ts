@@ -8,6 +8,7 @@ import { getPasswordResetEmailHtml, getPasswordResetEmailText } from './password
 import { getVerificationEmailHtml, getVerificationEmailText } from './verification-email';
 import { getEmailLayout } from './email-layout';
 import { prisma } from '@/lib/db';
+import { lifecycleEmailContext } from './email-preferences';
 
 // Don't initialize Resend at module level - do it lazily in the function
 // This prevents build-time errors when RESEND_API_KEY is not set
@@ -181,6 +182,7 @@ export async function sendInvoiceEmail({
       content,
       title: `Invoice ${invoiceNum}`,
       previewText: `${companyName} sent you Invoice ${invoiceNum} — ${currency} ${total} due ${fmtDate(invoice.dueDate)}`,
+      footerVariant: 'client',
     });
 
     // Prep From Email
@@ -452,7 +454,9 @@ export async function sendInvoiceReminderEmail({
 
     const resend = new Resend(process.env.RESEND_API_KEY);
     const clientName = invoice.clientInfo?.name || 'Valued Client';
-    const invoiceUrl = `https://invoicegenerator.ng/invoice/${invoice.id}`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng';
+    const invoiceUrl = invoice.paymentLink || `${appUrl}/invoice/${invoice.id}`;
+    const outstanding = Math.max(0, Number(invoice.total || 0) - Number(invoice.paidAmount || 0));
 
     let subject = '';
     let headline = '';
@@ -473,7 +477,7 @@ export async function sendInvoiceReminderEmail({
       case 'overdue':
         subject = `Overdue: Invoice ${invoice.invoiceNumber} is ${days} days late`;
         headline = 'Payment Overdue';
-        bodyText = `We noticed that payment for Invoice ${invoice.invoiceNumber} was due on ${new Date(invoice.dueDate).toLocaleDateString()} and is now ${days} days overdue. Please make payment immediately to avoid service interruption.`;
+        bodyText = `Payment for Invoice ${invoice.invoiceNumber} was due on ${new Date(invoice.dueDate).toLocaleDateString()} and is now ${days} days overdue. Please arrange payment or contact us if anything needs clarification.`;
         infoBoType = 'warning-box';
         break;
     }
@@ -496,12 +500,12 @@ export async function sendInvoiceReminderEmail({
         </tr>
         <tr>
           <td style="padding: 10px;"><strong>Amount Due:</strong></td>
-          <td style="padding: 10px; text-align: right; font-weight: bold;">${invoice.currency} ${invoice.total?.toFixed(2)}</td>
+          <td style="padding: 10px; text-align: right; font-weight: bold;">${invoice.currency} ${outstanding.toFixed(2)}</td>
         </tr>
       </table>
 
       <div style="text-align: center; margin: 30px 0;">
-         <a href="${invoiceUrl}" class="button">View & Pay Invoice</a>
+         <a href="${invoiceUrl}" class="button">${invoice.paymentLink ? 'View & Pay Invoice' : 'View Invoice'}</a>
       </div>
       
       <p>If you have already made payment, please disregard this email.</p>
@@ -511,6 +515,7 @@ export async function sendInvoiceReminderEmail({
       content,
       title: headline,
       previewText: subject,
+      footerVariant: 'client',
     });
 
     const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
@@ -631,6 +636,7 @@ export async function sendClientStatementEmail(params: SendClientStatementParams
       content,
       title: `Account Statement - ${params.companyName}`,
       previewText: `Account statement from ${params.companyName}`,
+      footerVariant: 'client',
     });
 
     const fromEmail = process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng';
@@ -865,6 +871,7 @@ export async function sendPaymentConfirmationEmail({
       content,
       title: `Payment Confirmed: ${invoiceNumber}`,
       previewText: `Your payment for Invoice ${invoiceNumber} has been received`,
+      footerVariant: 'client',
     });
 
     await resend.emails.send({
@@ -894,8 +901,10 @@ export async function sendSequenceEmail({
   to,
   name,
   step,
-}: SendSequenceEmailParams): Promise<{ success: boolean; error?: string }> {
+}: SendSequenceEmailParams): Promise<{ success: boolean; error?: string; skipped?: boolean }> {
   try {
+    const lifecycle = await lifecycleEmailContext(to, 'lifecycle');
+    if (!lifecycle.allowed) return { success: true, skipped: true };
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       console.log(`⚠️ RESEND_API_KEY not set. Would have sent sequence step ${step} to ${to}`);
@@ -918,7 +927,21 @@ export async function sendSequenceEmail({
       where: { key: templateKey },
     });
 
-    if (customTemplate && customTemplate.enabled) {
+    const stepAction: Record<number, { text: string; url: string }> = {
+      1: { text: 'Create your first invoice', url: `${appUrl}/free-invoice-generator` },
+      2: { text: 'Complete your business details', url: `${appUrl}/profile` },
+      3: { text: 'Send an invoice', url: `${appUrl}/free-invoice-generator` },
+      4: { text: 'Try AI invoice generation', url: `${appUrl}/invoice-generator-ai` },
+      5: { text: 'Compare plans', url: `${appUrl}/upgrade` },
+    };
+    buttonText = stepAction[step].text;
+    buttonUrl = stepAction[step].url;
+
+    if (customTemplate && !customTemplate.enabled) {
+      return { success: true, skipped: true };
+    }
+
+    if (customTemplate) {
       subject = customTemplate.subject;
       bodyContent = customTemplate.body.replace(/\{\{userName\}\}/g, userName);
 
@@ -930,76 +953,72 @@ export async function sendSequenceEmail({
       // For backwards compatibility and smooth integration with the Email Layout wrapper, we inject their custom body 
       // into the same layout mechanism we use for hardcoded items.
       // Users might add `{{buttonUrl}}` to their custom template layout if they choose, so let's set it.
-      bodyContent = bodyContent.replace(/\{\{buttonUrl\}\}/g, `${appUrl}/dashboard`);
-      if (step === 1 || step === 4) {
-        bodyContent = bodyContent.replace(/\{\{buttonUrl\}\}/g, `${appUrl}/invoices/new`);
-      }
-      if (step === 3 || step === 5) {
-        bodyContent = bodyContent.replace(/\{\{buttonUrl\}\}/g, `${appUrl}/pricing`);
+      const hadButtonPlaceholder = bodyContent.includes('{{buttonUrl}}');
+      bodyContent = bodyContent.replace(/\{\{buttonUrl\}\}/g, buttonUrl);
+      if (!hadButtonPlaceholder) {
+        bodyContent += `<div style="text-align:center;margin:28px 0;"><a href="${buttonUrl}" style="display:inline-block;background:#1F4D45;color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:700;">${buttonText}</a></div>`;
       }
     } else {
       // Fallback to Hardcoded Templates
       switch (step) {
         case 1:
-          subject = '👉 Your first invoice is waiting 🇳🇬';
+          subject = 'Your first invoice is ready to create';
           headline = 'Welcome to InvoiceGenerator.ng';
           bodyContent = `
               <p>Hi ${userName},</p>
-              <p>The number one reason Nigerian freelancers and SMEs wait weeks to get paid is friction. When your invoice is hard to read or looks unprofessional, corporate accounting departments push it to the bottom of the pile.</p>
-              <p>Let’s fix that today.</p>
-              <p>Your dashboard is ready. You can generate a stunning, mathematically perfect PDF invoice in under 60 seconds. Best part? It separates your VAT and totals automatically.</p>
+              <p>Your account is ready. Create a clear, professional invoice in Naira, add your payment details and send it to a real client in a few minutes.</p>
+              <p>If you started an invoice before signing up, it will be waiting for you when you return.</p>
             `;
           buttonText = 'Create Your First Invoice';
-          buttonUrl = `${appUrl}/invoices/new`;
+          buttonUrl = `${appUrl}/free-invoice-generator`;
           break;
 
         case 2:
-          subject = '👉 Why clients are delaying your payments...';
+          subject = 'Make every invoice recognisably yours';
           headline = 'Look more professional';
           bodyContent = `
               <p>Hi ${userName},</p>
-              <p>A bare, black-and-white grid of numbers screams "I am a beginner." If you don't invest in your own branding, clients subconsciously feel they don't need to rush to pay you.</p>
-              <p>Log in right now to upload your high-resolution company Logo and set your primary brand color. When you send an invoice that looks like a luxury agency document, clients stop haggling and start paying.</p>
+              <p>Add your business name, logo and bank details once and we will reuse them on future invoices.</p>
+              <p>It takes a minute and makes every document easier for clients to recognise and pay.</p>
             `;
           buttonText = 'Complete Your Profile';
           buttonUrl = `${appUrl}/dashboard`;
           break;
 
         case 3:
-          subject = '👉 Where Nigerian business actually happens 📱';
+          subject = 'Send your next invoice where clients respond';
           headline = 'WhatsApp Invoicing';
           bodyContent = `
               <p>Hi ${userName},</p>
-              <p>Email is slow. The actual heartbeat of Nigerian commerce is WhatsApp.</p>
-              <p>With our Premium tier, you don't even need to download heavy PDFs. You can instantly generate a highly secure, non-editable link and blast it directly into your client's WhatsApp DM with a single click. Faster delivery equals faster payment.</p>
+              <p>InvoiceGenerator.ng lets you share a clear invoice summary through WhatsApp and give your client a direct route to view and pay.</p>
+              <p>Create or open an invoice, then choose WhatsApp when it is ready.</p>
             `;
           buttonText = "See Premium Features";
-          buttonUrl = `${appUrl}/pricing`;
+          buttonUrl = `${appUrl}/free-invoice-generator`;
           break;
 
         case 4:
-          subject = "👉 Defeat writer's block instantly 🤖";
+          subject = 'Turn a short brief into a clear invoice';
           headline = 'Let AI write your invoice';
           bodyContent = `
               <p>Hi ${userName},</p>
-              <p>"Website Design - N50,000" is a terrible invoice description. Corporate procurement officers will reject it because it lacks detail.</p>
-              <p>Are you struggling to describe your work professionally? Stop typing. With InvoiceGenerator Premium, you can use our built-in AI to instantly generate bulletproof, highly detailed service descriptions that sail through corporate audits.</p>
+              <p>If writing line-item descriptions slows you down, the AI generator can turn a short brief into a structured invoice draft.</p>
+              <p>You remain in control: review the wording, amounts and payment terms before sending.</p>
             `;
           buttonText = 'Try AI Invoice Generation';
-          buttonUrl = `${appUrl}/invoices/new`;
+          buttonUrl = `${appUrl}/invoice-generator-ai`;
           break;
 
         case 5:
-          subject = '👉 Ready to look like a Tier-1 Agency?';
+          subject = 'Spend less time following up on invoices';
           headline = 'Upgrade to Premium';
           bodyContent = `
               <p>Hi ${userName},</p>
-              <p>You’ve seen what InvoiceGenerator.ng can do. Now it's time to take the training wheels off.</p>
-              <p>Upgrade to Premium today to completely remove our branding from your PDFs, unlock unlimited AI descriptions, and activate seamless WhatsApp delivery.</p>
-              <p>You charge premium prices. Your paperwork should match.</p>
+              <p>Pro adds recurring invoices, payment links, WhatsApp delivery and automated follow-ups so you can spend less time on invoice administration.</p>
+              <p>Compare the plans and choose one only when those features will save your business time.</p>
             `;
-          buttonText = 'Upgrade to Premium';
-          buttonUrl = `${appUrl}/pricing`;
+          buttonText = 'Compare plans';
+          buttonUrl = `${appUrl}/upgrade`;
           break;
       }
 
@@ -1024,6 +1043,8 @@ export async function sendSequenceEmail({
       content: bodyContent,
       title: headline,
       previewText: subject,
+      footerVariant: 'lifecycle',
+      unsubscribeUrl: lifecycle.unsubscribeUrl,
     });
 
     await resend.emails.send({
@@ -1053,6 +1074,8 @@ export async function sendLimitWarningEmail({
   name,
 }: SendLimitWarningEmailParams): Promise<{ success: boolean; error?: string }> {
   try {
+    const lifecycle = await lifecycleEmailContext(to, 'lifecycle');
+    if (!lifecycle.allowed) return { success: true };
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       console.log('⚠️ RESEND_API_KEY not set. Limit warning email would be sent to', to);
@@ -1087,6 +1110,8 @@ export async function sendLimitWarningEmail({
       content,
       title: 'Approaching Your Monthly Limits',
       previewText: 'You have almost reached your 15 invoice monthly limit.',
+      footerVariant: 'lifecycle',
+      unsubscribeUrl: lifecycle.unsubscribeUrl,
     });
 
     await resend.emails.send({
@@ -1241,6 +1266,8 @@ export async function sendWeeklySummaryEmail({
   overdueAmount,
 }: SendWeeklySummaryEmailParams): Promise<{ success: boolean; error?: string }> {
   try {
+    const lifecycle = await lifecycleEmailContext(to, 'weekly');
+    if (!lifecycle.allowed) return { success: true };
     const enabled = await isNotificationEnabled('weekly_summary');
     if (!enabled) return { success: true };
 
@@ -1293,6 +1320,8 @@ export async function sendWeeklySummaryEmail({
       content,
       title: 'Your weekly business summary',
       previewText: `${invoicesSent} invoices sent · ${currency} ${totalPaid} paid this week`,
+      footerVariant: 'lifecycle',
+      unsubscribeUrl: lifecycle.unsubscribeUrl,
     });
 
     await resend.emails.send({
@@ -1306,5 +1335,55 @@ export async function sendWeeklySummaryEmail({
   } catch (error: any) {
     console.error('Error sending weekly summary email:', error);
     return { success: false, error: error.message };
+  }
+}
+
+export type SubscriptionEmailEvent = 'activated' | 'renewed' | 'ending' | 'cancelled' | 'expired' | 'payment_failed';
+
+export async function sendSubscriptionEmail({
+  to,
+  name,
+  event,
+  plan,
+  endDate,
+}: {
+  to: string;
+  name: string;
+  event: SubscriptionEmailEvent;
+  plan?: string | null;
+  endDate?: Date | null;
+}): Promise<{ success: boolean; error?: string; emailId?: string }> {
+  try {
+    if (!process.env.RESEND_API_KEY) return { success: true, emailId: 'dev-mode' };
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://invoicegenerator.ng';
+    const planName = plan === 'business' ? 'Business' : plan === 'pro' || plan === 'premium' ? 'Pro' : 'paid';
+    const date = endDate ? endDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
+    const copy: Record<SubscriptionEmailEvent, { subject: string; heading: string; body: string; cta: string }> = {
+      activated: { subject: `${planName} is now active`, heading: `Welcome to ${planName}`, body: `Your ${planName} features are ready to use${date ? ` through ${date}` : ''}.`, cta: 'Open your dashboard' },
+      renewed: { subject: `${planName} renewed successfully`, heading: 'Your plan has renewed', body: `Your access continues${date ? ` through ${date}` : ''}.`, cta: 'View your account' },
+      ending: { subject: `Your ${planName} access ends soon`, heading: 'Your plan ends soon', body: `Your paid features are scheduled to end${date ? ` on ${date}` : ' soon'}. Renew to keep automatic reminders, recurring invoices and other paid tools.`, cta: 'Review your plan' },
+      cancelled: { subject: `${planName} cancellation confirmed`, heading: 'Cancellation confirmed', body: `You can keep using your paid features${date ? ` until ${date}` : ' until the end of your billing period'}.`, cta: 'Review your account' },
+      expired: { subject: 'Your account is now on Free', heading: 'Your paid access has ended', body: 'Your invoices and customer records are still here. You can continue on Free or reactivate paid features at any time.', cta: 'View plans' },
+      payment_failed: { subject: `We could not renew ${planName}`, heading: 'Payment needs your attention', body: 'We could not complete your subscription payment. Update your billing details to avoid losing paid features.', cta: 'Fix billing' },
+    };
+    const selected = copy[event];
+    const content = `
+      <h1 style="font-size:24px;margin:0 0 20px;color:#111827;">${selected.heading}</h1>
+      <p>Hi ${name || 'there'},</p>
+      <p>${selected.body}</p>
+      <div style="margin:28px 0;"><a class="button" href="${appUrl}/upgrade">${selected.cta}</a></div>
+      <p style="color:#6b7280;font-size:13px;">This is an account and billing message, so it is sent even when marketing emails are off.</p>`;
+    const html = await getEmailLayout({ content, title: selected.heading, previewText: selected.subject, footerVariant: 'account' });
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const result = await resend.emails.send({
+      from: `InvoiceGenerator.ng <${process.env.FROM_EMAIL || 'noreply@invoicegenerator.ng'}>`,
+      to,
+      subject: selected.subject,
+      html,
+    });
+    if (result.error) return { success: false, error: formatErrorMessage(result.error, 'sending subscription email') };
+    return { success: true, emailId: result.data?.id };
+  } catch (error: any) {
+    return { success: false, error: formatErrorMessage(error, 'sending subscription email') };
   }
 }

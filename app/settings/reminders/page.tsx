@@ -23,7 +23,7 @@ export default function RemindersSettings() {
     const [isPremium, setIsPremium] = useState(false);
 
     const [settings, setSettings] = useState<ReminderSettings>({
-        enableEmail: true,
+        enableEmail: false,
         enableWhatsApp: false,
         remindBeforeDue: 3,
         remindOnDue: true,
@@ -101,10 +101,10 @@ export default function RemindersSettings() {
                             <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">Premium Feature</h2>
-                            <p className="text-gray-600 mb-6 max-w-md mx-auto">Automated Invoice Reminders are available exclusively for Premium users. Upgrade to automatically follow up on unpaid invoices.</p>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">Automated reminders are on Pro</h2>
+                            <p className="text-gray-600 mb-6 max-w-md mx-auto">Follow up before and after an invoice is due, while keeping control of the schedule.</p>
                             <button onClick={() => router.push('/upgrade')} className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-medium rounded-lg hover:from-teal-700 hover:to-emerald-700 transition-colors shadow-sm">
-                                Upgrade to Premium
+                                View Pro plans
                             </button>
                         </div>
                     </div>
@@ -120,8 +120,8 @@ export default function RemindersSettings() {
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="px-6 py-5 border-b border-gray-100 bg-white sm:flex sm:items-center sm:justify-between">
                             <div>
-                                <h3 className="text-lg leading-6 font-medium text-gray-900">Automated Reminders</h3>
-                                <p className="mt-1 text-sm text-gray-500">Configure when we automatically send payment follow-ups to your clients.</p>
+                                <h3 className="text-lg leading-6 font-semibold text-gray-900">Automatic payment reminders</h3>
+                                <p className="mt-1 text-sm text-gray-500">Nothing is sent until you switch reminders on and save.</p>
                             </div>
                             <div className="mt-3 flex sm:mt-0 sm:ml-4">
                                 <button

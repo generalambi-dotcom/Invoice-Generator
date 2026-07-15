@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
-import { sendInvoiceEmail } from '@/lib/email';
+import { sendPaymentReminder } from '@/lib/reminder-service';
 import { rateLimit, rateLimitConfigs } from '@/lib/rate-limit';
 
 // Force dynamic rendering
@@ -108,30 +108,19 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        const outstanding = invoice.total - (invoice.paidAmount || 0);
         const daysOverdue = Math.floor(
           (new Date().getTime() - new Date(invoice.dueDate).getTime()) / (1000 * 60 * 60 * 24)
         );
 
-        const reminderMessage = message || 
-          `This is a friendly reminder that invoice ${invoice.invoiceNumber} is ${daysOverdue > 0 ? `${daysOverdue} days overdue` : 'due'}. ` +
-          `Outstanding amount: ${invoice.currency} ${outstanding.toFixed(2)}. ` +
-          `Please make payment at your earliest convenience.`;
-
-        // Send reminder email
-        const emailResult = await sendInvoiceEmail({
-          invoice,
-          to: clientEmail,
-          message: reminderMessage,
+        const emailResult = await sendPaymentReminder({
+          invoiceId: invoice.id,
+          userId: user.userId,
+          type: daysOverdue > 0 ? 'overdue' : 'due_today',
+          days: Math.max(daysOverdue, 0),
+          automated: false,
         });
 
         if (emailResult.success) {
-          // Update invoice sentAt
-          await prisma.invoice.update({
-            where: { id: invoice.id },
-            data: { sentAt: new Date() },
-          });
-
           results.push({ invoiceId, success: true, emailId: emailResult.emailId });
         } else {
           results.push({ invoiceId, success: false, error: emailResult.error });
@@ -160,4 +149,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

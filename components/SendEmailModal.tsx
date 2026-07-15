@@ -32,7 +32,7 @@ export function SendEmailModal({ invoiceId, isOpen, onClose, defaultEmail = '' }
 
             const endpoint = isGuestOrPublic ? '/api/public/send-copy' : '/api/invoices/send-email';
             const payload = isGuestOrPublic
-                ? { invoiceId, email: recipientEmail, subscribeToBrevo: true }
+                ? { invoiceId, email: recipientEmail, subscribeToBrevo: false }
                 : { invoiceId, recipientEmail, message };
 
             const res = await fetch(endpoint, {

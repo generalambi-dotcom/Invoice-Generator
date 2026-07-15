@@ -15,14 +15,24 @@ interface PlanContext {
   subscriptionPlan: string | null;
   createdAt: Date;
   isAdmin: boolean;
+  subscriptionStatus: string | null;
+  subscriptionEndDate: Date | null;
 }
 
 async function getPlanContext(userId: string): Promise<PlanContext | null> {
   const u = await prisma.user.findUnique({
     where: { id: userId },
-    select: { subscriptionPlan: true, createdAt: true, isAdmin: true },
+    select: { subscriptionPlan: true, subscriptionStatus: true, subscriptionEndDate: true, createdAt: true, isAdmin: true },
   });
-  return u ? { subscriptionPlan: u.subscriptionPlan, createdAt: u.createdAt, isAdmin: u.isAdmin } : null;
+  return u ? { subscriptionPlan: u.subscriptionPlan, subscriptionStatus: u.subscriptionStatus, subscriptionEndDate: u.subscriptionEndDate, createdAt: u.createdAt, isAdmin: u.isAdmin } : null;
+}
+
+function effectivePlan(ctx: PlanContext) {
+  const paid = ['pro', 'business', 'premium'].includes(ctx.subscriptionPlan || '');
+  if (!paid) return ctx.subscriptionPlan;
+  const statusAllowsAccess = ['active', 'cancelled'].includes(ctx.subscriptionStatus || '');
+  const hasTime = !ctx.subscriptionEndDate || ctx.subscriptionEndDate > new Date();
+  return statusAllowsAccess && hasTime ? ctx.subscriptionPlan : 'free';
 }
 
 /** Does this user's plan grant a feature? (admins always true) */
@@ -30,7 +40,7 @@ export async function userHasFeature(userId: string, feature: FeatureKey): Promi
   const ctx = await getPlanContext(userId);
   if (!ctx) return false;
   if (ctx.isAdmin) return true;
-  return planHasFeature(feature, ctx.subscriptionPlan, ctx.createdAt);
+  return planHasFeature(feature, effectivePlan(ctx), ctx.createdAt);
 }
 
 /** May this user use the given invoice currency? */
@@ -38,7 +48,7 @@ export async function userCurrencyAllowed(userId: string, currency: string): Pro
   const ctx = await getPlanContext(userId);
   if (!ctx) return false;
   if (ctx.isAdmin) return true;
-  return currencyAllowed(currency, ctx.subscriptionPlan, ctx.createdAt);
+  return currencyAllowed(currency, effectivePlan(ctx), ctx.createdAt);
 }
 
 /** May this user use the given invoice theme? */
@@ -46,5 +56,5 @@ export async function userThemeAllowed(userId: string, theme: string): Promise<b
   const ctx = await getPlanContext(userId);
   if (!ctx) return false;
   if (ctx.isAdmin) return true;
-  return themeAllowed(theme, ctx.subscriptionPlan, ctx.createdAt);
+  return themeAllowed(theme, effectivePlan(ctx), ctx.createdAt);
 }

@@ -66,16 +66,15 @@ export default function AuthLayout({ children, heading, subheading, image = "/im
 
                         <div className="absolute -bottom-8 -right-8 w-64 bg-white rounded-xl shadow-2xl p-4 border border-gray-100 z-20 transform rotate-2">
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-semibold text-gray-500">Weekly sales</span>
+                                <span className="text-xs font-semibold text-gray-500">From invoice to payment</span>
                                 <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
                                     <svg className="w-3 h-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                     </svg>
                                 </div>
                             </div>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-2xl font-bold text-gray-900">714k</span>
-                                <span className="text-xs font-medium text-green-500 bg-green-50 px-1.5 py-0.5 rounded">+2.4%</span>
+                            <div className="flex items-center gap-2 text-sm font-bold text-gray-900">
+                                <span>Create</span><span className="text-gray-300">→</span><span>Send</span><span className="text-gray-300">→</span><span className="text-green-600">Track</span>
                             </div>
                         </div>
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { generateUniquePublicSlug, isPublicSlugAvailable } from '@/lib/public-invoice';
+import { isPaidTier, normaliseTier } from '@/lib/plans';
 
 /**
  * Check if user has premium access (admin or premium subscription)
@@ -23,7 +24,7 @@ async function checkPremiumAccess(userId: string): Promise<boolean> {
   if (user.isAdmin) return true;
 
   // Check premium subscription
-  if (user.subscriptionPlan === 'premium' && user.subscriptionStatus === 'active') {
+  if (isPaidTier(normaliseTier(user.subscriptionPlan)) && ['active', 'cancelled'].includes(user.subscriptionStatus || '')) {
     // Check if subscription hasn't expired
     if (user.subscriptionEndDate) {
       return new Date(user.subscriptionEndDate) > new Date();
@@ -177,4 +178,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

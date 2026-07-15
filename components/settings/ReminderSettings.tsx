@@ -14,7 +14,7 @@ interface ReminderSettings {
 
 export default function ReminderSettings() {
     const [settings, setSettings] = useState<ReminderSettings>({
-        enableEmail: true,
+        enableEmail: false,
         enableWhatsApp: false,
         remindBeforeDue: 3,
         remindOnDue: true,
@@ -105,15 +105,13 @@ export default function ReminderSettings() {
                         <label className="flex items-center space-x-3 cursor-pointer">
                             <input
                                 type="checkbox"
-                                checked={settings.enableWhatsApp}
-                                onChange={() => handleToggle('enableWhatsApp')}
+                            checked={false}
+                            disabled
                                 className="w-5 h-5 text-green-600 rounded border-gray-300 focus:ring-green-500"
                             />
-                            <span className="text-gray-700">Enable WhatsApp Reminders</span>
+                            <span className="text-gray-400">WhatsApp reminders</span>
                         </label>
-                        {!settings.enableWhatsApp && (
-                            <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">Requires WhatsApp Connection</span>
-                        )}
+                        <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">Coming soon</span>
                     </div>
                 </div>
             </div>

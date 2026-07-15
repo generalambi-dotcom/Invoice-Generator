@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import Stripe from 'stripe';
 import { syncContactToBrevo } from '@/lib/brevo';
 import { notifyPaymentReceived } from '@/lib/payment-notifications';
+import { notifySubscriptionEvent } from '@/lib/subscription-notifications';
 
 // POST - Handle Stripe webhook
 export async function POST(request: NextRequest) {
@@ -71,6 +72,7 @@ export async function POST(request: NextRequest) {
         if (updatedUser) {
           syncContactToBrevo(updatedUser.email, updatedUser.name, 'premium').catch(console.error);
         }
+        await notifySubscriptionEvent(userId, 'activated', session.id);
 
         // Note: Payment model requires invoiceId, but subscriptions don't have invoices
         // The subscription status is already updated above, which is the important part
@@ -131,6 +133,7 @@ export async function POST(request: NextRequest) {
             },
           });
           console.log(`🔁 Stripe subscription renewed for user ${subUser.id} (${interval})`);
+          await notifySubscriptionEvent(subUser.id, 'renewed', event.id);
         }
       }
     }
@@ -149,8 +152,30 @@ export async function POST(request: NextRequest) {
           where: { id: subUser.id },
           data: { subscriptionStatus: 'cancelled' },
         });
+        await notifySubscriptionEvent(subUser.id, 'cancelled', event.id);
         console.log(`⚠️ Stripe subscription cancelled for user ${subUser.id}`);
       }
+    }
+
+    if (event.type === 'invoice.payment_failed') {
+      const invoice = event.data.object as Stripe.Invoice;
+      const email = (invoice as any).customer_email as string | undefined;
+      const subscriptionId = typeof (invoice as any).subscription === 'string' ? (invoice as any).subscription : null;
+      let userId: string | undefined;
+      if (subscriptionId) {
+        try {
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+          userId = subscription.metadata?.userId;
+        } catch (error) {
+          console.error('Could not resolve failed Stripe subscription:', error);
+        }
+      }
+      const user = userId
+        ? await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
+        : email
+          ? await prisma.user.findUnique({ where: { email: email.toLowerCase() }, select: { id: true } })
+          : null;
+      if (user) await notifySubscriptionEvent(user.id, 'payment_failed', event.id);
     }
 
     // Handle invoice payments
@@ -209,4 +234,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

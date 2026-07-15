@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { syncContactToBrevo } from '@/lib/brevo';
 import { checkCronAuth } from '@/lib/cron-auth';
+import { notifySubscriptionEvent } from '@/lib/subscription-notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
     // Find users with expired subscriptions that haven't been downgraded yet
     const expiredUsers = await prisma.user.findMany({
       where: {
-        subscriptionStatus: 'active',
+        subscriptionStatus: { in: ['active', 'cancelled'] },
         subscriptionEndDate: {
           lt: now, // End date has passed
         },
@@ -63,6 +64,7 @@ export async function GET(request: Request) {
 
         // Update Brevo contact to free (fire-and-forget)
         syncContactToBrevo(user.email, user.name, 'free').catch(console.error);
+        await notifySubscriptionEvent(user.id, 'expired', now.toISOString().slice(0, 10));
 
         downgraded++;
         console.log(`[Subscription Cron] Downgraded ${user.email} to free`);

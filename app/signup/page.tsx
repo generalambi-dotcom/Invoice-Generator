@@ -17,6 +17,7 @@ export default function SignUpPage() {
     email: '',
     password: '',
     confirmPassword: '',
+    marketingConsent: false,
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -47,6 +48,11 @@ export default function SignUpPage() {
     }
 
     try {
+      const requestedRedirect = new URLSearchParams(window.location.search).get('redirect');
+      const safeRedirect = requestedRedirect?.startsWith('/') && !requestedRedirect.startsWith('//')
+        ? requestedRedirect
+        : '/dashboard';
+      localStorage.setItem('invoice-generator-post-auth-redirect', safeRedirect);
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
@@ -56,6 +62,7 @@ export default function SignUpPage() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
+          marketingConsent: formData.marketingConsent,
         }),
       });
 
@@ -76,9 +83,9 @@ export default function SignUpPage() {
 
       // Redirect to email verification or dashboard
       if (data.requiresVerification) {
-        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}&redirect=${encodeURIComponent(safeRedirect)}`);
       } else {
-        router.push('/dashboard');
+        router.push(safeRedirect);
       }
 
     } catch (err: any) {
@@ -90,8 +97,8 @@ export default function SignUpPage() {
 
   return (
     <AuthLayout
-      heading="Create Account"
-      subheading="Get started with your free account today."
+      heading="Create your free workspace"
+      subheading="Save this invoice, reuse customer details and keep track of what is paid."
     >
       <div className="mb-8">
         <GoogleSignInButton text="Sign up with Google" />
@@ -169,6 +176,18 @@ export default function SignUpPage() {
         <p className="text-xs text-gray-500">
           By creating an account, you agree to our <Link href="/terms" className="text-[#1F4D45] hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-[#1F4D45] hover:underline">Privacy Policy</Link>.
         </p>
+
+        <label className="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+          <input
+            type="checkbox"
+            checked={formData.marketingConsent}
+            onChange={(event) => setFormData({ ...formData, marketingConsent: event.target.checked })}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#1F4D45] focus:ring-[#1F4D45]"
+          />
+          <span>
+            Send me occasional product updates and practical invoicing tips. This is optional and can be changed anytime.
+          </span>
+        </label>
 
         <button
           type="submit"

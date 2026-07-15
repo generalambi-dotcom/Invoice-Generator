@@ -65,7 +65,10 @@ function SignInContent() {
 
         trackEvent('login', { method: 'email' });
 
-        const redirectUrl = searchParams.get('redirect') || '/dashboard';
+        const storedRedirect = localStorage.getItem('invoice-generator-post-auth-redirect');
+        const requestedRedirect = searchParams.get('redirect') || storedRedirect || '/dashboard';
+        const redirectUrl = requestedRedirect.startsWith('/') && !requestedRedirect.startsWith('//') ? requestedRedirect : '/dashboard';
+        localStorage.removeItem('invoice-generator-post-auth-redirect');
         window.location.href = redirectUrl;
         return;
       }
@@ -108,7 +111,10 @@ function SignInContent() {
       localStorage.setItem('invoice-generator-current-user', JSON.stringify(data.user));
       createSession(data.user);
       trackEvent('login', { method: '2fa' });
-      const redirectUrl = searchParams.get('redirect') || '/dashboard';
+      const storedRedirect = localStorage.getItem('invoice-generator-post-auth-redirect');
+      const requestedRedirect = searchParams.get('redirect') || storedRedirect || '/dashboard';
+      const redirectUrl = requestedRedirect.startsWith('/') && !requestedRedirect.startsWith('//') ? requestedRedirect : '/dashboard';
+      localStorage.removeItem('invoice-generator-post-auth-redirect');
       window.location.href = redirectUrl;
     } catch (err: any) {
       setError(err.message || 'Verification failed.');
@@ -258,4 +264,3 @@ export default function SignInPage() {
     </Suspense>
   );
 }
-

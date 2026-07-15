@@ -11,6 +11,7 @@ function VerifyEmailContent() {
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [postAuthRedirect, setPostAuthRedirect] = useState('/dashboard');
 
   const verified = searchParams.get('verified') === 'true';
   const errorParam = searchParams.get('error');
@@ -21,6 +22,11 @@ function VerifyEmailContent() {
       setEmail(emailParam);
     }
   }, [emailParam]);
+
+  useEffect(() => {
+    const requested = searchParams.get('redirect') || localStorage.getItem('invoice-generator-post-auth-redirect');
+    if (requested?.startsWith('/') && !requested.startsWith('//')) setPostAuthRedirect(requested);
+  }, [searchParams]);
 
   useEffect(() => {
     if (errorParam) {
@@ -104,7 +110,7 @@ function VerifyEmailContent() {
                 Your email address has been successfully verified. You can now sign in to your account.
               </p>
               <Link
-                href="/signin"
+                href={`/signin?redirect=${encodeURIComponent(postAuthRedirect)}`}
                 className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
               >
                 Sign In
@@ -177,7 +183,7 @@ function VerifyEmailContent() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Already verified?{' '}
-              <Link href="/signin" className="text-blue-600 hover:text-blue-800 font-medium">
+              <Link href={`/signin?redirect=${encodeURIComponent(postAuthRedirect)}`} className="text-blue-600 hover:text-blue-800 font-medium">
                 Sign In
               </Link>
             </p>
@@ -206,4 +212,3 @@ export default function VerifyEmailPage() {
     </Suspense>
   );
 }
-

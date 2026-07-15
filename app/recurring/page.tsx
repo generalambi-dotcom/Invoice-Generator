@@ -17,6 +17,7 @@ interface RecurringInvoiceData {
 }
 
 import { getCurrentUser } from '@/lib/auth';
+import { isPremiumUser } from '@/lib/payments';
 
 // ... imports
 
@@ -27,10 +28,7 @@ export default function RecurringInvoicesPage() {
     const [isPremium, setIsPremium] = useState(false);
 
     useEffect(() => {
-        const user = getCurrentUser();
-        const premium = user?.isAdmin === true ||
-            (user?.subscription?.plan === 'premium' &&
-                user?.subscription?.status === 'active');
+        const premium = isPremiumUser();
 
         if (!premium) {
             router.push('/upgrade');

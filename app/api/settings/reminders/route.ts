@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
+import { z } from 'zod';
+
+const settingsSchema = z.object({
+    enableEmail: z.boolean(),
+    enableWhatsApp: z.boolean().optional(),
+    remindBeforeDue: z.number().int().min(1).max(30).nullable(),
+    remindOnDue: z.boolean(),
+    remindAfterDue1: z.number().int().min(1).max(60).nullable(),
+    remindAfterDue2: z.number().int().min(1).max(90).nullable(),
+});
 
 export async function GET(request: NextRequest) {
     try {
@@ -16,7 +26,7 @@ export async function GET(request: NextRequest) {
         if (!settings) {
             // Return defaults if none exist yet
             return NextResponse.json({
-                enableEmail: true,
+                enableEmail: false,
                 enableWhatsApp: false,
                 remindBeforeDue: 3,
                 remindOnDue: true,
@@ -42,7 +52,11 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const body = await request.json();
+        const parsed = settingsSchema.safeParse(await request.json());
+        if (!parsed.success) {
+            return NextResponse.json({ error: 'Please check the reminder schedule and try again.' }, { status: 400 });
+        }
+        const body = parsed.data;
         const {
             enableEmail,
             enableWhatsApp,
@@ -56,7 +70,7 @@ export async function PUT(request: NextRequest) {
             where: { userId: user.userId },
             update: {
                 enableEmail,
-                enableWhatsApp,
+                enableWhatsApp: false,
                 remindBeforeDue,
                 remindOnDue,
                 remindAfterDue1,
@@ -64,8 +78,8 @@ export async function PUT(request: NextRequest) {
             },
             create: {
                 userId: user.userId,
-                enableEmail: enableEmail ?? true,
-                enableWhatsApp: enableWhatsApp ?? false,
+                enableEmail,
+                enableWhatsApp: false,
                 remindBeforeDue: remindBeforeDue ?? 3,
                 remindOnDue: remindOnDue ?? true,
                 remindAfterDue1: remindAfterDue1 ?? 3,

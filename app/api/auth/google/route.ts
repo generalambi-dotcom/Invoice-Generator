@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
             // Trigger Welcome Sequence Step 1 for new google users
             sendSequenceEmail({ to: newUser.email, name: newUser.name, step: 1 })
                 .then(async (result) => {
-                    if (result.success) {
+                    if (result.success && !result.skipped) {
                         await prisma.emailLog.create({
                             data: {
                                 userId: newUser.id,

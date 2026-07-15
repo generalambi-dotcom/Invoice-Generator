@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import crypto from 'crypto';
+import { sendSequenceEmail } from '@/lib/email';
+
+async function triggerFirstWelcome(user: { id: string; email: string; name: string }) {
+  const key = 'welcome_step_1';
+  const existing = await prisma.emailLog.findFirst({ where: { userId: user.id, subject: key } });
+  if (existing) return;
+  const result = await sendSequenceEmail({ to: user.email, name: user.name, step: 1 });
+  if (result.success && !result.skipped) {
+    await prisma.emailLog.create({
+      data: { userId: user.id, to: user.email, subject: key, body: 'Sequence Step 1', status: 'sent', templateKey: key },
+    });
+  }
+}
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -26,6 +39,7 @@ export async function POST(request: NextRequest) {
       select: { 
         id: true, 
         email: true, 
+        name: true,
         emailVerified: true,
         emailVerificationExpiry: true 
       },
@@ -72,6 +86,7 @@ export async function POST(request: NextRequest) {
         emailVerificationExpiry: null,
       },
     });
+    await triggerFirstWelcome(user);
 
     return NextResponse.json({
       message: 'Email verified successfully! You can now sign in.',
@@ -107,6 +122,7 @@ export async function GET(request: NextRequest) {
       select: { 
         id: true, 
         email: true, 
+        name: true,
         emailVerified: true,
         emailVerificationExpiry: true 
       },
@@ -149,6 +165,7 @@ export async function GET(request: NextRequest) {
         emailVerificationExpiry: null,
       },
     });
+    await triggerFirstWelcome(user);
 
     return NextResponse.redirect(
       new URL('/verify-email?verified=true', request.url)
@@ -160,4 +177,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

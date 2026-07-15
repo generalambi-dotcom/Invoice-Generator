@@ -251,7 +251,8 @@ export function isPremiumUser(): boolean {
 
     // Any paid tier (Pro or Business; legacy 'premium' maps to Pro) counts.
     const { isPaidTier, normaliseTier } = require('./plans');
-    if (isPaidTier(normaliseTier(user?.subscription?.plan)) && user?.subscription?.status === 'active') {
+    const statusAllowsAccess = ['active', 'cancelled'].includes(user?.subscription?.status || '');
+    if (isPaidTier(normaliseTier(user?.subscription?.plan)) && statusAllowsAccess) {
       // Check if subscription hasn't expired
       if (user.subscription.endDate) {
         const endDate = new Date(user.subscription.endDate);
@@ -267,4 +268,3 @@ export function isPremiumUser(): boolean {
     return false;
   }
 }
-

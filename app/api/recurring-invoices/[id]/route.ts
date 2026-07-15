@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
+import { userHasFeature } from '@/lib/feature-gate';
 
 export async function GET(
     req: NextRequest,
@@ -42,17 +43,9 @@ export async function PUT(
 
         const body = await req.json();
 
-        // Check if user has premium subscription
-        const dbUser = await prisma.user.findUnique({
-            where: { id: user.userId },
-            select: { subscriptionPlan: true, subscriptionStatus: true, isAdmin: true }
-        });
-
-        const isPremium = dbUser?.isAdmin || (dbUser?.subscriptionPlan === 'premium' && dbUser?.subscriptionStatus === 'active');
-
-        if (!isPremium) {
+        if (!(await userHasFeature(user.userId, 'recurringInvoices'))) {
             return NextResponse.json(
-                { error: 'Recurring invoices are a premium feature. Please upgrade to access this feature.' },
+                { error: 'Recurring invoices are available on Pro and Business plans. Please upgrade to continue.' },
                 { status: 403 }
             );
         }
@@ -98,21 +91,6 @@ export async function DELETE(
         const user = await getAuthenticatedUser(req);
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        // Check if user has premium subscription
-        const dbUser = await prisma.user.findUnique({
-            where: { id: user.userId },
-            select: { subscriptionPlan: true, subscriptionStatus: true, isAdmin: true }
-        });
-
-        const isPremium = dbUser?.isAdmin || (dbUser?.subscriptionPlan === 'premium' && dbUser?.subscriptionStatus === 'active');
-
-        if (!isPremium) {
-            return NextResponse.json(
-                { error: 'Recurring invoices are a premium feature. Please upgrade to access this feature.' },
-                { status: 403 }
-            );
         }
 
         // Verify ownership

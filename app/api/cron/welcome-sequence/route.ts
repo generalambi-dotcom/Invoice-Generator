@@ -26,6 +26,7 @@ export async function GET(request: Request) {
 
         const recentUsers = await prisma.user.findMany({
             where: {
+                emailVerified: true,
                 createdAt: {
                     gte: eightDaysAgo,
                 },
@@ -35,6 +36,14 @@ export async function GET(request: Request) {
                 email: true,
                 name: true,
                 createdAt: true,
+                subscriptionPlan: true,
+                subscriptionStatus: true,
+                companyDefaults: { select: { id: true } },
+                invoices: {
+                    select: { id: true, sentAt: true },
+                    orderBy: { createdAt: 'desc' },
+                    take: 10,
+                },
             },
         });
 
@@ -48,6 +57,15 @@ export async function GET(request: Request) {
             const stepToSend = sequenceMap[daysKey];
 
             if (stepToSend) {
+                const invoiceCount = user.invoices.length;
+                const sentCount = user.invoices.filter((invoice) => invoice.sentAt).length;
+                const paid = ['pro', 'business', 'premium'].includes(user.subscriptionPlan || '') && user.subscriptionStatus === 'active';
+                const relevant =
+                    (stepToSend === 2 && !user.companyDefaults) ||
+                    (stepToSend === 3 && invoiceCount > 0 && sentCount === 0) ||
+                    (stepToSend === 4 && invoiceCount === 0) ||
+                    (stepToSend === 5 && invoiceCount >= 2 && !paid);
+                if (!relevant) continue;
                 const subjectKey = `welcome_step_${stepToSend} `;
 
                 // Verification: Ensure this email wasn't already sent to this user
@@ -68,7 +86,7 @@ export async function GET(request: Request) {
                             step: stepToSend,
                         });
 
-                        if (emailResult.success) {
+                        if (emailResult.success && !emailResult.skipped) {
                             await prisma.emailLog.create({
                                 data: {
                                     userId: user.id,
@@ -79,7 +97,7 @@ export async function GET(request: Request) {
                                 },
                             });
                             results.sent++;
-                        } else {
+                        } else if (!emailResult.skipped) {
                             results.errors.push(`Failed to send step ${stepToSend} to ${user.email}: ${emailResult.error} `);
                         }
                     } catch (e: any) {

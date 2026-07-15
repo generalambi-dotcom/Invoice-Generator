@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { decryptPaymentCredential } from '@/lib/encryption';
 import { syncContactToBrevo } from '@/lib/brevo';
+import { notifySubscriptionEvent } from '@/lib/subscription-notifications';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -160,6 +161,7 @@ export async function POST(request: NextRequest) {
     if (updatedUser) {
       syncContactToBrevo(updatedUser.email, updatedUser.name, resolvedPlan).catch(console.error);
     }
+    await notifySubscriptionEvent(resolvedUserId, existing?.subscriptionStatus === 'active' ? 'renewed' : 'activated', reference);
 
     return NextResponse.json({
       success: true,

@@ -55,6 +55,7 @@ import { planHasFeature, currencyAllowed, themeAllowed, FREE_THEMES, FREE_CURREN
 import { isPremiumUser } from '@/lib/payments';
 import ImageUpload from '@/components/ImageUpload';
 import { trackEvent } from '@/lib/tracking';
+import { clearGuestDraft, loadGuestDraft, saveGuestDraft } from '@/lib/guest-draft';
 
 interface InvoiceFormContentProps {
   initialType?: 'invoice' | 'estimate' | 'credit_note' | 'receipt';
@@ -210,6 +211,8 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
   const [guestEmailStep, setGuestEmailStep] = useState<1 | 2>(1);
   const [guestEmail, setGuestEmail] = useState('');
   const [guestEmailLoading, setGuestEmailLoading] = useState(false);
+  const [guestMarketingConsent, setGuestMarketingConsent] = useState(false);
+  const importedGuestDraft = React.useRef(false);
   const [addressModes, setAddressModes] = useState<{
     company: 'simple' | 'detailed';
     client: 'simple' | 'detailed';
@@ -233,13 +236,28 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
     setUser(currentUser);
     if (currentUser) {
       // Admins automatically have premium access
-      const isPremiumUser =
-        currentUser.isAdmin === true ||
-        (currentUser.subscription?.plan === 'premium' &&
-          currentUser.subscription?.status === 'active');
-      setIsPremium(isPremiumUser);
+      setIsPremium(isPremiumUser());
     }
   }, []);
+
+  // Carry a guest's completed work through signup and verification. Import it
+  // into the authenticated form once, then clear it after the first save.
+  useEffect(() => {
+    if (!user || importedGuestDraft.current) return;
+    const draft = loadGuestDraft();
+    if (!draft) return;
+    importedGuestDraft.current = true;
+    setInvoice((current) => ({
+      ...current,
+      ...draft,
+      id: undefined,
+      paymentStatus: 'pending',
+      createdAt: undefined,
+      updatedAt: undefined,
+    }));
+    toast.success('Your invoice draft is back. Review it, then save or send it.');
+    trackEvent('guest_draft_restored');
+  }, [user]);
 
   // Sync simple address fields when invoice data changes (e.g., when loading from database)
   useEffect(() => {
@@ -254,6 +272,9 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
   // Load company defaults and generate invoice number on mount
   useEffect(() => {
     const loadDefaults = async () => {
+      // The public generator works without an account. Avoid authenticated API
+      // calls until a signed-in user is available.
+      if (!getCurrentUser()) return;
       try {
         const defaults = await getCompanyDefaultsAPI();
         if (defaults) {
@@ -381,8 +402,8 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
         setInvoiceHistory([]);
       }
     };
-    loadHistory();
-  }, []);
+    if (user) loadHistory();
+  }, [user]);
 
   // Load invoice from URL query parameter (invoiceId) or sessionStorage
   useEffect(() => {
@@ -846,6 +867,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
           // Update invoice with database ID
           if (result.invoice) {
             setInvoice(prev => ({ ...prev, id: result.invoice.id }));
+            clearGuestDraft();
             // First time this invoice is saved → show the "now get paid" success
             // flow that drives the next action (share / send / reminders).
             if (wasNewInvoice) {
@@ -2441,7 +2463,7 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                           <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-theme-primary"></div>
                         </label>
                         {!isPremium && (
-                          <Link href="/pricing" className="absolute -top-6 -right-2 px-2 py-0.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[9px] font-bold rounded uppercase tracking-wider items-center gap-1 flex whitespace-nowrap hover:from-amber-500 hover:to-amber-600 transition-all">
+                          <Link href="/upgrade" className="absolute -top-6 -right-2 px-2 py-0.5 bg-gradient-to-r from-amber-400 to-amber-500 text-white text-[9px] font-bold rounded uppercase tracking-wider items-center gap-1 flex whitespace-nowrap hover:from-amber-500 hover:to-amber-600 transition-all">
                             PRO
                           </Link>
                         )}
@@ -3116,13 +3138,15 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
               </p>
               <div className="flex flex-col gap-3">
                 <Link
-                  href="/auth/register"
+                  href="/signup?redirect=%2Ffree-invoice-generator"
+                  onClick={() => saveGuestDraft(invoice)}
                   className="w-full py-3 px-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl text-sm transition-colors text-center"
                 >
                   Create Free Account
                 </Link>
                 <Link
-                  href="/auth/login"
+                  href="/signin?redirect=%2Ffree-invoice-generator"
+                  onClick={() => saveGuestDraft(invoice)}
                   className="w-full py-3 px-4 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold rounded-xl text-sm transition-colors text-center"
                 >
                   Log In
@@ -3165,8 +3189,15 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
                         invoiceId: invoice.id,
+                        invoiceData: {
+                          ...invoice,
+                          id: invoice.id || `guest-${Date.now()}`,
+                          companyInfo: invoice.company,
+                          clientInfo: invoice.client,
+                          shipToInfo: invoice.shipTo,
+                        },
                         email: guestEmail,
-                        subscribeToBrevo: true // auto-subscribe as requested by prompt
+                        subscribeToBrevo: guestMarketingConsent,
                       })
                     });
                     if (res.ok) {
@@ -3191,6 +3222,16 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
+
+                  <label className="mb-4 flex items-start gap-2.5 rounded-xl bg-gray-50 p-3 text-xs leading-5 text-gray-600">
+                    <input
+                      type="checkbox"
+                      checked={guestMarketingConsent}
+                      onChange={(event) => setGuestMarketingConsent(event.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span>Also send me occasional invoicing tips and product updates. Optional; unsubscribe anytime.</span>
+                  </label>
 
                   <button
                     type="submit"
@@ -3223,7 +3264,8 @@ function InvoiceFormContent({ initialType = 'invoice' }: InvoiceFormContentProps
                 </p>
 
                 <Link
-                  href="/auth/register"
+                  href="/signup?redirect=%2Ffree-invoice-generator"
+                  onClick={() => saveGuestDraft(invoice)}
                   className="block w-full py-3 px-4 bg-gray-900 hover:bg-black text-white font-bold rounded-xl text-sm transition-colors mb-3"
                 >
                   Create Free Account

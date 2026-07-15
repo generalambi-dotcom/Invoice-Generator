@@ -5,6 +5,7 @@ import Image from 'next/image';
 
 import { Metadata } from 'next';
 import { prisma } from '../../lib/db';
+import type { Prisma } from '@prisma/client';
 
 // Flagship posts shown in the featured hero section
 const FEATURED_SLUGS = [
@@ -32,15 +33,22 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogPage() {
-    const posts = await prisma.blogPost.findMany({
-        where: { published: true },
-        orderBy: { createdAt: 'desc' },
-        include: {
-            author: {
-                select: { name: true },
+    type BlogPostWithAuthor = Prisma.BlogPostGetPayload<{ include: { author: { select: { name: true } } } }>;
+    let posts: BlogPostWithAuthor[] = [];
+    try {
+        posts = await prisma.blogPost.findMany({
+            where: { published: true },
+            orderBy: { createdAt: 'desc' },
+            include: {
+                author: {
+                    select: { name: true },
+                },
             },
-        },
-    });
+        });
+    } catch (error) {
+        // Keep the public page buildable and useful during a temporary database outage.
+        console.error('Unable to load blog posts:', error);
+    }
 
     const featuredPosts = FEATURED_SLUGS
         .map(slug => posts.find(p => p.slug === slug))

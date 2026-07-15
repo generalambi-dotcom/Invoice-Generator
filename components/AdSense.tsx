@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getCurrentUser } from '@/lib/auth';
 import Script from 'next/script';
+import { isPremiumUser } from '@/lib/payments';
 
 interface AdSenseProps {
   adSlot?: string;
@@ -16,11 +17,7 @@ export default function AdSense({
   const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
-    const user = getCurrentUser();
-    // Admins automatically have premium access (no ads)
-    const premium = user?.isAdmin === true ||
-      (user?.subscription?.plan === 'premium' && user?.subscription?.status === 'active');
-    setIsPremium(premium || false);
+    setIsPremium(isPremiumUser());
   }, []);
 
   useEffect(() => {
@@ -58,4 +55,3 @@ export default function AdSense({
     </>
   );
 }
-

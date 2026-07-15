@@ -134,6 +134,31 @@ export async function syncContactToBrevo(
   }
 }
 
+/** Keep Brevo's send permission aligned with the in-app consent switch. */
+export async function setBrevoMarketingConsent(email: string, consent: boolean) {
+  try {
+    const config = await getBrevoConfig();
+    if (!config) return { success: false, error: 'Brevo not configured' };
+    const response = await fetch(
+      `${BREVO_API_BASE}/contacts/${encodeURIComponent(email.trim().toLowerCase())}`,
+      {
+        method: 'PUT',
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'api-key': config.apiKey,
+        },
+        body: JSON.stringify({ emailBlacklisted: !consent }),
+      },
+    );
+    if (response.ok || response.status === 204 || response.status === 404) return { success: true };
+    const error = await response.json().catch(() => ({}));
+    return { success: false, error: error.message || `HTTP ${response.status}` };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 /**
  * Bulk-sync ALL registered users to the Brevo customer list.
  * Uses the Brevo import contacts API for efficiency.
@@ -172,7 +197,7 @@ export async function syncAllUsersToBrevo(): Promise<{
       subscriptionPlan: string | null;
       subscriptionStatus: string | null;
     }): 'FREE' | 'PREMIUM' => {
-      if (user.subscriptionPlan === 'premium' && user.subscriptionStatus === 'active') {
+      if (['premium', 'pro', 'business'].includes(user.subscriptionPlan || '') && user.subscriptionStatus === 'active') {
         return 'PREMIUM';
       }
       return 'FREE';

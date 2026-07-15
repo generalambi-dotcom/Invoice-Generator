@@ -4,16 +4,14 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import RecurringInvoiceForm from '@/components/RecurringInvoiceForm';
 import { getCurrentUser } from '@/lib/auth';
+import { isPremiumUser } from '@/lib/payments';
 
 export default function NewRecurringInvoicePage() {
     const router = useRouter();
     const [isPremium, setIsPremium] = useState(false);
 
     useEffect(() => {
-        const user = getCurrentUser();
-        const premium = user?.isAdmin === true ||
-            (user?.subscription?.plan === 'premium' &&
-                user?.subscription?.status === 'active');
+        const premium = isPremiumUser();
 
         if (!premium) {
             router.push('/upgrade');

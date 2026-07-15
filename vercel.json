@@ -11,6 +11,18 @@
         {
             "path": "/api/cron/weekly-summary",
             "schedule": "0 8 * * 1"
+        },
+        {
+            "path": "/api/cron/process-recurring",
+            "schedule": "15 7 * * *"
+        },
+        {
+            "path": "/api/cron/subscription-lifecycle",
+            "schedule": "30 8 * * *"
+        },
+        {
+            "path": "/api/cron/check-subscriptions",
+            "schedule": "0 */6 * * *"
         }
     ]
 }

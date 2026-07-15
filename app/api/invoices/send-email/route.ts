@@ -133,23 +133,10 @@ export async function POST(request: NextRequest) {
         body: message || '',
         status: emailResult.success ? 'sent' : 'failed',
         errorMessage: emailResult.error || null,
+        providerMessageId: emailResult.emailId === 'dev-mode' ? null : emailResult.emailId,
+        templateKey: 'invoice_sent',
+        metadata: { source: 'invoice_editor' },
       },
-    });
-
-    // Update invoice
-    await prisma.invoice.update({
-      where: { id: invoiceId },
-      data: { sentAt: new Date() },
-    });
-
-    // Log sent event (fire-and-forget)
-    logInvoiceEvent({
-      invoiceId,
-      userId: user.userId,
-      eventType: 'sent',
-      description: `Invoice emailed to ${recipientEmail}`,
-      newValue: recipientEmail,
-      actor: 'owner',
     });
 
     if (!emailResult.success) {
@@ -158,6 +145,21 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Only mark the invoice as sent after the provider accepted the email.
+    await prisma.invoice.update({
+      where: { id: invoiceId },
+      data: { sentAt: new Date() },
+    });
+
+    logInvoiceEvent({
+      invoiceId,
+      userId: user.userId,
+      eventType: 'sent',
+      description: `Invoice emailed to ${recipientEmail}`,
+      newValue: recipientEmail,
+      actor: 'owner',
+    });
 
     const responseTime = Date.now() - startTime;
     logRequest(request, { userId: user.userId, statusCode: 200, responseTime });
@@ -180,4 +182,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
